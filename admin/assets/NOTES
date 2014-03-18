@@ -1,0 +1,17 @@
+<link rel="stylesheet" href="styles/site.css" type="text/css" />
+
+<title>Grid Director Developer Network : What is Grid Director?</title>
+
+<body class="theme-default aui-theme-default"> -> <div ...>
+
+
+update all these: <a href="index.html">
+
+update all these: <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+
+relative paths in XML
+
+ideal: import javascript, identify sections to remove, identify sections to rename/reclass
+
+change options page slug to prevent conflict
+personalize the plugin
