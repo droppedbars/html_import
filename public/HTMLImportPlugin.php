@@ -328,7 +328,7 @@ class HTMLImportPlugin {
 		return $saved_attributes;
 	}
 
-	private function get_body( SimpleXMLElement $html_file ) {
+	private function get_body( SimpleXMLElement $html_file, $filepath, $html_post_lookup ) {
 // TODO: this was the start of converting a <BODY> to a <DIV> while retaining all class and style attributes
 //		$body = ''.$html_file->body->asXML();
 //		$main_div = new SimpleXMLElement('<div></div>');
@@ -339,8 +339,43 @@ class HTMLImportPlugin {
 //		}
 //
 //
+		// TODO: make this more efficient
+		// TODO, note, may need to do images at this time as they can be linked to as well
+		$body = $html_file->body->asXML();
 
-		return $html_file->body->asXML();
+		$link_table = Array();
+		$all_links = $html_file->xpath('//a[@href]');
+		// TODO: encapsulate this in a function
+		if ($all_links) {
+			foreach ($all_links as $link) {
+
+				foreach ($link->attributes() as $attribute => $value) {
+					$path = ''.$value;
+					if (0 == strcasecmp('href', $attribute)) {
+						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
+							if ($path[0] != '/') {
+								$fullpath = realpath($filepath.'/'.$path);
+							} else {
+								$fullpath = $path;
+							}
+							if (array_key_exists($fullpath, $html_post_lookup)) {
+								$link_table[$path] = $fullpath;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// TODO: returns the link based on the page id, not the permalink
+		foreach ($link_table as $link => $full_link) {
+			$post_id = $html_post_lookup[$full_link];
+			$post_link = get_post_permalink($post_id);
+			$body = preg_replace('/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.$link.'\b)(")/', '$1'.$post_link.'$3', $body);
+		}
+
+
+		return $body;
 	}
 
 	private function getXMLObject( $source_file ) {
@@ -354,14 +389,36 @@ class HTMLImportPlugin {
 		return $simple_xml;
 	}
 
-	private function importAnHTML( $source_file, $parent_page_id = null, $category = null, $tag = null ) {
+	/**
+	 * @param      $source_file string must be the absolute path of the file to import
+	 * @param bool $stub_only
+	 * @param null $parent_page_id
+	 * @param null $category
+	 * @param null $tag
+	 * @param null $order
+	 * @param      $html_post_lookup
+	 *
+	 * @return int|WP_Error
+	 */
+	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup ) {
+		// TODO: handle images (URL vs local files)
+
 		set_time_limit( 540 );
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
 		$page                   = Array();
 		$page['post_title']     = $this->get_title( $file_as_xml_obj );
-		$page['post_content']   = $this->get_body( $file_as_xml_obj ); // TODO: pass in mapping and update links at same time
-		$page['post_status']    = 'publish';
+		if (isset($html_post_lookup)) {
+			if (array_key_exists($source_file, $html_post_lookup)) {
+				$page['ID'] = $html_post_lookup[$source_file];
+			}
+		}
+		if ($stub_only) {
+			$page['post_status']    = 'draft';
+		} else {
+			$page['post_status']    = 'publish';
+			$page['post_content']   = $this->get_body( $file_as_xml_obj, dirname($source_file), $html_post_lookup );
+		}
 		$page['post_type']      = 'page';
 		$page['comment_status'] = 'closed';
 		$page['ping_status']    = 'closed';
@@ -371,7 +428,9 @@ class HTMLImportPlugin {
 		if ( isset( $parent_page_id ) ) {
 			$page['post_parent'] = $parent_page_id;
 		}
-		$page['menu_order']  = ''; // TODO, pull from xml index
+		if ( isset ($order) ) {
+			$page['menu_order']  = $order;
+		}
 		$page['post_author'] = wp_get_current_user()->ID;
 
 		// TODO: handle updating page if it already exists
@@ -384,7 +443,7 @@ class HTMLImportPlugin {
 		return $page_id;
 	}
 
-	private function processNode( DOMNode $node, $parent_id = null ) {
+	private function processNode( DOMNode $node, $stubs_only = true, &$html_post_lookup, $parent_id = null ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
@@ -395,7 +454,7 @@ class HTMLImportPlugin {
 
 		if ( isset( $attributes ) ) {
 			for ( $i = 0; $i < $attributes->length; $i ++ ) {
-				$attribute = $attributes->item( $i )->name;
+				$attribute = $attributes->item( $i )->nodeName;
 				switch ( $attribute ) {
 					case 'title':
 						$title = $attributes->item( $i )->nodeValue;
@@ -428,38 +487,49 @@ class HTMLImportPlugin {
 		foreach ( $tag as $t ) {
 		}
 
+
 		// TODO: handle title, tags, categories and ordering
 		if ( isset( $src ) ) {
 			// TODO: validate source file
-			$my_id = $this->importAnHTML( $src, $parent_id );
-			// TODO: import the post
-			// TODO: hand images
+			if ($stubs_only) {
+				$my_id = $this->importAnHTML( $src, true, $parent_id, null, null, $order, null );
+				$html_post_lookup[$src] = $my_id;
+			} else {
+				$my_id = $this->importAnHTML( $src, false, $parent_id, null, null, $order, $html_post_lookup );
+			}
 		}
+
 
 
 		// recurse through children nodes
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $children->item( $i ), $my_id );
+				$this->processNode( $children->item( $i ), $stubs_only, $html_post_lookup, $my_id );
 			}
 		}
 	}
 
 
-	private function process_xml_file( $xml_path ) {
+	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null ) {
+		if (!isset($html_post_lookup)) {
+			$html_post_lookup = Array();
+		}
+
 		$doc = new DOMDocument();
 		$doc->load( $xml_path, LIBXML_NOBLANKS );
 
 		$nodelist = $doc->childNodes;
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $nodelist->item( $i ) );
+			$this->processNode( $nodelist->item( $i ), $stubs_only, $html_post_lookup );
 		}
+		return $html_post_lookup;
 	}
 
 	public function import_html_from_xml_index( $xml_path ) {
 		if ( $this->valid_xml_file( $xml_path ) ) {
-			$this->process_xml_file( $xml_path );
+			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup );
+			$this->process_xml_file( $xml_path, false, $html_post_lookup );
 		}
 	}
 
