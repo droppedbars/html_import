@@ -404,14 +404,19 @@ class HTMLImportPlugin {
 		// TODO: handle images (URL vs local files)
 
 		set_time_limit( 540 );
+
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
 		$page                   = Array();
 		$page['post_title']     = $this->get_title( $file_as_xml_obj );
+		$post = get_page_by_title($page['post_title']);
 		if (isset($html_post_lookup)) {
-			if (array_key_exists($source_file, $html_post_lookup)) {
+			if (array_key_exists($source_file, $html_post_lookup)) { // stub was created during this cycle
 				$page['ID'] = $html_post_lookup[$source_file];
 			}
+		}
+		else if (!is_null($post)) { // post was previously created
+			$page['ID'] = $post->ID;
 		}
 		if ($stub_only) {
 			$page['post_status']    = 'draft';
@@ -443,7 +448,7 @@ class HTMLImportPlugin {
 		return $page_id;
 	}
 
-	private function processNode( DOMNode $node, $stubs_only = true, &$html_post_lookup, $parent_id = null ) {
+	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, $parent_id = null ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
@@ -461,6 +466,9 @@ class HTMLImportPlugin {
 						break;
 					case 'src':
 						$src = $attributes->item( $i )->nodeValue;
+						if ($src[0] != '/') {
+							$src = realpath(dirname($xml_path).'/'.$src);
+						}
 						break;
 					case 'category':
 						$category = explode( ',', $attributes->item( $i )->nodeValue );
@@ -505,7 +513,7 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $children->item( $i ), $stubs_only, $html_post_lookup, $my_id );
+				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $my_id );
 			}
 		}
 	}
@@ -521,7 +529,7 @@ class HTMLImportPlugin {
 
 		$nodelist = $doc->childNodes;
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $nodelist->item( $i ), $stubs_only, $html_post_lookup );
+			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup );
 		}
 		return $html_post_lookup;
 	}
