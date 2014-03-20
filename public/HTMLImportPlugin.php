@@ -339,9 +339,15 @@ class HTMLImportPlugin {
 //		}
 //
 //
+		// TODO: paths are all unix specific
 		// TODO: make this more efficient
 		// TODO, note, may need to do images at this time as they can be linked to as well
 		$body = $html_file->body->asXML();
+
+		// TODO: parse file, pull out img src and non-htm/html anchors
+		//  upload them to media, update img src ref, update anchor
+		//  add them to look up table for future references
+
 
 		$link_table = Array();
 		$all_links = $html_file->xpath('//a[@href]');
@@ -353,13 +359,38 @@ class HTMLImportPlugin {
 					$path = ''.$value;
 					if (0 == strcasecmp('href', $attribute)) {
 						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
-							if ($path[0] != '/') {
-								$fullpath = realpath($filepath.'/'.$path);
-							} else {
-								$fullpath = $path;
-							}
-							if (array_key_exists($fullpath, $html_post_lookup)) {
-								$link_table[$path] = $fullpath;
+							// TODO: if ends with html or htm, do below, else treat as media
+							if (preg_match('/\.([hH][tT][mM][lL]?)$/', $path)) { // if html or htm
+								if ($path[0] != '/') {
+									$fullpath = realpath($filepath.'/'.$path);
+								} else {
+									$fullpath = $path;
+								}
+								if (array_key_exists($fullpath, $html_post_lookup)) {
+									$link_table[$path] = $fullpath;
+								}
+							} else if (preg_match('/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower($path))) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
+								if ($path[0] != '/') {
+									$fullpath = realpath($filepath.'/'.$path);
+								} else {
+									$fullpath = $path;
+								}
+								$filename = basename($fullpath);
+
+								$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
+								// TODO: handle error, $upload is array with keys file (system path), url, error
+								$wp_filetype = wp_check_filetype(basename($upload['file']),null);
+								$attachment = array(
+										'guid' => $upload['file'],
+										'post_mime_type' => $wp_filetype['type'],
+										'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
+										'post_content' => '',
+										'post_status' => 'inherit');
+								$attach_id = wp_insert_attachment ($attachment, $upload['file']);
+								echo $attach_id;
+								// TODO: add to media lookup
+								// TODO: add file conflict (if it was already uploaded, then don't upload again, check in media lookup)
+								// TODO: look for conflict, if media name already exists, overwrite (future option?)
 							}
 						}
 					}

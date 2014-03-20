@@ -2,7 +2,7 @@ Phase 1
 - input src xml location
 - plugin options page
 - plugin menu name
-- import images
+- import images -> halfway there, have them uploading to media, no update to links or img src yet, or handling conflicts
 - update <img src
 - update links to images
 - handle errors
@@ -16,7 +16,6 @@ X update relative links
 Phase 2
 - prefer title in xml
 - ordering based on xml
-- reclass body as div
 - use categories from xml on page
 - use categories from xml on media
 - use tags from xml on page
@@ -27,6 +26,7 @@ Phase 2
 Phase 3
 - import css
 - import javascript
+- re-class body as div
 - identify sections to remove
 - identify sections to rename/reclass
 - use meta tags for excerpt
