@@ -369,28 +369,6 @@ class HTMLImportPlugin {
 								if (array_key_exists($fullpath, $html_post_lookup)) {
 									$link_table[$path] = $fullpath;
 								}
-							} else if (preg_match('/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower($path))) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
-								if ($path[0] != '/') {
-									$fullpath = realpath($filepath.'/'.$path);
-								} else {
-									$fullpath = $path;
-								}
-								$filename = basename($fullpath);
-
-								$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
-								// TODO: handle error, $upload is array with keys file (system path), url, error
-								$wp_filetype = wp_check_filetype(basename($upload['file']),null);
-								$attachment = array(
-										'guid' => $upload['file'],
-										'post_mime_type' => $wp_filetype['type'],
-										'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
-										'post_content' => '',
-										'post_status' => 'inherit');
-								$attach_id = wp_insert_attachment ($attachment, $upload['file']);
-								echo $attach_id;
-								// TODO: add to media lookup
-								// TODO: add file conflict (if it was already uploaded, then don't upload again, check in media lookup)
-								// TODO: look for conflict, if media name already exists, overwrite (future option?)
 							}
 						}
 					}
@@ -398,11 +376,13 @@ class HTMLImportPlugin {
 			}
 		}
 
+
 		// TODO: returns the link based on the page id, not the permalink
 		foreach ($link_table as $link => $full_link) {
 			$post_id = $html_post_lookup[$full_link];
 			$post_link = get_post_permalink($post_id);
-			$body = preg_replace('/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.$link.'\b)(")/', '$1'.$post_link.'$3', $body);
+			$search_str = '/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($link,'/').'\b)(")/';
+			$body = preg_replace($search_str, '$1'.preg_quote($post_link,'/').'$3', $body);
 		}
 
 
@@ -433,8 +413,6 @@ class HTMLImportPlugin {
 	 */
 	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup ) {
 		// TODO: handle images (URL vs local files)
-
-		set_time_limit( 540 );
 
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
@@ -469,17 +447,132 @@ class HTMLImportPlugin {
 		}
 		$page['post_author'] = wp_get_current_user()->ID;
 
-		// TODO: handle updating page if it already exists
-		$page_id = wp_insert_post( $page );
-		if ( is_wp_error( $page_id ) ) {
-			// TODO: handle error
-			echo 'post did not post';
+		if (is_null($post)) {
+			$page_id = wp_insert_post( $page );
+			if ( is_wp_error( $page_id ) ) {
+				// TODO: handle error
+				echo 'post did not post';
+			}
+		} else {
+			$page_id = wp_update_post($page);
 		}
 
 		return $page_id;
 	}
 
-	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, $parent_id = null ) {
+	private function importMedia( $post_id, $source_path, &$media_lookup ) {
+
+		$body = get_post($post_id)->post_content;
+		$media_table = Array();
+
+		$doc                      = new DOMDocument();
+		$doc->strictErrorChecking = false;
+		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
+		$doc->loadHTML( $body, LIBXML_HTML_NOIMPLIED );
+		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
+		$file_as_xml_obj = simplexml_import_dom( $doc );
+
+
+		// import img srcs
+		$all_imgs = $file_as_xml_obj->xpath('//img[@src]');
+		if ($all_imgs) {
+			foreach ($all_imgs as $img) {
+
+				foreach ($img->attributes() as $attribute => $value) {
+					$path = ''.$value;
+					if (0 == strcasecmp('src', $attribute)) {
+						// TODO: this is duplicated above, refactor it out
+						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) { // if it's local
+							if ((!is_null($media_lookup) && (!array_key_exists($path, $media_lookup)))) {
+
+								if ($path[0] != '/') {
+									$fullpath = realpath(dirname($source_path).'/'.$path);
+								} else {
+									$fullpath = $path;
+								}
+								$filename = basename($fullpath);
+								$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
+								// TODO: handle error, $upload is array with keys file (system path), url, error
+								$wp_filetype = wp_check_filetype(basename($upload['file']),null);
+								$attachment = array(
+										'guid' => $upload['file'],
+										'post_mime_type' => $wp_filetype['type'],
+										'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
+										'post_content' => '',
+										'post_status' => 'inherit');
+								$attach_id = wp_insert_attachment ($attachment, $upload['file'], $post_id);
+								require_once( ABSPATH . 'wp-admin/includes/image.php' );
+								$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+								wp_update_attachment_metadata( $attach_id, $attach_data );
+								$media_lookup[$fullpath] = $attach_id;
+								$media_table[$path] = $fullpath;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// linked media
+		$all_links = $file_as_xml_obj->xpath('//a[@href]');
+		// TODO: encapsulate this in a function
+		if ($all_links) {
+			foreach ($all_links as $link) {
+
+				foreach ($link->attributes() as $attribute => $value) {
+					$path = ''.$value;
+					if (0 == strcasecmp('href', $attribute)) {
+						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
+							// TODO: if ends with html or htm, do below, else treat as media
+							if (preg_match('/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower($path))) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
+								if ((!is_null($media_lookup) && (!array_key_exists($path, $media_lookup)))) {
+									if ($path[0] != '/') {
+										$fullpath = realpath(dirname($source_path).'/'.$path);
+									} else {
+										$fullpath = $path;
+									}
+									$filename = basename($fullpath);
+
+									$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
+									// TODO: handle error, $upload is array with keys file (system path), url, error
+									$wp_filetype = wp_check_filetype(basename($upload['file']),null);
+									$attachment = array(
+											'guid' => $upload['file'],
+											'post_mime_type' => $wp_filetype['type'],
+											'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
+											'post_content' => '',
+											'post_status' => 'inherit');
+									$attach_id = wp_insert_attachment ($attachment, $upload['file'], $post_id);
+									require_once( ABSPATH . 'wp-admin/includes/image.php' );
+									$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+									wp_update_attachment_metadata( $attach_id, $attach_data );
+									$media_lookup[$fullpath] = $attach_id;
+									// TODO: look for conflict, if media name already exists, overwrite (future option?)
+									$media_table[$path] = $fullpath;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		foreach ($media_table as $media_item => $full_media_path) {
+			$media_id = $media_lookup[$full_media_path];
+			$media_url = wp_get_attachment_url($media_id);
+			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")(\b'.preg_quote($media_item,'/').'\b)(")/';
+			$body = preg_replace($search_str, '$1'.preg_quote($media_url,'/').'$3', $body); // img src
+			$body = preg_replace('/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($media_item,'/').'\b)(")/', '$1'.preg_quote($media_url,'/').'$3', $body); // a href
+		}
+
+		// TODO: use wp_unique_filename ???
+	//TODO: can use wp_get_attachment_image to recreate the entire img tag
+		$page['ID'] = $post_id;
+		$page['post_content']   = $body;
+		wp_update_post( $page );
+	}
+
+	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, &$media_lookup, $parent_id = null ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
@@ -522,6 +615,7 @@ class HTMLImportPlugin {
 		//TODO: category and tag may be null or empty
 		//TODO: probably need to trim the exploded text
 		foreach ( $category as $cat ) {
+			
 		}
 		foreach ( $tag as $t ) {
 		}
@@ -535,6 +629,7 @@ class HTMLImportPlugin {
 				$html_post_lookup[$src] = $my_id;
 			} else {
 				$my_id = $this->importAnHTML( $src, false, $parent_id, null, null, $order, $html_post_lookup );
+				$this->importMedia($my_id, $src, $media_lookup);
 			}
 		}
 
@@ -544,13 +639,13 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $my_id );
+				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $my_id );
 			}
 		}
 	}
 
 
-	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null ) {
+	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup ) {
 		if (!isset($html_post_lookup)) {
 			$html_post_lookup = Array();
 		}
@@ -560,15 +655,16 @@ class HTMLImportPlugin {
 
 		$nodelist = $doc->childNodes;
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup );
+			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup );
 		}
 		return $html_post_lookup;
 	}
 
 	public function import_html_from_xml_index( $xml_path ) {
+		$media_lookup = Array();
 		if ( $this->valid_xml_file( $xml_path ) ) {
-			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup );
-			$this->process_xml_file( $xml_path, false, $html_post_lookup );
+			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup );
+			$this->process_xml_file( $xml_path, false, $html_post_lookup, $media_lookup );
 		}
 	}
 

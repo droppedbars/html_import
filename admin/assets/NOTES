@@ -2,9 +2,9 @@ Phase 1
 - input src xml location
 - plugin options page
 - plugin menu name
-- import images -> halfway there, have them uploading to media, no update to links or img src yet, or handling conflicts
-- update <img src
-- update links to images
+X import images
+X update <img src
+X update links to images
 - handle errors
 - select parent page in options
 X update existing posts
@@ -30,6 +30,7 @@ Phase 3
 - identify sections to remove
 - identify sections to rename/reclass
 - use meta tags for excerpt
+- handle
 - import via zip
 
 Phase 4
