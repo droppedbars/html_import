@@ -436,7 +436,7 @@ class HTMLImportPlugin {
 		$page['post_type']      = 'page';
 		$page['comment_status'] = 'closed';
 		$page['ping_status']    = 'closed';
-		$page['post_category']  = ''; // TODO, pull from xml index
+		$page['post_category']  = $category;
 		$page['post_excerpt']   = ''; // TODO, pull from meta
 		$page['post_date']      = date( 'Y-m-d H:i:s', filemtime( $source_file ) );
 		if ( isset( $parent_page_id ) ) {
@@ -612,10 +612,14 @@ class HTMLImportPlugin {
 				}
 			}
 		}
+
 		//TODO: category and tag may be null or empty
 		//TODO: probably need to trim the exploded text
-		foreach ( $category as $cat ) {
-			
+		if (!is_null($category) && is_array($category)) {
+			foreach ( $category as $index => $cat ) {
+				$cat_id = wp_create_category(trim($cat));
+				$categoryIDs[$index] = intval($cat_id);
+			}
 		}
 		foreach ( $tag as $t ) {
 		}
@@ -625,10 +629,10 @@ class HTMLImportPlugin {
 		if ( isset( $src ) ) {
 			// TODO: validate source file
 			if ($stubs_only) {
-				$my_id = $this->importAnHTML( $src, true, $parent_id, null, null, $order, null );
+				$my_id = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
 				$html_post_lookup[$src] = $my_id;
 			} else {
-				$my_id = $this->importAnHTML( $src, false, $parent_id, null, null, $order, $html_post_lookup );
+				$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup );
 				$this->importMedia($my_id, $src, $media_lookup);
 			}
 		}
