@@ -1,7 +1,7 @@
 Phase 1
 - input src xml location
 - plugin options page
-- plugin menu name
+X plugin menu name
 X import images
 X update <img src
 X update links to images
@@ -12,15 +12,15 @@ X import HTML
 X use relative links to html in xml source
 X hierarchy based on XML
 X update relative links
+X ordering based on xml
+X relink to permalink, not post_id
 
 Phase 2
 - prefer title in xml
-- ordering based on xml
 X use categories from xml on page
 - use categories from xml on media
 - use tags from xml on page
 - use tags from xml on media
-- relink to permalink, not post_id
 - select parent page in xml source
 
 Phase 3

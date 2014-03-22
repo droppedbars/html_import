@@ -3,10 +3,10 @@
  * Plugin Name.
  *
  * @package   HTMLImportPlugin
- * @author    Your Name <email@example.com>
+ * @author    Patrick Mauro <patrick@mauro.ca>
  * @license   GPL-2.0+
- * @link      http://example.com
- * @copyright 2014 Your Name or Company Name
+ * @link      http://patrick.mauro.ca
+ * @copyright 2014 Patrick Mauro
  */
 
 /**
@@ -17,7 +17,7 @@
  * functionality, then refer to `HTMLImportPluginAdmin.php`
  *
  * @package HTMLImportPlugin
- * @author  Your Name <email@example.com>
+ * @author  Patrick Mauro <patrick@mauro.ca
  */
 class HTMLImportPlugin {
 
@@ -43,7 +43,7 @@ class HTMLImportPlugin {
 	 *
 	 * @var      string
 	 */
-	protected $plugin_slug = 'html-import';
+	protected $plugin_slug = 'htim-html-import';
 
 	/**
 	 * Instance of this class.
@@ -71,12 +71,6 @@ class HTMLImportPlugin {
 		// Load public-facing style sheet and JavaScript.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-
-		/* Define custom functionality.
-		 * Refer To http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
-		 */
-		add_action( '@TODO', array( $this, 'action_method_name' ) );
-		add_filter( '@TODO', array( $this, 'filter_method_name' ) );
 
 	}
 
@@ -277,34 +271,17 @@ class HTMLImportPlugin {
 	}
 
 	/**
-	 * NOTE:  Actions are points in the execution of a page or process
-	 *        lifecycle that WordPress fires.
+	 * Ensure the provided file exists
 	 *
-	 *        Actions:    http://codex.wordpress.org/Plugin_API#Actions
-	 *        Reference:  http://codex.wordpress.org/Plugin_API/Action_Reference
+	 * @param $xml_path
 	 *
-	 * @since    1.0.0
+	 * @return bool
 	 */
-	public function action_method_name() {
-		// @TODO: Define your action hook callback here
-	}
-
-	/**
-	 * NOTE:  Filters are points of execution in which WordPress modifies data
-	 *        before saving it or sending it to the browser.
-	 *
-	 *        Filters: http://codex.wordpress.org/Plugin_API#Filters
-	 *        Reference:  http://codex.wordpress.org/Plugin_API/Filter_Reference
-	 *
-	 * @since    1.0.0
-	 */
-	public function filter_method_name() {
-		// @TODO: Define your filter hook callback here
-	}
-
 	private function valid_xml_file( $xml_path ) {
-		// @TODO: stub, should validate file properly
-		return true;
+		if (file_exists($xml_path)) {
+			return true;
+		}
+		return false;
 	}
 
 	private function get_title( SimpleXMLElement $html_file ) {
@@ -314,18 +291,6 @@ class HTMLImportPlugin {
 		}
 
 		return $title;
-	}
-
-	private function get_body_attributes( SimpleXMLElement $body ) {
-		$saved_attributes = Array();
-
-		foreach ( $body->attributes() as $attr ) {
-			if ( ( strcmp( 'class', $attr->getName() ) ) || ( strcmp( 'style', $attr->getName() ) ) ) {
-				array_push( $saved_attributes, $attr );
-			}
-		}
-
-		return $saved_attributes;
 	}
 
 	private function get_body( SimpleXMLElement $html_file, $filepath, $html_post_lookup ) {
@@ -340,14 +305,8 @@ class HTMLImportPlugin {
 //
 //
 		// TODO: paths are all unix specific
-		// TODO: make this more efficient
-		// TODO, note, may need to do images at this time as they can be linked to as well
+
 		$body = $html_file->body->asXML();
-
-		// TODO: parse file, pull out img src and non-htm/html anchors
-		//  upload them to media, update img src ref, update anchor
-		//  add them to look up table for future references
-
 
 		$link_table = Array();
 		$all_links = $html_file->xpath('//a[@href]');
@@ -359,7 +318,6 @@ class HTMLImportPlugin {
 					$path = ''.$value;
 					if (0 == strcasecmp('href', $attribute)) {
 						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
-							// TODO: if ends with html or htm, do below, else treat as media
 							if (preg_match('/\.([hH][tT][mM][lL]?)$/', $path)) { // if html or htm
 								if ($path[0] != '/') {
 									$fullpath = realpath($filepath.'/'.$path);
@@ -380,7 +338,7 @@ class HTMLImportPlugin {
 		// TODO: returns the link based on the page id, not the permalink
 		foreach ($link_table as $link => $full_link) {
 			$post_id = $html_post_lookup[$full_link];
-			$post_link = get_post_permalink($post_id);
+			$post_link = get_permalink($post_id);
 			$search_str = '/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($link,'/').'\b)(")/';
 			$body = preg_replace($search_str, '$1'.preg_quote($post_link,'/').'$3', $body);
 		}
@@ -418,6 +376,7 @@ class HTMLImportPlugin {
 
 		$page                   = Array();
 		$page['post_title']     = $this->get_title( $file_as_xml_obj );
+		$page['post_name'] = sanitize_title_with_dashes($page['post_title']);
 		$post = get_page_by_title($page['post_title']);
 		if (isset($html_post_lookup)) {
 			if (array_key_exists($source_file, $html_post_lookup)) { // stub was created during this cycle
@@ -428,7 +387,7 @@ class HTMLImportPlugin {
 			$page['ID'] = $post->ID;
 		}
 		if ($stub_only) {
-			$page['post_status']    = 'draft';
+			$page['post_status']    = 'publish';
 		} else {
 			$page['post_status']    = 'publish';
 			$page['post_content']   = $this->get_body( $file_as_xml_obj, dirname($source_file), $html_post_lookup );
@@ -523,7 +482,7 @@ class HTMLImportPlugin {
 					$path = ''.$value;
 					if (0 == strcasecmp('href', $attribute)) {
 						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
-							// TODO: if ends with html or htm, do below, else treat as media
+
 							if (preg_match('/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower($path))) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
 								if ((!is_null($media_lookup) && (!array_key_exists($path, $media_lookup)))) {
 									if ($path[0] != '/') {
@@ -547,7 +506,7 @@ class HTMLImportPlugin {
 									$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
 									wp_update_attachment_metadata( $attach_id, $attach_data );
 									$media_lookup[$fullpath] = $attach_id;
-									// TODO: look for conflict, if media name already exists, overwrite (future option?)
+
 									$media_table[$path] = $fullpath;
 								}
 							}
@@ -565,8 +524,6 @@ class HTMLImportPlugin {
 			$body = preg_replace('/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($media_item,'/').'\b)(")/', '$1'.preg_quote($media_url,'/').'$3', $body); // a href
 		}
 
-		// TODO: use wp_unique_filename ???
-	//TODO: can use wp_get_attachment_image to recreate the entire img tag
 		$page['ID'] = $post_id;
 		$page['post_content']   = $body;
 		wp_update_post( $page );

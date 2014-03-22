@@ -3,10 +3,10 @@
  * Plugin Name.
  *
  * @package   HTMLImportPluginAdmin
- * @author    Your Name <email@example.com>
+ * @author    Patrick Mauro <patrick@mauro.ca>
  * @license   GPL-2.0+
- * @link      http://example.com
- * @copyright 2014 Your Name or Company Name
+ * @link      http://patrick.mauro.ca
+ * @copyright 2014 Patrick Mauro
  */
 
 /**
@@ -18,7 +18,7 @@
  *
  *
  * @package HTMLImportPluginAdmin
- * @author  Your Name <email@example.com>
+ * @author  Patrick Mauro <patrick@mauro.ca>
  */
 class HTMLImportPluginAdmin {
 
@@ -82,8 +82,8 @@ class HTMLImportPluginAdmin {
 		 * Read more about actions and filters:
 		 * http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
 		 */
-		add_action( '@TODO', array( $this, 'action_method_name' ) );
-		add_filter( '@TODO', array( $this, 'filter_method_name' ) );
+		//add_action( '@TODO', array( $this, 'action_method_name' ) );
+		//add_filter( '@TODO', array( $this, 'filter_method_name' ) );
 
 	}
 
@@ -169,16 +169,12 @@ class HTMLImportPluginAdmin {
 		 *
 		 *        Administration Menus: http://codex.wordpress.org/Administration_Menus
 		 *
-		 * @TODO:
-		 *
-		 * - Change 'Page Title' to the title of your plugin admin page
-		 * - Change 'Menu Text' to the text for menu item for the plugin settings page
 		 * - Change 'manage_options' to the capability you see fit
 		 *   For reference: http://codex.wordpress.org/Roles_and_Capabilities
 		 */
 		$this->plugin_screen_hook_suffix = add_options_page(
-				__( 'Page Title', $this->plugin_slug ),
-				__( 'Menu Text', $this->plugin_slug ),
+				__( 'HTML Importer', $this->plugin_slug ),
+				__( 'HTML Importer', $this->plugin_slug ),
 				'manage_options',
 				$this->plugin_slug,
 				array( $this, 'display_plugin_admin_page' )

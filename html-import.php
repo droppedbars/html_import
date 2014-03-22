@@ -6,23 +6,23 @@
  * also follow WordPress Coding Standards and PHP best practices.
  *
  * @package   HTMLImportPlugin
- * @author    Your Name <email@example.com>
+ * @author    Patrick Mauro <patrick@mauro.ca>
  * @license   GPL-2.0+
- * @link      http://example.com
- * @copyright 2014 Your Name or Company Name
+ * @link      http://patrick.mauro.ca
+ * @copyright 2014 Patrick Mauro
  *
  * @wordpress-plugin
- * Plugin Name:       @TODO
+ * Plugin Name:       HTML Importer
  * Plugin URI:        @TODO
- * Description:       @TODO
+ * Description:				Imports a set of HTML pages based off of a specially formatted XML index file.  Imports associated media and updates relative links between HTML and HTML and Media.
  * Version:           1.0.0
- * Author:            @TODO
- * Author URI:        @TODO
+ * Author:            Patrick Mauro
+ * Author URI:        http://patrick.mauro.ca
  * Text Domain:       plugin-name-locale
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Domain Path:       /languages
- * GitHub Plugin URI: https://github.com/<owner>/<repo>
+ * GitHub Plugin URI: https://github.com/droppedbars/html_import
  */
 
 // If this file is called directly, abort.
@@ -56,12 +56,6 @@ add_action( 'plugins_loaded', array( 'HTMLImportPlugin', 'get_instance' ) );
  *----------------------------------------------------------------------------*/
 
 /*
- * @TODO:
- *
- * - replace `HTMLImportPluginAdmin.php` with the name of the plugin's admin file
- * - replace HTMLImportPluginAdmin with the name of the class defined in
- *   `HTMLImportPluginAdmin.php`
- *
  * If you want to include Ajax within the dashboard, change the following
  * conditional to:
  *
