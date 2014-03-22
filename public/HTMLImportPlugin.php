@@ -278,9 +278,10 @@ class HTMLImportPlugin {
 	 * @return bool
 	 */
 	private function valid_xml_file( $xml_path ) {
-		if (file_exists($xml_path)) {
+		if ( file_exists( $xml_path ) ) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -309,22 +310,22 @@ class HTMLImportPlugin {
 		$body = $html_file->body->asXML();
 
 		$link_table = Array();
-		$all_links = $html_file->xpath('//a[@href]');
+		$all_links  = $html_file->xpath( '//a[@href]' );
 		// TODO: encapsulate this in a function
-		if ($all_links) {
-			foreach ($all_links as $link) {
+		if ( $all_links ) {
+			foreach ( $all_links as $link ) {
 
-				foreach ($link->attributes() as $attribute => $value) {
-					$path = ''.$value;
-					if (0 == strcasecmp('href', $attribute)) {
-						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
-							if (preg_match('/\.([hH][tT][mM][lL]?)$/', $path)) { // if html or htm
-								if ($path[0] != '/') {
-									$fullpath = realpath($filepath.'/'.$path);
+				foreach ( $link->attributes() as $attribute => $value ) {
+					$path = '' . $value;
+					if ( 0 == strcasecmp( 'href', $attribute ) ) {
+						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) {
+							if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) { // if html or htm
+								if ( $path[0] != '/' ) {
+									$fullpath = realpath( $filepath . '/' . $path );
 								} else {
 									$fullpath = $path;
 								}
-								if (array_key_exists($fullpath, $html_post_lookup)) {
+								if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
 									$link_table[$path] = $fullpath;
 								}
 							}
@@ -336,11 +337,11 @@ class HTMLImportPlugin {
 
 
 		// TODO: returns the link based on the page id, not the permalink
-		foreach ($link_table as $link => $full_link) {
-			$post_id = $html_post_lookup[$full_link];
-			$post_link = get_permalink($post_id);
-			$search_str = '/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($link,'/').'\b)(")/';
-			$body = preg_replace($search_str, '$1'.preg_quote($post_link,'/').'$3', $body);
+		foreach ( $link_table as $link => $full_link ) {
+			$post_id    = $html_post_lookup[$full_link];
+			$post_link  = get_permalink( $post_id );
+			$search_str = '/(\b[hH][rR][eE][fF]\s*=\s*")(\b' . preg_quote( $link, '/' ) . '\b)(")/';
+			$body       = preg_replace( $search_str, '$1' . preg_quote( $post_link, '/' ) . '$3', $body );
 		}
 
 
@@ -374,23 +375,24 @@ class HTMLImportPlugin {
 
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
-		$page                   = Array();
-		$page['post_title']     = $this->get_title( $file_as_xml_obj );
-		$page['post_name'] = sanitize_title_with_dashes($page['post_title']);
-		$post = get_page_by_title($page['post_title']);
-		if (isset($html_post_lookup)) {
-			if (array_key_exists($source_file, $html_post_lookup)) { // stub was created during this cycle
+		$page               = Array();
+		$page['post_title'] = $this->get_title( $file_as_xml_obj );
+		$page['post_name']  = sanitize_title_with_dashes( $page['post_title'] );
+		$post               = get_page_by_title( $page['post_title'] );
+		if ( isset( $html_post_lookup ) ) {
+			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
 				$page['ID'] = $html_post_lookup[$source_file];
 			}
-		}
-		else if (!is_null($post)) { // post was previously created
-			$page['ID'] = $post->ID;
-		}
-		if ($stub_only) {
-			$page['post_status']    = 'publish';
 		} else {
-			$page['post_status']    = 'publish';
-			$page['post_content']   = $this->get_body( $file_as_xml_obj, dirname($source_file), $html_post_lookup );
+			if ( ! is_null( $post ) ) { // post was previously created
+				$page['ID'] = $post->ID;
+			}
+		}
+		if ( $stub_only ) {
+			$page['post_status'] = 'publish';
+		} else {
+			$page['post_status']  = 'publish';
+			$page['post_content'] = $this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup );
 		}
 		$page['post_type']      = 'page';
 		$page['comment_status'] = 'closed';
@@ -401,19 +403,19 @@ class HTMLImportPlugin {
 		if ( isset( $parent_page_id ) ) {
 			$page['post_parent'] = $parent_page_id;
 		}
-		if ( isset ($order) ) {
-			$page['menu_order']  = $order;
+		if ( isset ( $order ) ) {
+			$page['menu_order'] = $order;
 		}
 		$page['post_author'] = wp_get_current_user()->ID;
 
-		if (is_null($post)) {
+		if ( is_null( $post ) ) {
 			$page_id = wp_insert_post( $page );
 			if ( is_wp_error( $page_id ) ) {
 				// TODO: handle error
 				echo 'post did not post';
 			}
 		} else {
-			$page_id = wp_update_post($page);
+			$page_id = wp_update_post( $page );
 		}
 
 		return $page_id;
@@ -421,7 +423,7 @@ class HTMLImportPlugin {
 
 	private function importMedia( $post_id, $source_path, &$media_lookup ) {
 
-		$body = get_post($post_id)->post_content;
+		$body        = get_post( $post_id )->post_content;
 		$media_table = Array();
 
 		$doc                      = new DOMDocument();
@@ -433,38 +435,45 @@ class HTMLImportPlugin {
 
 
 		// import img srcs
-		$all_imgs = $file_as_xml_obj->xpath('//img[@src]');
-		if ($all_imgs) {
-			foreach ($all_imgs as $img) {
+		$all_imgs = $file_as_xml_obj->xpath( '//img[@src]' );
+		if ( $all_imgs ) {
+			foreach ( $all_imgs as $img ) {
 
-				foreach ($img->attributes() as $attribute => $value) {
-					$path = ''.$value;
-					if (0 == strcasecmp('src', $attribute)) {
+				foreach ( $img->attributes() as $attribute => $value ) {
+					$path = '' . $value;
+					if ( 0 == strcasecmp( 'src', $attribute ) ) {
 						// TODO: this is duplicated above, refactor it out
-						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) { // if it's local
-							if ((!is_null($media_lookup) && (!array_key_exists($path, $media_lookup)))) {
+						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // if it's local
+							if ( ( ! is_null( $media_lookup ) && ( ! array_key_exists( $path, $media_table ) ) ) ) {
 
-								if ($path[0] != '/') {
-									$fullpath = realpath(dirname($source_path).'/'.$path);
+								if ( $path[0] != '/' ) {
+									$fullpath = realpath( dirname( $source_path ) . '/' . $path );
 								} else {
 									$fullpath = $path;
 								}
-								$filename = basename($fullpath);
-								$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
-								// TODO: handle error, $upload is array with keys file (system path), url, error
-								$wp_filetype = wp_check_filetype(basename($upload['file']),null);
-								$attachment = array(
-										'guid' => $upload['file'],
-										'post_mime_type' => $wp_filetype['type'],
-										'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
-										'post_content' => '',
-										'post_status' => 'inherit');
-								$attach_id = wp_insert_attachment ($attachment, $upload['file'], $post_id);
-								require_once( ABSPATH . 'wp-admin/includes/image.php' );
-								$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
-								wp_update_attachment_metadata( $attach_id, $attach_data );
-								$media_lookup[$fullpath] = $attach_id;
-								$media_table[$path] = $fullpath;
+								if (array_key_exists($fullpath, $media_lookup)) {
+									$attach_id   = $media_lookup[$fullpath] ;
+									require_once( ABSPATH . 'wp-admin/includes/image.php' );
+									$attach_data = wp_get_attachment_metadata( $attach_id );
+									wp_update_attachment_metadata( $attach_id, $attach_data );
+								} else {
+									$filename = basename( $fullpath );
+									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
+									// TODO: handle error, $upload is array with keys file (system path), url, error
+									$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
+									$attachment  = array(
+											'guid'           => $upload['file'],
+											'post_mime_type' => $wp_filetype['type'],
+											'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $upload['file'] ) ),
+											'post_content'   => '',
+											'post_status'    => 'inherit' );
+									$attach_id   = wp_insert_attachment( $attachment, $upload['file'], $post_id );
+									require_once( ABSPATH . 'wp-admin/includes/image.php' );
+									$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+									wp_update_attachment_metadata( $attach_id, $attach_data );
+									$media_lookup[$fullpath] = $attach_id;
+									$media_table[$path]      = $fullpath;
+								}
 							}
 						}
 					}
@@ -473,41 +482,48 @@ class HTMLImportPlugin {
 		}
 
 		// linked media
-		$all_links = $file_as_xml_obj->xpath('//a[@href]');
+		$all_links = $file_as_xml_obj->xpath( '//a[@href]' );
 		// TODO: encapsulate this in a function
-		if ($all_links) {
-			foreach ($all_links as $link) {
+		if ( $all_links ) {
+			foreach ( $all_links as $link ) {
 
-				foreach ($link->attributes() as $attribute => $value) {
-					$path = ''.$value;
-					if (0 == strcasecmp('href', $attribute)) {
-						if (!preg_match('/^[a-zA-Z].*:.*/', $path)) {
+				foreach ( $link->attributes() as $attribute => $value ) {
+					$path = '' . $value;
+					if ( 0 == strcasecmp( 'href', $attribute ) ) {
+						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) {
 
-							if (preg_match('/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower($path))) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
-								if ((!is_null($media_lookup) && (!array_key_exists($path, $media_lookup)))) {
-									if ($path[0] != '/') {
-										$fullpath = realpath(dirname($source_path).'/'.$path);
+							if ( preg_match( '/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower( $path ) ) ) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
+								if ( ( ! is_null( $media_lookup ) ) ) {
+									if ( $path[0] != '/' ) {
+										$fullpath = realpath( dirname( $source_path ) . '/' . $path );
 									} else {
 										$fullpath = $path;
 									}
-									$filename = basename($fullpath);
+									if (array_key_exists($fullpath, $media_lookup)) {
+										$attach_id   = $media_lookup[$fullpath] ;
+										require_once( ABSPATH . 'wp-admin/includes/image.php' );
+										$attach_data = wp_get_attachment_metadata( $attach_id );
+										wp_update_attachment_metadata( $attach_id, $attach_data );
+									} else {
+										$filename = basename( $fullpath );
 
-									$upload = wp_upload_bits($filename, null, file_get_contents($fullpath));
-									// TODO: handle error, $upload is array with keys file (system path), url, error
-									$wp_filetype = wp_check_filetype(basename($upload['file']),null);
-									$attachment = array(
-											'guid' => $upload['file'],
-											'post_mime_type' => $wp_filetype['type'],
-											'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
-											'post_content' => '',
-											'post_status' => 'inherit');
-									$attach_id = wp_insert_attachment ($attachment, $upload['file'], $post_id);
-									require_once( ABSPATH . 'wp-admin/includes/image.php' );
-									$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
-									wp_update_attachment_metadata( $attach_id, $attach_data );
-									$media_lookup[$fullpath] = $attach_id;
+										$upload = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
+										// TODO: handle error, $upload is array with keys file (system path), url, error
+										$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
+										$attachment  = array(
+												'guid'           => $upload['file'],
+												'post_mime_type' => $wp_filetype['type'],
+												'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $upload['file'] ) ),
+												'post_content'   => '',
+												'post_status'    => 'inherit' );
+										$attach_id   = wp_insert_attachment( $attachment, $upload['file'], $post_id );
+										require_once( ABSPATH . 'wp-admin/includes/image.php' );
+										$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+										wp_update_attachment_metadata( $attach_id, $attach_data );
+										$media_lookup[$fullpath] = $attach_id;
 
-									$media_table[$path] = $fullpath;
+										$media_table[$path] = $fullpath;
+									}
 								}
 							}
 						}
@@ -516,16 +532,16 @@ class HTMLImportPlugin {
 			}
 		}
 
-		foreach ($media_table as $media_item => $full_media_path) {
-			$media_id = $media_lookup[$full_media_path];
-			$media_url = wp_get_attachment_url($media_id);
-			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")(\b'.preg_quote($media_item,'/').'\b)(")/';
-			$body = preg_replace($search_str, '$1'.preg_quote($media_url,'/').'$3', $body); // img src
-			$body = preg_replace('/(\b[hH][rR][eE][fF]\s*=\s*")(\b'.preg_quote($media_item,'/').'\b)(")/', '$1'.preg_quote($media_url,'/').'$3', $body); // a href
+		foreach ( $media_table as $media_item => $full_media_path ) {
+			$media_id   = $media_lookup[$full_media_path];
+			$media_url  = wp_get_attachment_url( $media_id );
+			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/';
+			$body       = preg_replace( $search_str, '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // img src
+			$body       = preg_replace( '/(\b[hH][rR][eE][fF]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/', '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // a href
 		}
 
-		$page['ID'] = $post_id;
-		$page['post_content']   = $body;
+		$page['ID']           = $post_id;
+		$page['post_content'] = $body;
 		wp_update_post( $page );
 	}
 
@@ -547,8 +563,8 @@ class HTMLImportPlugin {
 						break;
 					case 'src':
 						$src = $attributes->item( $i )->nodeValue;
-						if ($src[0] != '/') {
-							$src = realpath(dirname($xml_path).'/'.$src);
+						if ( $src[0] != '/' ) {
+							$src = realpath( dirname( $xml_path ) . '/' . $src );
 						}
 						break;
 					case 'category':
@@ -572,10 +588,10 @@ class HTMLImportPlugin {
 
 		//TODO: category and tag may be null or empty
 		//TODO: probably need to trim the exploded text
-		if (!is_null($category) && is_array($category)) {
+		if ( ! is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
-				$cat_id = wp_create_category(trim($cat));
-				$categoryIDs[$index] = intval($cat_id);
+				$cat_id              = wp_create_category( trim( $cat ) );
+				$categoryIDs[$index] = intval( $cat_id );
 			}
 		}
 		foreach ( $tag as $t ) {
@@ -585,15 +601,14 @@ class HTMLImportPlugin {
 		// TODO: handle title, tags, categories and ordering
 		if ( isset( $src ) ) {
 			// TODO: validate source file
-			if ($stubs_only) {
-				$my_id = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
+			if ( $stubs_only ) {
+				$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
 				$html_post_lookup[$src] = $my_id;
 			} else {
 				$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup );
-				$this->importMedia($my_id, $src, $media_lookup);
+				$this->importMedia( $my_id, $src, $media_lookup );
 			}
 		}
-
 
 
 		// recurse through children nodes
@@ -607,7 +622,7 @@ class HTMLImportPlugin {
 
 
 	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup ) {
-		if (!isset($html_post_lookup)) {
+		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
 
@@ -618,6 +633,7 @@ class HTMLImportPlugin {
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
 			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup );
 		}
+
 		return $html_post_lookup;
 	}
 

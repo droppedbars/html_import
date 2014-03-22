@@ -1,5 +1,5 @@
 Phase 1
-- input src xml location
+X input src xml location
 - plugin options page
 X plugin menu name
 X import images
@@ -14,6 +14,7 @@ X hierarchy based on XML
 X update relative links
 X ordering based on xml
 X relink to permalink, not post_id
+- Select page template
 
 Phase 2
 - prefer title in xml
