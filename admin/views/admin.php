@@ -33,14 +33,55 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 	<h4><?php _e( 'What are you importing today?' ); ?></h4>
 
 	<form method="post" action="">
-		<label for=""><?php _e('Parent Page:', 'import-html-pages');?></label>
-		TODO: dropdown here
-
-		<label for=""><?php _e('Template:', 'import-html-pages');?></label>
-		TODO: dropdown here
-
+		<p>
+		<label for="parent_page"><?php _e('Parent Page:', 'import-html-pages');?></label>
+		<select name="parent_page">
+			<?php
+			// TODO: pre-select selected from stored options
+			echo '<option value="-1" '.selected(true, false, false).'>None</option>';
+			$search_args = array(
+					'sort_order' => 'ASC',
+					'sort_column' => 'post_title',
+					'hierarchical' => 1,
+					'exclude' => '',
+					'include' => '',
+					'meta_key' => '',
+					'meta_value' => '',
+					'authors' => '',
+					'child_of' => 0,
+					'parent' => -1,
+					'exclude_tree' => '',
+					'number' => '',
+					'offset' => 0,
+					'post_type' => 'page',
+					'post_status' => 'publish'
+			);
+			$pages = get_pages($search_args);
+			if (isset($pages)) {
+				foreach ($pages as $page) {
+						echo '<option value="'.$page->ID.'" '.selected(true, false, false).'>'.$page->post_title.'</option>';
+				}
+			}
+			?>
+			</select>
+		</p>
+		<p>
+		<label for="template"><?php _e('Template:', 'import-html-pages');?></label>
+			<select name="template">
+				<?php
+				// TODO: pre-select selected from stored options
+				echo '<option value="-1" '.selected(true, false, false).'>None</option>';
+				$templates = wp_get_theme()->get_page_templates();
+				if (isset($templates)) {
+					foreach ($templates as $file => $name) {
+						echo '<option value="'.$name.'" '.selected(true, false, false).'>'.$name.'</option>';
+					}
+				}
+				?>
+				</select>
+	</p>
 		<p id="xml">
-			<label for="import-xml"><?php _e( 'Enter in the absolute file location of the index XML file:', 'import-html-pages' ); ?></label>
+			<label for="import-xml"><?php _e( 'Enter in the absolute file location of the index XML file:', 'import-html-pages' ); ?></label><br>
 			<input type="text" id="import-xml" name="import-xml" size="50" />
 		</p>
 
