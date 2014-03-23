@@ -1,12 +1,12 @@
 Phase 1
 X input src xml location
-- plugin options page
+X plugin options page
 X plugin menu name
 X import images
 X update <img src
 X update links to images
 - handle errors
-- select parent page in options
+X select parent page in options
 X update existing posts
 X import HTML
 X use relative links to html in xml source

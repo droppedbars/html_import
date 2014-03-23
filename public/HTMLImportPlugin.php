@@ -226,6 +226,13 @@ class HTMLImportPlugin {
 	 */
 	private static function single_activate() {
 		// @TODO: Define activation functionality here
+
+		if ( ! get_option( 'htim_importer_options' ) ) {
+			$site_options_arr = array( );
+			// update the database with the default option values
+			update_site_option( 'htim_importer_options', $site_options_arr );
+		}
+
 	}
 
 	/**
@@ -545,14 +552,14 @@ class HTMLImportPlugin {
 		wp_update_post( $page );
 	}
 
-	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, &$media_lookup, $parent_id = null ) {
+	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, &$media_lookup, $parent_id = null, $template_name = '' ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
 		$category   = Array();
 		$tag        = Array();
 		$order      = 0;
-		$my_id      = null;
+		$my_id      = $parent_id;
 
 		if ( isset( $attributes ) ) {
 			for ( $i = 0; $i < $attributes->length; $i ++ ) {
@@ -604,9 +611,11 @@ class HTMLImportPlugin {
 			if ( $stubs_only ) {
 				$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
 				$html_post_lookup[$src] = $my_id;
+				// TODO: set the template
 			} else {
 				$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup );
 				$this->importMedia( $my_id, $src, $media_lookup );
+				//TODO: set the template
 			}
 		}
 
@@ -615,13 +624,13 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $my_id );
+				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $my_id, $template_name );
 			}
 		}
 	}
 
 
-	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup ) {
+	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
 		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
@@ -631,17 +640,17 @@ class HTMLImportPlugin {
 
 		$nodelist = $doc->childNodes;
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup );
+			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
 		}
 
 		return $html_post_lookup;
 	}
 
-	public function import_html_from_xml_index( $xml_path ) {
+	public function import_html_from_xml_index( $xml_path, $parent_page_id, $template_name ) {
 		$media_lookup = Array();
 		if ( $this->valid_xml_file( $xml_path ) ) {
-			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup );
-			$this->process_xml_file( $xml_path, false, $html_post_lookup, $media_lookup );
+			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
+			$this->process_xml_file( $xml_path, false, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
 		}
 	}
 
