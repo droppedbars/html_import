@@ -225,7 +225,6 @@ class HTMLImportPlugin {
 	 * @since    1.0.0
 	 */
 	private static function single_activate() {
-		// @TODO: Define activation functionality here
 
 		if ( ! get_option( 'htim_importer_options' ) ) {
 			$site_options_arr = array( );
@@ -241,7 +240,7 @@ class HTMLImportPlugin {
 	 * @since    1.0.0
 	 */
 	private static function single_deactivate() {
-		// @TODO: Define deactivation functionality here
+
 	}
 
 	/**
@@ -302,17 +301,7 @@ class HTMLImportPlugin {
 	}
 
 	private function get_body( SimpleXMLElement $html_file, $filepath, $html_post_lookup ) {
-// TODO: this was the start of converting a <BODY> to a <DIV> while retaining all class and style attributes
-//		$body = ''.$html_file->body->asXML();
-//		$main_div = new SimpleXMLElement('<div></div>');
-//
-//
-//		foreach ($this->get_body_attributes($html_file->body) as $attr) {
-//			$main_div->addAttribute($attr->getName(), ''.$attr);
-//		}
-//
-//
-		// TODO: paths are all unix specific
+		// TODO: paths are all unix specific?
 
 		$body = $html_file->body->asXML();
 
@@ -342,8 +331,6 @@ class HTMLImportPlugin {
 			}
 		}
 
-
-		// TODO: returns the link based on the page id, not the permalink
 		foreach ( $link_table as $link => $full_link ) {
 			$post_id    = $html_post_lookup[$full_link];
 			$post_link  = get_permalink( $post_id );
@@ -378,7 +365,6 @@ class HTMLImportPlugin {
 	 * @return int|WP_Error
 	 */
 	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup ) {
-		// TODO: handle images (URL vs local files)
 
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
@@ -405,9 +391,10 @@ class HTMLImportPlugin {
 		$page['comment_status'] = 'closed';
 		$page['ping_status']    = 'closed';
 		$page['post_category']  = $category;
-		$page['post_excerpt']   = ''; // TODO, pull from meta
+		$page['post_excerpt']   = '';
 		$page['post_date']      = date( 'Y-m-d H:i:s', filemtime( $source_file ) );
-		if ( isset( $parent_page_id ) ) {
+		if ( isset( $parent_page_id ) && ($parent_page_id > 0) ) {
+
 			$page['post_parent'] = $parent_page_id;
 		}
 		if ( isset ( $order ) ) {
@@ -418,11 +405,13 @@ class HTMLImportPlugin {
 		if ( is_null( $post ) ) {
 			$page_id = wp_insert_post( $page );
 			if ( is_wp_error( $page_id ) ) {
-				// TODO: handle error
-				echo 'post did not post';
+				echo '<span>Unable to create post '.$page['post_title'].' from '.$source_file.'</span>';
 			}
 		} else {
 			$page_id = wp_update_post( $page );
+			if ($page_id == 0) {
+				echo '<span>Unable to fill post '.$page['post_title'].' from '.$source_file.'</span>';
+			}
 		}
 
 		return $page_id;
@@ -594,7 +583,6 @@ class HTMLImportPlugin {
 		}
 
 		//TODO: category and tag may be null or empty
-		//TODO: probably need to trim the exploded text
 		if ( ! is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
 				$cat_id              = wp_create_category( trim( $cat ) );
@@ -605,17 +593,15 @@ class HTMLImportPlugin {
 		}
 
 
-		// TODO: handle title, tags, categories and ordering
 		if ( isset( $src ) ) {
 			// TODO: validate source file
 			if ( $stubs_only ) {
 				$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
 				$html_post_lookup[$src] = $my_id;
-				// TODO: set the template
 			} else {
 				$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup );
 				$this->importMedia( $my_id, $src, $media_lookup );
-				//TODO: set the template
+				update_post_meta($my_id, '_wp_page_template', $template_name);
 			}
 		}
 

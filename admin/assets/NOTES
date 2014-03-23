@@ -14,7 +14,7 @@ X hierarchy based on XML
 X update relative links
 X ordering based on xml
 X relink to permalink, not post_id
-- Select page template
+X Select page template
 
 Phase 2
 - prefer title in xml

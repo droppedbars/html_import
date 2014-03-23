@@ -105,7 +105,7 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 				$templates = wp_get_theme()->get_page_templates();
 				if (isset($templates)) {
 					foreach ($templates as $file => $name) {
-						echo '<option value="'.$name.'" '.selected(strcmp($name, $template) == 0, true, false).'>'.$name.'</option>';
+						echo '<option value="'.$file.'" '.selected(strcmp($file, $template) == 0, true, false).'>'.$name.'</option>';
 					}
 				}
 				?>
