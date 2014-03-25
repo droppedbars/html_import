@@ -17,7 +17,7 @@ X relink to permalink, not post_id
 X Select page template
 
 Phase 2
-- prefer title in xml
+X prefer title in xml
 X use categories from xml on page
 - use categories from xml on media
 - use tags from xml on page

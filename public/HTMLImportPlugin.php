@@ -321,8 +321,13 @@ class HTMLImportPlugin {
 								} else {
 									$fullpath = $path;
 								}
-								if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
-									$link_table[$path] = $fullpath;
+								if ($fullpath) {
+									if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
+										$link_table[$path] = $fullpath;
+									}
+								}
+								else {
+									echo '<span>could not update link '.$path.'</span><br>';
 								}
 							}
 						}
@@ -353,23 +358,16 @@ class HTMLImportPlugin {
 		return $simple_xml;
 	}
 
-	/**
-	 * @param      $source_file string must be the absolute path of the file to import
-	 * @param bool $stub_only
-	 * @param null $parent_page_id
-	 * @param null $category
-	 * @param null $tag
-	 * @param null $order
-	 * @param      $html_post_lookup
-	 *
-	 * @return int|WP_Error
-	 */
-	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup ) {
+	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
 		$page               = Array();
-		$page['post_title'] = $this->get_title( $file_as_xml_obj );
+		if (is_null($title)) {
+			$page['post_title'] = $this->get_title( $file_as_xml_obj );
+		} else {
+			$page['post_title'] = $title;
+		}
 		$page['post_name']  = sanitize_title_with_dashes( $page['post_title'] );
 		$post               = get_page_by_title( $page['post_title'] );
 		if ( isset( $html_post_lookup ) ) {
@@ -617,10 +615,10 @@ class HTMLImportPlugin {
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
 				if ( $stubs_only ) {
-					$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null );
+					$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null, $title );
 					$html_post_lookup[$src] = $my_id;
 				} else {
-					$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup );
+					$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup, $title );
 					$this->importMedia( $my_id, $src, $media_lookup );
 					update_post_meta( $my_id, '_wp_page_template', $template_name );
 				}
@@ -641,6 +639,7 @@ class HTMLImportPlugin {
 
 
 	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
+		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
@@ -658,7 +657,7 @@ class HTMLImportPlugin {
 
 	public function import_html_from_xml_index( $xml_path, $parent_page_id, $template_name ) {
 		$media_lookup = Array();
-		echo '<h2>Output from Import</h2><br>Please be patience</br>';
+		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		if ( $this->valid_xml_file( $xml_path ) ) {
 			echo '<ul>';
 			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
