@@ -363,7 +363,7 @@ class HTMLImportPlugin {
 		$doc                      = new DOMDocument();
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTMLFile( $source_file, LIBXML_HTML_NOIMPLIED );
+		$doc->loadHTMLFile( $source_file/*, LIBXML_HTML_NOIMPLIED */);// server uses 5.3.28, this is added in 5.4
 		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 		$simple_xml = simplexml_import_dom( $doc );
 
@@ -395,7 +395,11 @@ class HTMLImportPlugin {
 			$page['post_status'] = 'publish';
 		} else {
 			$page['post_status']  = 'publish';
-			$page['post_content'] = $this->getGridDirectorHeader($title).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
+			if (!is_null($file_as_xml_obj)) {
+				$page['post_content'] = $this->getGridDirectorHeader($title).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
+			} else {
+				$page['post_content'] = '';
+			}
 		}
 		$page['post_type']      = 'page';
 		$page['comment_status'] = 'closed';
@@ -443,7 +447,7 @@ class HTMLImportPlugin {
 		$doc                      = new DOMDocument();
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTML( $body, LIBXML_HTML_NOIMPLIED );
+		$doc->loadHTML( $body/*, LIBXML_HTML_NOIMPLIED */); // server uses 5.3.28, this is added in 5.4
 		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 		$file_as_xml_obj = simplexml_import_dom( $doc );
 
@@ -679,6 +683,8 @@ class HTMLImportPlugin {
 			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
 			$this->process_xml_file( $xml_path, false, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
 			echo '</ul>';
+		} else {
+			echo 'Cannot find file '.$xml_path."<br>Current path is ".getcwd().'<br>';
 		}
 	}
 
