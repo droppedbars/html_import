@@ -90,7 +90,7 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 			$pages = get_pages($search_args);
 			if (isset($pages)) {
 				foreach ($pages as $page) {
-						echo '<option value="'.$page->ID.'" '.selected($parent_page == $page->ID, true, false).'>'.$page->post_title.'</option>';
+						echo '<option value="'.$page->ID.'" '.selected($parent_page == $page->ID, true, false).'>'.htmlspecialchars($page->post_title).'</option>';
 				}
 			}
 			?>

@@ -421,14 +421,14 @@ class HTMLImportPlugin {
 			if ( is_wp_error( $page_id ) ) {
 				echo '<li>***Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
 			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . htmlspecialchars($page['post_title']) . '</li>';
 			}
 		} else {
 			$page_id = wp_update_post( $page, true );
 			if ( is_wp_error($page_id) ) {
 				echo '<li>***Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . ': '.$page_id->get_error_message().'</li>';
 			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . htmlspecialchars($page['post_title']) . '</li>';
 			}
 		}
 

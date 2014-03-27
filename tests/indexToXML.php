@@ -12,7 +12,7 @@ function processNode(SimpleXMLElement $node, $higher_counter) {
 		if (strcmp('li', $level0->getName()) == 0) {
 			foreach ($level0->children() as $level1) {
 				if (strcmp('a', $level1->getName()) == 0) {
-					echo "\n".'<document title="'.$level1.'" src="'.$level1->xpath('@href')[0].'" category="documentation" tag="foo" order="'.$higher_counter.'">';
+					echo "\n".'<document title="'.htmlspecialchars($level1).'" src="'.$level1->xpath('@href')[0].'" category="'.htmlspecialchars('Documentation,Mix Language Reference Guide').'" tag="foo" order="'.$higher_counter.'">';
 					//echo $level1->xpath('@href')[0].' '.$level1."\n";
 					$i++;
 					$higher_counter++;
