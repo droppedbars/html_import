@@ -39,6 +39,7 @@ Phase 4
 - refactor to more OOP structure
 
 
-
+ERRORS TO HANDLE:
+ - page template is invalid - to recreate: create page.  Change theme so template is no longer avaialble.  Run import again.
 
 

@@ -339,7 +339,7 @@ class HTMLImportPlugin {
 									}
 								}
 								else {
-									echo '<span>could not update link '.$path.'</span><br>';
+									echo '<span>***could not update link '.$path.'</span><br>';
 								}
 							}
 						}
@@ -415,14 +415,14 @@ class HTMLImportPlugin {
 		if ( is_null( $post ) ) {
 			$page_id = wp_insert_post( $page );
 			if ( is_wp_error( $page_id ) ) {
-				echo '<li>Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
+				echo '<li>***Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
 			} else {
 				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
 			}
 		} else {
-			$page_id = wp_update_post( $page );
-			if ( $page_id == 0 ) {
-				echo '<li>Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
+			$page_id = wp_update_post( $page, true );
+			if ( is_wp_error($page_id) ) {
+				echo '<li>***Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . ': '.$page_id->get_error_message().'</li>';
 			} else {
 				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
 			}
@@ -434,6 +434,10 @@ class HTMLImportPlugin {
 	private function importMedia( $post_id, $source_path, &$media_lookup ) {
 
 		$body        = get_post( $post_id )->post_content;
+		if (is_null($body) || strcmp('', $body) == 0) {
+			echo '** the body for post '.$post_id.' was empty, no media to import.';
+			return;
+		}
 		$media_table = Array();
 
 		$doc                      = new DOMDocument();
@@ -470,7 +474,7 @@ class HTMLImportPlugin {
 									$filename = basename( $fullpath );
 									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
 									if ( $upload['error'] ) {
-										echo '<li>Unable to upload media file ' . $filename . '</li>';
+										echo '<li>***Unable to upload media file ' . $filename . '</li>';
 									} else {
 										echo '<li>' . $filename . ' media file uploaded.</li>';
 										$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
@@ -524,7 +528,7 @@ class HTMLImportPlugin {
 
 										$upload = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
 										if ( $upload['error'] ) {
-											echo '<li>Unable to upload media file ' . $filename . '</li>';
+											echo '<li>***Unable to upload media file ' . $filename . '</li>';
 										} else {
 											echo '<li>' . $filename . ' media file uploaded.</li>';
 											$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
@@ -565,7 +569,7 @@ class HTMLImportPlugin {
 		if ( wp_update_post( $page ) > 0 ) {
 			echo '<li>Post ' . $page['ID'] . ' updated with correct image links.</li>';
 		} else {
-			echo '<li>Post ' . $page['ID'] . ' could not be updated with correct image links.</li>';
+			echo '<li>***Post ' . $page['ID'] . ' could not be updated with correct image links.</li>';
 		}
 
 	}
