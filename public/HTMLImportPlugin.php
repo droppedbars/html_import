@@ -276,6 +276,18 @@ class HTMLImportPlugin {
 		wp_enqueue_script( $this->plugin_slug . '-plugin-script', plugins_url( 'assets/js/public.js', __FILE__ ), array( 'jquery' ), self::VERSION );
 	}
 
+	private function getGridDirectorHeader($title) {
+		$title = 'Grid Director Developer Network : '.$title;
+		$subTitle = '';
+		$header = '[vc_row][vc_column width="1/1"][mk_fancy_title tag_name="h2" style="true" color="#4a266d" size="24" font_weight="bolder" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$title.'[/mk_fancy_title][mk_fancy_title tag_name="h2" style="false" color="#393836" size="24" font_weight="300" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$subTitle.'[/mk_fancy_title][mk_padding_divider size="10" width="1/1" el_position="first last"][vc_column_text disable_pattern="false" align="left" margin_bottom="0" p_margin_bottom="20" width="1/1" el_position="first last"]';
+		return $header;
+	}
+
+	private function getGridDirectorFooter() {
+		$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
+		return $footer;
+	}
+
 	/**
 	 * Ensure the provided file exists
 	 *
@@ -383,7 +395,7 @@ class HTMLImportPlugin {
 			$page['post_status'] = 'publish';
 		} else {
 			$page['post_status']  = 'publish';
-			$page['post_content'] = $this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup );
+			$page['post_content'] = $this->getGridDirectorHeader($title).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
 		}
 		$page['post_type']      = 'page';
 		$page['comment_status'] = 'closed';
