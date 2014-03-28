@@ -30,7 +30,7 @@ function processNode(SimpleXMLElement $node, $higher_counter) {
 $doc                      = new DOMDocument();
 $doc->strictErrorChecking = false;
 libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-$doc->loadHTMLFile( './index.html', LIBXML_HTML_NOIMPLIED );
+$doc->loadHTMLFile( './index.html' );
 libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 $file_as_xml_obj = simplexml_import_dom( $doc );
 

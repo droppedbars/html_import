@@ -378,7 +378,7 @@ class HTMLImportPlugin {
 		if (is_null($title)) {
 			$page['post_title'] = $this->get_title( $file_as_xml_obj );
 		} else {
-			$page['post_title'] = $title;
+			$page['post_title'] = htmlspecialchars($title);
 		}
 		$page['post_name']  = sanitize_title_with_dashes( $page['post_title'] );
 		$post               = get_page_by_title( $page['post_title'] );
@@ -396,7 +396,7 @@ class HTMLImportPlugin {
 		} else {
 			$page['post_status']  = 'publish';
 			if (!is_null($file_as_xml_obj)) {
-				$page['post_content'] = $this->getGridDirectorHeader($title).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
+				$page['post_content'] = $this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
 			} else {
 				$page['post_content'] = '';
 			}
@@ -421,14 +421,14 @@ class HTMLImportPlugin {
 			if ( is_wp_error( $page_id ) ) {
 				echo '<li>***Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
 			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . htmlspecialchars($page['post_title']) . '</li>';
+				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
 			}
 		} else {
 			$page_id = wp_update_post( $page, true );
 			if ( is_wp_error($page_id) ) {
 				echo '<li>***Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . ': '.$page_id->get_error_message().'</li>';
 			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . htmlspecialchars($page['post_title']) . '</li>';
+				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
 			}
 		}
 
