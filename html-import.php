@@ -12,7 +12,7 @@
  * @copyright 2014 Patrick Mauro
  *
  * @wordpress-plugin
- * Plugin Name:       HTML Importer
+ * Plugin Name:       GDN HTML Importer
  * Plugin URI:        @TODO
  * Description:				Imports a set of HTML pages based off of a specially formatted XML index file.  Imports associated media and updates relative links between HTML and HTML and Media.
  * Version:           1.0.2
