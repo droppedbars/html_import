@@ -392,7 +392,7 @@ class HTMLImportPlugin {
 			}
 		}
 		if ( $stub_only ) {
-			$page['post_status'] = 'publish';
+			$page['post_status'] = 'publish'; // needs to be published in order to set categories( was that the issue?)
 		} else {
 			$page['post_status']  = 'publish';
 			if (!is_null($file_as_xml_obj)) {
