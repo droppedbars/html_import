@@ -30,9 +30,6 @@ if (isset($plugin_options_arr['template'])) {
 }
 
 if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
-	// TODO: statically set path for now, should read from field
-	//$_POST['import-xml'] = '/Users/patrick/DevWork/websites/wordpress_ms_3_8_1/GDDN/sample.xml';
-
 	if (isset($_POST['submit'])) {
 		// TODO: sanitize values brought in
 		if (isset($_POST['import-xml'])) {
@@ -68,7 +65,6 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		<label for="parent_page"><?php _e('Parent Page:', 'import-html-pages');?></label>
 		<select name="parent_page">
 			<?php
-			// TODO: pre-select selected from stored options
 			echo '<option value="0" '.selected($parent_page == 0, true, false).'>None</option>';
 			$search_args = array(
 					'sort_order' => 'ASC',
@@ -100,7 +96,6 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		<label for="template"><?php _e('Template:', 'import-html-pages');?></label>
 			<select name="template">
 				<?php
-				// TODO: pre-select selected from stored options
 				echo '<option value="0" '.selected($template == 0, true, false).'>None</option>';
 				$templates = wp_get_theme()->get_page_templates();
 				if (isset($templates)) {
@@ -111,9 +106,26 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 				?>
 				</select>
 	</p>
+		<p id="categories">
+			section here for selecting categories.  Need js to support multiples.
+		</p>
+		<p id="import-type">
+			<label for="import-type-xml"><input type="radio" name="import-type" id="import-type-xml" value="xml" />XML Index</label><br>
+			<label for="import-type-flare"><input type="radio" name="import-type" id="import-type-flare" value="flare" />MadCap Flare Index</label><br>
+			<!-- <label for="import-type-raw"><input type="radio" name="import-type" id="import-type-raw" value="raw" />No Index</label><br> -->
+		</p>
+		<p id="import-source">
+			<label for="import-source-local"><input type="radio" name="import-source" id="import-source-local" value="local" onclick="javascript: jQuery('#zip').hide('fast'); jQuery('#xml').show('fast');" />Local Directory</label><br>
+			<label for="import-source-upload"><input type="radio" name="import-source" id="import-source-upload" value="upload" onclick="javascript: jQuery('#zip').show('fast'); jQuery('#xml').hide('fast');"/>Upload Zip</label><br>
+		</p>
 		<p id="xml">
-			<label for="import-xml"><?php _e( 'Enter in the absolute file location of the index XML file:', 'import-html-pages' ); ?></label><br>
+			<label for="import-xml"><?php _e( 'Enter in the absolute file location of the index file:', 'import-html-pages' ); ?></label>
 			<input type="text" id="import-xml" name="import-xml" size="50" value="<?php echo $import_xml;?>" />
+		</p>
+
+		<p id="zip">
+			<label for="uploadfiles"><?php _e( 'Select the ZIP of files to import:', 'import-zip-file' ); ?></label>
+			<input type="file" name="uploadfiles" id="uploadfiles" size="35" class="uploadfiles" />
 		</p>
 
 		<input type="hidden" name="action" value="save" />
