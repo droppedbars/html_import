@@ -688,4 +688,15 @@ class HTMLImportPlugin {
 		}
 	}
 
+	public function import_html_from_flare( $zip_to_upload, $parent_page_id, $template_name) {
+		/*
+		 * $zip_to_uplaod is an array with elements:
+		 * 	name
+		 * 	type
+		 * 	tmp_name
+		 * 	error
+		 * 	size
+		 */
+	}
+
 }
