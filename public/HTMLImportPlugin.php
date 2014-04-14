@@ -696,7 +696,32 @@ class HTMLImportPlugin {
 		 * 	tmp_name
 		 * 	error
 		 * 	size
+		 *
+		 * .rar    application/x-rar-compressed, application/octet-stream
+				.zip    application/zip, application/octet-stream
 		 */
-	}
 
+		$mime_type = $zip_to_upload['type'];
+	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0)) {
+			$zip = new ZipArchive;
+			$res = $zip->open($zip_to_upload['tmp_name']);
+			if ($res === TRUE) {
+				$upload_dir = wp_upload_dir();
+				$path = $upload_dir['path'].'/import';
+				$path_modifier = 1;
+				while (file_exists($path.'-'.$path_modifier)) {
+					$path_modifier++;
+				}
+				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
+				$closeSuccess = $zip->close();
+
+				// TODO: parse to find index
+
+			} else {
+				echo '<H4>Failed to read ZIP: failed, code:' . $res.'</H4>';
+			}
+		} else {
+			echo '<H4>File uploaded is not ZIP or RAR</H4>';
+		}
+	}
 }
