@@ -688,6 +688,24 @@ class HTMLImportPlugin {
 		}
 	}
 
+	private function findFile($filename, $root) {
+		$allFiles = scandir(realpath($root));
+		foreach ($allFiles as $file) {
+			if ((strcmp($file, '.') == 0) || (strcmp($file, '..')) == 0) {
+				continue;
+			}
+			if (strcmp($filename, $file) == 0) {
+				return $root.'/'.$file;
+			}
+			if (is_dir($root.'/'.$file)) {
+				$foundFile = $this->findFile($filename, $root.'/'.$file);
+				if (!is_null($foundFile)) {
+					return $foundFile;
+				}
+			}
+		}
+	}
+
 	public function import_html_from_flare( $zip_to_upload, $parent_page_id, $template_name) {
 		/*
 		 * $zip_to_uplaod is an array with elements:
@@ -715,7 +733,18 @@ class HTMLImportPlugin {
 				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
 				$closeSuccess = $zip->close();
 
-				// TODO: parse to find index
+				// TODO: parse to find index Toc.js
+				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
+				$tocContents = file_get_contents($tocJS);
+				preg_match('/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch);
+				$numChunks = $numChunksMatch[1];
+				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
+				$chunkName = $tocMatches[1];
+				// TODO: build tree for each chunk
+				// TODO: deal with multiple chunks
+				$tocChunk0JS = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
+				$tocChunkContents = file_get_contents($tocChunk0JS);
+				// TODO: parse Toc_Chunk0.js type files against tree
 
 			} else {
 				echo '<H4>Failed to read ZIP: failed, code:' . $res.'</H4>';
