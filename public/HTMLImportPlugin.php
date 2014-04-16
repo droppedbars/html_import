@@ -657,7 +657,6 @@ class HTMLImportPlugin {
 		}
 	}
 
-
 	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
 		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
@@ -718,7 +717,8 @@ class HTMLImportPlugin {
 		 * .rar    application/x-rar-compressed, application/octet-stream
 				.zip    application/zip, application/octet-stream
 		 */
-
+		echo '<h2>Output from Import</h2><br>Please be patient</br>';
+		echo '<ul>';
 		$mime_type = $zip_to_upload['type'];
 	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0)) {
 			$zip = new ZipArchive;
@@ -737,14 +737,23 @@ class HTMLImportPlugin {
 				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
 				$tocContents = file_get_contents($tocJS);
 				preg_match('/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch);
-				$numChunks = $numChunksMatch[1];
+				$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
 				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
-				$chunkName = $tocMatches[1];
-				// TODO: build tree for each chunk
-				// TODO: deal with multiple chunks
+				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
+
 				$tocChunk0JS = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
 				$tocChunkContents = file_get_contents($tocChunk0JS);
-				// TODO: parse Toc_Chunk0.js type files against tree
+				// parses the chunk file and gets the list of all files to import
+				preg_match_all("/('(.*)':\\{i:\\[(\\d*)\\],t:\\['(.*)?'\\],b:\\[''\\]\\})/U", $tocChunkContents, $regMatches);
+				$length = sizeof($regMatches[2]);
+				$fileList = Array();
+				for ($i = 0; $i < $length; $i++) {
+					// key is the identifier id, value is hash with key relative file location and value title
+					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
+				}
+
+				// TODO: now to walk the toc
+
 
 			} else {
 				echo '<H4>Failed to read ZIP: failed, code:' . $res.'</H4>';
@@ -752,5 +761,6 @@ class HTMLImportPlugin {
 		} else {
 			echo '<H4>File uploaded is not ZIP or RAR</H4>';
 		}
+		echo '</ul>';
 	}
 }
