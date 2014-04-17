@@ -674,6 +674,97 @@ class HTMLImportPlugin {
 		return $html_post_lookup;
 	}
 
+	private function importFlareNode( $flare_path, $stubs_only = true, &$html_post_lookup, &$media_lookup, $parent_id = null, $orderNum, $pagePath, $pageTitle, $template_name = '' ) {
+
+		$title      = $pageTitle;
+		$src = realpath( $flare_path . $pagePath );
+
+		$category   = Array(); // TODO:
+		$tag        = Array();
+		$order      = $orderNum;
+		$my_id      = $parent_id;
+
+		if ( ! is_null( $category ) && is_array( $category ) ) {
+			foreach ( $category as $index => $cat ) {
+				$cat_id              = wp_create_category( trim( $cat ) );
+				$categoryIDs[$index] = intval( $cat_id );
+			}
+		}
+		if ( ! is_null( $tag ) && is_array( $tag ) ) {
+			foreach ( $tag as $t ) {
+				//TODO: support tags
+			}
+		}
+
+
+		if ( isset( $src ) ) {
+			if ( file_exists( $src ) ) {
+				if ( $stubs_only ) {
+					$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $my_id;
+				} else {
+					$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$this->importMedia( $my_id, $src, $media_lookup );
+					update_post_meta( $my_id, '_wp_page_template', $template_name );
+				}
+			} else {
+				echo '<li>Unable to find ' . $src . '</li>';
+			}
+		}
+
+		return $my_id;
+	}
+
+	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
+
+		// TODO: this algorithm must be reimagined!  this is horrid and hacky!
+
+		for ( $i = $index; $i < sizeof($orderIds); $i++) {
+			$order = $orderIds[$i];
+			$tail = $elementTails[$i];
+			$pagePath = key($pages[$order]);
+			$pageTitle = $pages[$order][$pagePath];
+
+			$parent_page_id = $this->importFlareNode($flare_path, $stubs_only, $html_post_lookup, $media_lookup, $parent_page_id, $order, $pagePath, $pageTitle, $template_name);
+			//echo $index.' '.$order.' '.$pageTitle.'<br>';
+			if (strcmp($tail, '}') == 0) {
+				// next element is a sibling
+				continue;
+			} else if (strcmp($tail, ',n:[') == 0) {
+				//next element is a child
+				$i++;
+				$levels = $this->process_flare_node($flare_path, $i, $orderIds, $elementTails, $pages, $stubs_only, $html_post_lookup, $media_lookup, $parent_page_id, $template_name);
+				if ($levels > 0) {
+					$index = $i; // this is to keep the counter counting
+					return $levels - 1;
+				}
+			} else {
+				// move up
+				$levels = substr_count($tail, '}');
+				if ($i == (sizeof($orderIds) - 1)){
+					$levels = $levels - 2;
+				}
+				$index = $i;
+				return $levels -2; // return number of levels to return
+			}
+
+		}
+		return 0;
+	}
+
+	private function process_flare_index( $flare_path, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
+
+		set_time_limit(520);
+		if ( ! isset( $html_post_lookup ) ) {
+			$html_post_lookup = Array();
+		}
+
+		$index = 0;
+		$this->process_flare_node($flare_path, $index, $orderIds, $elementTails, $pages, $stubs_only, $html_post_lookup, $media_lookup, $parent_page_id, $template_name);
+
+		return $html_post_lookup;
+	}
+
 	public function import_html_from_xml_index( $xml_path, $parent_page_id, $template_name ) {
 		$media_lookup = Array();
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
@@ -752,7 +843,15 @@ class HTMLImportPlugin {
 					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
 				}
 
-				// TODO: now to walk the toc
+				// now to walk the tree
+				$matches = null;
+				$returnValue = preg_match_all('/\\{i:(\\d*),c:(\\d*)(,n:\\[|[\\}\\]]*)/', $tocContents, $matches);
+				$fileOrder = $matches[1];
+				$elementTail = $matches[3];
+
+				$media_lookup = Array();
+				$html_post_lookup = $this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, true, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
+				$this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, false, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
 
 
 			} else {
