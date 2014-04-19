@@ -1,4 +1,6 @@
 <?php
+require_once( dirname( __FILE__ ) . '/admin/includes/HtmlImportSettings.php' );
+
 /**
  * Fired when the plugin is uninstalled.
  *
@@ -14,4 +16,5 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// @TODO: Define uninstall functionality here
+$settings = new \html_import\admin\HtmlImportSettings();
+$settings->deleteFromDB();
