@@ -1,5 +1,6 @@
 <?php
 require_once( dirname( __FILE__ ) . '/../admin/includes/HtmlImportSettings.php' );
+require_once( dirname( __FILE__ ) . '/includes/WPMetaConfigs.php' );
 /**
  * Plugin Name.
  *
@@ -372,67 +373,64 @@ class HTMLImportPlugin {
 
 	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
+		$pageMeta = new \html_import\WPMetaConfigs();
+
 		$file_as_xml_obj = $this->getXMLObject( $source_file );
 
-		$page               = Array();
 		if (is_null($title)) {
-			$page['post_title'] = $this->get_title( $file_as_xml_obj );
+			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
 		} else {
-			$page['post_title'] = htmlspecialchars($title);
+			$pageMeta->setPostTitle($title);
 		}
-		$page['post_name']  = sanitize_title_with_dashes( $page['post_title'] );
-		$post               = get_page_by_title( $page['post_title'] );
+		$pageMeta->setPostName($pageMeta->getPostTitle());
+		$post               = get_page_by_title( $pageMeta->getPostTitle() );
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
-				$page['ID'] = $html_post_lookup[$source_file];
+				$pageMeta->setPostId($html_post_lookup[$source_file]);
 			}
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
-				$page['ID'] = $post->ID;
+				$pageMeta->setPostId($post->ID);
 			}
 		}
-		if ( $stub_only ) {
-			$page['post_status'] = 'publish'; // needs to be published in order to set categories( was that the issue?)
-		} else {
-			$page['post_status']  = 'publish';
+		$pageMeta->setPostStatus('publish');
+		if ( !$stub_only ) {
 			if (!is_null($file_as_xml_obj)) {
-				$page['post_content'] = $this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
-			} else {
-				$page['post_content'] = '';
+				$pageMeta->setPostContent($this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter());
 			}
 		}
-		$page['post_type']      = 'page';
-		$page['comment_status'] = 'closed';
-		$page['ping_status']    = 'closed';
-		$page['post_category']  = $category;
-		$page['post_excerpt']   = '';
-		$page['post_date']      = date( 'Y-m-d H:i:s', filemtime( $source_file ) );
+		$pageMeta->setPostType('page');
+		$pageMeta->setCommentStatus('closed');
+		$pageMeta->setPingStatus('closed');
+		$pageMeta->setPostCategory($category);
+		$pageMeta->setPostDate(date( 'Y-m-d H:i:s', filemtime( $source_file ) ));
 		if ( isset( $parent_page_id ) && ( $parent_page_id > 0 ) ) {
-
-			$page['post_parent'] = $settings->getParentPage()->getValue();
+			$pageMeta->setPostParent($settings->getParentPage()->getValue());
 		}
 		if ( isset ( $order ) ) {
-			$page['menu_order'] = $order;
+			$pageMeta->setMenuOrder($order);
 		}
-		$page['post_author'] = wp_get_current_user()->ID;
+		$pageMeta->setPostAuthor(wp_get_current_user()->ID);
 
 		if ( is_null( $post ) ) {
-			$page_id = wp_insert_post( $page );
-			if ( is_wp_error( $page_id ) ) {
-				echo '<li>***Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
+			$updateResult = $pageMeta->updateWPPost();
+			if ( is_wp_error( $updateResult ) ) {
+				echo '<li>***Unable to create content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . '</li>';
+				return 0;
 			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Stub post created from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
 			}
 		} else {
-			$page_id = wp_update_post( $page, true );
-			if ( is_wp_error($page_id) ) {
-				echo '<li>***Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . ': '.$page_id->get_error_message().'</li>';
+			$updateResult = $pageMeta->updateWPPost();
+			if ( is_wp_error($updateResult) ) {
+				echo '<li>***Unable to fill content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . ': '.$updateResult->get_error_message().'</li>';
+				return 0;
 			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Content filled from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
 			}
 		}
 
-		return $page_id;
+		return $updateResult;
 	}
 
 	private function importMedia( $post_id, $source_path, &$media_lookup ) {
