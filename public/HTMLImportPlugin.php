@@ -1,6 +1,7 @@
 <?php
 require_once( dirname( __FILE__ ) . '/../admin/includes/HtmlImportSettings.php' );
 require_once( dirname( __FILE__ ) . '/includes/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/includes/XMLHelper.php' );
 /**
  * Plugin Name.
  *
@@ -289,20 +290,6 @@ class HTMLImportPlugin {
 		return $footer;
 	}
 
-	/**
-	 * Ensure the provided file exists
-	 *
-	 * @param $xml_path
-	 *
-	 * @return bool
-	 */
-	private function valid_xml_file( $xml_path ) {
-		if ( file_exists( $xml_path ) ) {
-			return true;
-		}
-
-		return false;
-	}
 
 	private function get_title( SimpleXMLElement $html_file ) {
 		$title = '';
@@ -360,22 +347,11 @@ class HTMLImportPlugin {
 		return $body;
 	}
 
-	private function getXMLObject( $source_file ) {
-		$doc                      = new DOMDocument();
-		$doc->strictErrorChecking = false;
-		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTMLFile( $source_file/*, LIBXML_HTML_NOIMPLIED */);// server uses 5.3.28, this is added in 5.4
-		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
-		$simple_xml = simplexml_import_dom( $doc );
-
-		return $simple_xml;
-	}
-
-	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
+	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
 		$pageMeta = new \html_import\WPMetaConfigs();
 
-		$file_as_xml_obj = $this->getXMLObject( $source_file );
+		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
 
 		if (is_null($title)) {
 			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
@@ -391,6 +367,7 @@ class HTMLImportPlugin {
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
 				$pageMeta->setPostId($post->ID);
+				echo '<li>Page with title '.$pageMeta->getPostTitle().' and ID '.$pageMeta->getPostId().' already exists, now tagged to be overwritten.</li>';
 			}
 		}
 		$pageMeta->setPostStatus('publish');
@@ -404,9 +381,11 @@ class HTMLImportPlugin {
 		$pageMeta->setPingStatus('closed');
 		$pageMeta->setPostCategory($category);
 		$pageMeta->setPostDate(date( 'Y-m-d H:i:s', filemtime( $source_file ) ));
-		if ( isset( $parent_page_id ) && ( $parent_page_id > 0 ) ) {
-			$pageMeta->setPostParent($settings->getParentPage()->getValue());
+
+		if (!is_null($parent_page)) {
+			$pageMeta->setPostParent($parent_page->getPostId());
 		}
+
 		if ( isset ( $order ) ) {
 			$pageMeta->setMenuOrder($order);
 		}
@@ -419,6 +398,7 @@ class HTMLImportPlugin {
 				return 0;
 			} else {
 				echo '<li>Stub post created from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
+				$pageMeta->setPostId($updateResult);
 			}
 		} else {
 			$updateResult = $pageMeta->updateWPPost();
@@ -427,10 +407,11 @@ class HTMLImportPlugin {
 				return 0;
 			} else {
 				echo '<li>Content filled from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
+				$pageMeta->setPostId($updateResult);
 			}
 		}
 
-		return $updateResult;
+		return $pageMeta;
 	}
 
 	private function importMedia( $post_id, $source_path, &$media_lookup ) {
@@ -442,13 +423,7 @@ class HTMLImportPlugin {
 		}
 		$media_table = Array();
 
-		$doc                      = new DOMDocument();
-		$doc->strictErrorChecking = false;
-		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTML( $body/*, LIBXML_HTML_NOIMPLIED */); // server uses 5.3.28, this is added in 5.4
-		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
-		$file_as_xml_obj = simplexml_import_dom( $doc );
-
+		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromString($body);
 
 		// import img srcs
 		$all_imgs = $file_as_xml_obj->xpath( '//img[@src]' );
@@ -576,14 +551,13 @@ class HTMLImportPlugin {
 
 	}
 
-	private function processNode( DOMNode $node, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
 		$category   = Array();
 		$tag        = Array();
 		$order      = 0;
-		$my_id      = $settings->getParentPage()->getValue();
 
 		if ( isset( $attributes ) ) {
 			for ( $i = 0; $i < $attributes->length; $i ++ ) {
@@ -633,12 +607,12 @@ class HTMLImportPlugin {
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
 				if ( $stubs_only ) {
-					$my_id                  = $this->importAnHTML( $src, true, $settings, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $my_id;
+					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $parent_page->getPostId();
 				} else {
-					$my_id = $this->importAnHTML( $src, false, $settings, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$this->importMedia( $my_id, $src, $media_lookup );
-					update_post_meta( $my_id, '_wp_page_template', $settings->getTemplate()->getValue() );
+					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
+					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -650,8 +624,7 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$settings->getParentPage()->setSettingValue($my_id);
-				$this->processNode( $children->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $settings );
+				$this->processNode( $children->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
 			}
 		}
 	}
@@ -666,14 +639,21 @@ class HTMLImportPlugin {
 		$doc->load( $settings->getFileLocation()->getValue(), LIBXML_NOBLANKS );
 
 		$nodelist = $doc->childNodes;
+
+		$parent_page = new \html_import\WPMetaConfigs();
+		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		if (!$hasParent) {
+			$parent_page = null;
+		}
+
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $settings );
+			$this->processNode( $nodelist->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
 		}
 
 		return $html_post_lookup;
 	}
 
-	private function importFlareNode( $flare_path, $stubs_only = true, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
+	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
 
 		$title      = $pageTitle;
 		$src = realpath( $flare_path . $pagePath );
@@ -681,7 +661,6 @@ class HTMLImportPlugin {
 		$category   = Array(); // TODO:
 		$tag        = Array();
 		$order      = $orderNum;
-		$my_id      = $settings->getParentPage()->getValue();
 
 		if ( ! is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
@@ -699,22 +678,22 @@ class HTMLImportPlugin {
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
 				if ( $stubs_only ) {
-					$my_id                  = $this->importAnHTML( $src, true, $settings, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $my_id;
+					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $parent_page->getPostId();
 				} else {
-					$my_id = $this->importAnHTML( $src, false, $settings, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$this->importMedia( $my_id, $src, $media_lookup );
-					update_post_meta( $my_id, '_wp_page_template', $settings->getTemplate()->getValue() );
+					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
+					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
 			}
 		}
 
-		return $my_id;
+		return $parent_page;
 	}
 
-	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 
 		// TODO: this algorithm must be reimagined!  this is horrid and hacky!
 
@@ -724,7 +703,7 @@ class HTMLImportPlugin {
 			$pagePath = key($pages[$order]);
 			$pageTitle = $pages[$order][$pagePath];
 
-			$parent_page_id = $this->importFlareNode($flare_path, $stubs_only, $html_post_lookup, $media_lookup, $order, $pagePath, $pageTitle, $settings);
+			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $order, $pagePath, $pageTitle, $settings);
 			//echo $index.' '.$order.' '.$pageTitle.'<br>';
 			if (strcmp($tail, '}') == 0) {
 				// next element is a sibling
@@ -732,8 +711,8 @@ class HTMLImportPlugin {
 			} else if (strcmp($tail, ',n:[') == 0) {
 				//next element is a child
 				$i++;
-				$settings->getParentPage()->setSettingValue($parent_page_id);
-				$levels = $this->process_flare_node($flare_path, $i, $orderIds, $elementTails, $pages, $stubs_only, $html_post_lookup, $media_lookup, $settings);
+
+				$levels = $this->process_flare_node($flare_path, $i, $orderIds, $elementTails, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
 				if ($levels > 0) {
 					$index = $i; // this is to keep the counter counting
 					return $levels - 1;
@@ -760,7 +739,13 @@ class HTMLImportPlugin {
 		}
 
 		$index = 0;
-		$this->process_flare_node($flare_path, $index, $orderIds, $elementTails, $pages, $stubs_only, $html_post_lookup, $media_lookup, $settings);
+
+		$parent_page = new \html_import\WPMetaConfigs();
+		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		if (!$hasParent) {
+			$parent_page = null;
+		}
+		$this->process_flare_node($flare_path, $index, $orderIds, $elementTails, $pages, $stubs_only, $parent_page,$html_post_lookup, $media_lookup, $settings);
 
 		return $html_post_lookup;
 	}
@@ -768,7 +753,7 @@ class HTMLImportPlugin {
 	public function import_html_from_xml_index( html_import\admin\HtmlImportSettings $settings ) {
 		$media_lookup = Array();
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
-		if ( $this->valid_xml_file( $settings->getFileLocation()->getValue() ) ) {
+		if ( \html_import\XMLHelper::valid_xml_file( $settings->getFileLocation()->getValue() ) ) {
 			echo '<ul>';
 			$html_post_lookup = $this->process_xml_file( true, $html_post_lookup, $media_lookup, $settings );
 			$this->process_xml_file( false, $html_post_lookup, $media_lookup, $settings );

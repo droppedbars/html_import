@@ -25,6 +25,22 @@ class WPMetaConfigs {
 	private $post_author = '';
 	private $post_content = '';
 	private $page_template = '';
+	private $source_path = '';
+
+	/**
+	 * @param string $source_path
+	 */
+	public function setSourcePath( $source_path ) {
+		$this->source_path = $source_path;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourcePath() {
+		return $this->source_path;
+	}
+
 
 	/**
 	 * @param mixed $page_template
@@ -96,6 +112,7 @@ class WPMetaConfigs {
 		$this->post_excerpt = $post->post_excerpt;
 		$this->comment_status = $post->comment_status;
 		$this->ping_status = $post->ping_status;
+		$this->post_status = $post->post_status;
 		// $post->post_password
 		$this->post_parent = $post->post_parent;
 		// $post->post_modified
@@ -123,6 +140,7 @@ class WPMetaConfigs {
 			'post_excerpt' => $this->post_excerpt,
 			'comment_status' => $this->comment_status,
 			'ping_status' => $this->ping_status,
+			'post_status' => $this->post_status,
 			// $post->post_password
 			'post_parent' => $this->post_parent,
 			// $post->post_modified
