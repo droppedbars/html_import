@@ -555,7 +555,7 @@ class HTMLImportPlugin {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
-		$category   = Array();
+		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
 		$order      = 0;
 
@@ -572,7 +572,8 @@ class HTMLImportPlugin {
 							$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
 						}
 						break;
-					case 'category':
+					case 'category': // if category is set in XML, then overrides the web settings
+													 // TODO: should have a setting for if to use xml or web settings
 						$category = explode( ',', $attributes->item( $i )->nodeValue );
 						break;
 					case 'tag':
@@ -658,7 +659,7 @@ class HTMLImportPlugin {
 		$title      = $pageTitle;
 		$src = realpath( $flare_path . $pagePath );
 
-		$category   = Array(); // TODO:
+		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
 		$order      = $orderNum;
 
@@ -809,7 +810,6 @@ class HTMLImportPlugin {
 				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
 				$closeSuccess = $zip->close();
 
-				// TODO: parse to find index Toc.js
 				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
 				$tocContents = file_get_contents($tocJS);
 				preg_match('/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch);

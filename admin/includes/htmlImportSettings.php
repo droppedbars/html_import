@@ -10,6 +10,7 @@ namespace html_import\admin;
 
 require_once( dirname( __FILE__ ) . '/PluginSettingsInterface.php' );
 require_once( dirname( __FILE__ ) . '/StringSetting.php' );
+require_once( dirname( __FILE__ ) . '/ArraySetting.php' );
 
 class HtmlImportSettings implements PluginSettingsInterface {
 	const SETTINGS_NAME = 'htim_importer_options';
@@ -21,6 +22,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	private $file_location = null;
 	private $parent_page = null;
 	private $template = null;
+	private $category = null;
 
 	const INDEX_DEFAULT = 'flare';
 	const FILE_TYPE_DEFAULT = 'zip';
@@ -29,7 +31,6 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	const TEMPLATE_DEFAULT = 0;
 	const FILE_LOCATION_DEFAULT = '';
 
-
 	function __construct() {
 		$this->index_type = new StringSetting('index-type');
 		$this->file_type = new StringSetting('file-type');
@@ -37,6 +38,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->file_location = new StringSetting('file-location');
 		$this->parent_page = new StringSetting('parent_page');
 		$this->template = new StringSetting('template');
+		$this->category = new ArraySetting('category');
 	}
 
 	private function loadDefaults() {
@@ -80,19 +82,38 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			$file_location = $plugin_options_arr['file-location'];
 			$this->file_location->setSettingValue($file_location);
 		}
+		$counter = 0;
+		do {
+			if (isset($plugin_options_arr[$this->category->getName($counter)])) {
+				array_push($this->category, $plugin_options_arr[$this->category->getName($counter)]);
+				$counter++;
+			} else {
+				break;
+			}
+		} while(1 == 1);
 	}
 
 	/**
 	 * @return bool|void
 	 */
 	public function saveToDB() {
-		return update_site_option(self::SETTINGS_NAME,
-				Array($this->index_type->getName() 		=> $this->index_type->getValue(),
-							$this->file_type->getName() 		=> $this->file_type->getValue(),
-							$this->import_source->getName() => $this->import_source->getValue(),
-							$this->file_location->getName() => $this->file_location->getValue(),
-							$this->parent_page->getName() 	=> $this->parent_page->getValue(),
-							$this->template->getName() 			=> $this->template->getValue()));
+		$settings = Array($this->index_type->getName() 		=> $this->index_type->getValue(),
+											$this->file_type->getName() 		=> $this->file_type->getValue(),
+											$this->import_source->getName() => $this->import_source->getValue(),
+											$this->file_location->getName() => $this->file_location->getValue(),
+											$this->parent_page->getName() 	=> $this->parent_page->getValue(),
+											$this->template->getName() 			=> $this->template->getValue());
+		$counter = 0;
+		do {
+			if (!is_null($this->category->getValue($counter))) {
+				$settings[$this->category->getName($counter)] = $this->category->getValue($counter);
+				$counter++;
+			} else {
+				break;
+			}
+		} while(1 == 1);
+		return update_site_option(self::SETTINGS_NAME, $settings);
+
 	}
 
 	/**
@@ -140,6 +161,20 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			$template = sanitize_text_field($_POST[$this->template->getName()]);
 			$this->template->setSettingValue($template);
 		}
+
+		$counter = 0;
+		do {
+			if (isset($_POST[$this->category->getName($counter)])) {
+				$this->category->addValue($_POST[$this->category->getName($counter)]);
+				$counter++;
+			} else {
+				break;
+			}
+		} while(1 == 1);
+
+		// TODO: temporary to test things out
+		$this->category->addValue('Documentation');
+		$this->category->addValue('Test');
 	}
 
 	/**
@@ -167,6 +202,9 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	}
 	public function getFileLocation() {
 		return $this->file_location;
+	}
+	public function getCategories() {
+		return $this->category;
 	}
 
 } 

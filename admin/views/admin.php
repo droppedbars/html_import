@@ -19,7 +19,7 @@ require_once( dirname( __FILE__ ) . '/../includes/HtmlImportSettings.php' );
 if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 	if (isset($_POST['submit'])) {
 		$settingsToProcess = new html_import\admin\HtmlImportSettings();
-		$settingsToProcess->loadFromDB();
+		$settingsToProcess->loadFromDB(); //loads the defaults in case not all settings are passed in the POST
 		$settingsToProcess->loadFromPOST();
 		$settingsToProcess->saveToDB();
 		// TODO: improve support for combinations:
