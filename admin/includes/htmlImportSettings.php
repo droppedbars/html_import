@@ -85,7 +85,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$counter = 0;
 		do {
 			if (isset($plugin_options_arr[$this->category->getName($counter)])) {
-				array_push($this->category, $plugin_options_arr[$this->category->getName($counter)]);
+				$this->category->addValue($plugin_options_arr[$this->category->getName($counter)]);
 				$counter++;
 			} else {
 				break;
