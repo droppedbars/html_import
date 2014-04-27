@@ -123,14 +123,41 @@ $settings->loadFromDB();
 			</select>
 		</p>
 		<p id="categories">
-			<h3>Select the categories for the imported files</h3>
-			TODO...
+		<h3>Select the Categories for the imported files</h3>
+		<?php // TODO: loop here for multiple categories! ?>
+		<input type="button" class="button-primary" value="-" onclick="htim_removeCategoryOnClick('cat_row_</php echo $i; ?> ')"/>
+		<select name="category_0">
+			<?php
+			$search_args = array(		'type'                     => 'post',
+															 'child_of'                 => 0,
+															 'parent'                   => '',
+															 'orderby'                  => 'name',
+															 'order'                    => 'ASC',
+															 'hide_empty'               => 1,
+															 'hierarchical'             => 1,
+															 'exclude'                  => '',
+															 'include'                  => '',
+															 'number'                   => '',
+															 'taxonomy'                 => 'category',
+															 'pad_counts'               => false
+			);
+			$categories = get_categories($search_args);
+			if (isset($categories)) {
+				foreach ($categories as $category) {
+					// TODO: value should be the cat_ID but need to modify back end to support this
+					echo '<option value="'.$category->name.'" '.selected(strcmp($settings->getCategories()->getValue(0),$category->name) == 0, true, false).'>'.htmlspecialchars($category->name).'</option>';
+				}
+			}
+			?>
+		</select>
+		</p><p>
+		<input type="button" class="button-primary" value="Add Category" onclick="htim_addCategoryOnClick()"/>
 		</p>
 
 		<input type="hidden" name="action" value="save" />
 
 		<p class="submit">
-			<input type="submit" name="submit" class="button" value="<?php echo esc_attr( __( 'Import', 'import-html-pages' ) ); ?>" />
+			<input type="submit" name="submit" class="button-primary" value="<?php echo esc_attr( __( 'Import', 'import-html-pages' ) ); ?>" />
 		</p>
 		<?php wp_nonce_field( 'html-import' ); ?>
 	</form>

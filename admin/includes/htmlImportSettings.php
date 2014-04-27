@@ -48,6 +48,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->parent_page->setSettingValue(self::PARENT_PAGE_DEFAULT);
 		$this->template->setSettingValue(self::TEMPLATE_DEFAULT);
 		$this->file_location->setSettingValue(self::FILE_LOCATION_DEFAULT);
+		$this->category->setSettingValue(0, 0); // TODO: 0 as default "none", could be better
 	}
 
 	/**
@@ -83,6 +84,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			$this->file_location->setSettingValue($file_location);
 		}
 		$counter = 0;
+		$this->category = new ArraySetting('category');
 		do {
 			if (isset($plugin_options_arr[$this->category->getName($counter)])) {
 				$this->category->addValue($plugin_options_arr[$this->category->getName($counter)]);
@@ -163,6 +165,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		}
 
 		$counter = 0;
+		$this->category = new ArraySetting('category');
 		do {
 			if (isset($_POST[$this->category->getName($counter)])) {
 				$this->category->addValue($_POST[$this->category->getName($counter)]);
@@ -172,9 +175,6 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			}
 		} while(1 == 1);
 
-		// TODO: temporary to test things out
-		$this->category->addValue('Documentation');
-		$this->category->addValue('Test');
 	}
 
 	/**
