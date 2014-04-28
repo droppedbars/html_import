@@ -114,6 +114,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 				break;
 			}
 		} while(1 == 1);
+
 		return update_site_option(self::SETTINGS_NAME, $settings);
 
 	}

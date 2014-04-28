@@ -124,10 +124,21 @@ $settings->loadFromDB();
 		</p>
 		<p id="categories">
 		<h3>Select the Categories for the imported files</h3>
-		<?php // TODO: loop here for multiple categories! ?>
-		<input type="button" class="button-primary" value="-" onclick="htim_removeCategoryOnClick('cat_row_</php echo $i; ?> ')"/>
-		<select name="category_0">
+		<div id="settings-categories">
+		<?php
+		$categoryArray = $settings->getCategories()->getValuesArray();
+		$arrayOfCategoryNames = Array();
+		$arrayOfCategoryValues = Array();
+		$counter = 0;
+		// TODO: change to use multiselect
+		foreach ($categoryArray as $num => $value) {
+			$counter++;
+		?>
+		<span id="cat_<?php echo $num;?>">
+		<input type="button" class="button-primary" value="-" onclick="htim_removeCategoryOnClick('cat_<?php echo $num; ?>')"/>
+		<select name="category_<?php echo $num; ?>">
 			<?php
+			// TODO: this should only have to be run for the first element, not repeatedly
 			$search_args = array(		'type'                     => 'post',
 															 'child_of'                 => 0,
 															 'parent'                   => '',
@@ -141,17 +152,42 @@ $settings->loadFromDB();
 															 'taxonomy'                 => 'category',
 															 'pad_counts'               => false
 			);
+
 			$categories = get_categories($search_args);
+			$arrayOfCategoryNames = Array();
+			$arrayOfCategoryValues = Array();
 			if (isset($categories)) {
 				foreach ($categories as $category) {
 					// TODO: value should be the cat_ID but need to modify back end to support this
-					echo '<option value="'.$category->name.'" '.selected(strcmp($settings->getCategories()->getValue(0),$category->name) == 0, true, false).'>'.htmlspecialchars($category->name).'</option>';
+					echo '<option value="'.$category->name.'" '.selected(strcmp($settings->getCategories()->getValue($num),$category->name) == 0, true, false).'>'.htmlspecialchars($category->name).'</option>';
+					array_push($arrayOfCategoryNames, "'".$category->name."'");
+					array_push($arrayOfCategoryValues, "'".htmlspecialchars($category->name)."'");
+				}
+			} ?>
+			</select>
+			<br>
+			</span>
+		<?php
+		}
+		?>
+		</div>
+		<input type="hidden" value="<?php echo $counter++; ?>" id="categoryRowCounter" />
+		</p><p>
+			<input type="button" class="button-primary" value="Add Category" onclick="htim_addCategoryOnClick([<?php
+			for ($i = 0; $i < sizeof($arrayOfCategoryNames); $i++) {
+				echo $arrayOfCategoryNames[$i];
+				if ($i < sizeof($arrayOfCategoryNames) - 1) {
+					echo ',';
 				}
 			}
-			?>
-		</select>
-		</p><p>
-		<input type="button" class="button-primary" value="Add Category" onclick="htim_addCategoryOnClick()"/>
+			echo '],[';
+			for ($i = 0; $i < sizeof($arrayOfCategoryValues); $i++) {
+				echo $arrayOfCategoryValues[$i];
+				if ($i < sizeof($arrayOfCategoryValues) - 1) {
+					echo ',';
+				}
+			}
+			?>])"/>
 		</p>
 
 		<input type="hidden" name="action" value="save" />

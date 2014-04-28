@@ -151,6 +151,7 @@ class HTMLImportPluginAdmin {
 		$screen = get_current_screen();
 		if ( $this->plugin_screen_hook_suffix == $screen->id ) {
 			wp_enqueue_script( $this->plugin_slug . '-admin-script', plugins_url( 'assets/js/admin.js', __FILE__ ), array( 'jquery' ), HTMLImportPlugin::VERSION );
+			wp_enqueue_script( $this->plugin_slug . '-admin-settings-script', plugins_url( 'assets/js/settingsHandler.js', __FILE__ ), array( 'jquery' ), HTMLImportPlugin::VERSION );
 		}
 
 	}

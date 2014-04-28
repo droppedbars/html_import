@@ -31,12 +31,15 @@ Phase 3
 - identify sections to remove
 - identify sections to rename/reclass
 - use meta tags for excerpt
-- handle
-- import via zip
+X handle import via zip
 
 Phase 4
-- import other file types (pdf, etc)
+X import other file types (pdf, etc)
 - refactor to more OOP structure
+
+
+- change category selection to multiselect dropdown
+
 
 
 ERRORS TO HANDLE:
