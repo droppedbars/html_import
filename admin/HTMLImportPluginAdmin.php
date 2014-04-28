@@ -151,7 +151,6 @@ class HTMLImportPluginAdmin {
 		$screen = get_current_screen();
 		if ( $this->plugin_screen_hook_suffix == $screen->id ) {
 			wp_enqueue_script( $this->plugin_slug . '-admin-script', plugins_url( 'assets/js/admin.js', __FILE__ ), array( 'jquery' ), HTMLImportPlugin::VERSION );
-			wp_enqueue_script( $this->plugin_slug . '-admin-settings-script', plugins_url( 'assets/js/settingsHandler.js', __FILE__ ), array( 'jquery' ), HTMLImportPlugin::VERSION );
 		}
 
 	}
@@ -176,7 +175,7 @@ class HTMLImportPluginAdmin {
 		$this->plugin_screen_hook_suffix = add_options_page(
 				__( 'GDN HTML Importer', $this->plugin_slug ),
 				__( 'GDN HTML Importer', $this->plugin_slug ),
-				'manage_options',
+				'edit_pages',
 				$this->plugin_slug,
 				array( $this, 'display_plugin_admin_page' )
 		);

@@ -67,16 +67,10 @@ class ArraySetting implements PluginSettingInterface {
 	}
 
 	/**
-	 * @param null $index
-	 *
 	 * @return mixed
 	 */
-	public function getName($index = null) {
-		if (is_null($index)) {
-			return $this->name.'_'.$this->index;
-		} else {
-			return $this->name.'_'.$index;
-		}
+	public function getName() {
+		return $this->name;
 	}
 
 	/**
@@ -111,6 +105,11 @@ class ArraySetting implements PluginSettingInterface {
 
 	public function addValue( $value ) {
 		array_push($this->value, $value);
+	}
+
+	public function testValue ($value) {
+		$test = in_array($value, $this->value);
+		return $test;
 	}
 
 	public function getValuesArray() {

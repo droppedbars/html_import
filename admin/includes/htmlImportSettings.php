@@ -86,8 +86,8 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$counter = 0;
 		$this->category = new ArraySetting('category');
 		do {
-			if (isset($plugin_options_arr[$this->category->getName($counter)])) {
-				$this->category->addValue($plugin_options_arr[$this->category->getName($counter)]);
+			if (isset($plugin_options_arr[$this->category->getName().'_'.$counter])) {
+				$this->category->addValue($plugin_options_arr[$this->category->getName().'_'.$counter]);
 				$counter++;
 			} else {
 				break;
@@ -108,7 +108,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$counter = 0;
 		do {
 			if (!is_null($this->category->getValue($counter))) {
-				$settings[$this->category->getName($counter)] = $this->category->getValue($counter);
+				$settings[$this->category->getName().'_'.$counter] = $this->category->getValue($counter);
 				$counter++;
 			} else {
 				break;
@@ -165,17 +165,14 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			$this->template->setSettingValue($template);
 		}
 
-		$counter = 0;
 		$this->category = new ArraySetting('category');
-		do {
-			if (isset($_POST[$this->category->getName($counter)])) {
-				$this->category->addValue($_POST[$this->category->getName($counter)]);
-				$counter++;
-			} else {
-				break;
+		$catName = $this->category->getName();
+		if (isset($_POST[$catName])) {
+			$catArray = $_POST[$catName];
+			foreach ($catArray as $cat) {
+				$this->category->addValue($cat);
 			}
-		} while(1 == 1);
-
+		}
 	}
 
 	/**
