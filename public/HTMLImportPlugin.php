@@ -287,8 +287,9 @@ class HTMLImportPlugin {
 	}
 
 	private function getGridDirectorFooter() {
-		$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
-		return $footer;
+		//$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
+		//return $footer;
+		return '';
 	}
 
 
