@@ -1,4 +1,7 @@
 <?php
+require_once( dirname( __FILE__ ) . '/../admin/includes/HtmlImportSettings.php' );
+require_once( dirname( __FILE__ ) . '/includes/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/includes/XMLHelper.php' );
 /**
  * Plugin Name.
  *
@@ -226,10 +229,9 @@ class HTMLImportPlugin {
 	 */
 	private static function single_activate() {
 
-		if ( ! get_option( 'htim_importer_options' ) ) {
-			$site_options_arr = array();
-			// update the database with the default option values
-			update_site_option( 'htim_importer_options', $site_options_arr );
+		$settings = new \html_import\admin\HtmlImportSettings();
+		if ( ! get_option( $settings::SETTINGS_NAME ) ) {
+			$settings->saveToDB();
 		}
 
 	}
@@ -279,29 +281,17 @@ class HTMLImportPlugin {
 	private function getGridDirectorHeader($title) {
 		$title = 'Grid Director Developer Network : '.$title;
 		$subTitle = '';
-		$header = '[vc_row][vc_column width="1/1"][mk_fancy_title tag_name="h2" style="true" color="#4a266d" size="24" font_weight="bolder" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$title.'[/mk_fancy_title][mk_fancy_title tag_name="h2" style="false" color="#393836" size="24" font_weight="300" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$subTitle.'[/mk_fancy_title][mk_padding_divider size="10" width="1/1" el_position="first last"][vc_column_text disable_pattern="false" align="left" margin_bottom="0" p_margin_bottom="20" width="1/1" el_position="first last"]';
+//		$header = '[vc_row][vc_column width="1/1"][mk_fancy_title tag_name="h2" style="true" color="#4a266d" size="24" font_weight="bolder" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$title.'[/mk_fancy_title][mk_fancy_title tag_name="h2" style="false" color="#393836" size="24" font_weight="300" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$subTitle.'[/mk_fancy_title][mk_padding_divider size="10" width="1/1" el_position="first last"][vc_column_text disable_pattern="false" align="left" margin_bottom="0" p_margin_bottom="20" width="1/1" el_position="first last"]';
+		$header = '<h2 class="resource-title">'.$title.'</h2>';
 		return $header;
 	}
 
 	private function getGridDirectorFooter() {
-		$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
-		return $footer;
+		//$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
+		//return $footer;
+		return '';
 	}
 
-	/**
-	 * Ensure the provided file exists
-	 *
-	 * @param $xml_path
-	 *
-	 * @return bool
-	 */
-	private function valid_xml_file( $xml_path ) {
-		if ( file_exists( $xml_path ) ) {
-			return true;
-		}
-
-		return false;
-	}
 
 	private function get_title( SimpleXMLElement $html_file ) {
 		$title = '';
@@ -359,80 +349,71 @@ class HTMLImportPlugin {
 		return $body;
 	}
 
-	private function getXMLObject( $source_file ) {
-		$doc                      = new DOMDocument();
-		$doc->strictErrorChecking = false;
-		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTMLFile( $source_file/*, LIBXML_HTML_NOIMPLIED */);// server uses 5.3.28, this is added in 5.4
-		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
-		$simple_xml = simplexml_import_dom( $doc );
+	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
-		return $simple_xml;
-	}
+		$pageMeta = new \html_import\WPMetaConfigs();
 
-	private function importAnHTML( $source_file, $stub_only = true, $parent_page_id = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
+		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
 
-		$file_as_xml_obj = $this->getXMLObject( $source_file );
-
-		$page               = Array();
 		if (is_null($title)) {
-			$page['post_title'] = $this->get_title( $file_as_xml_obj );
+			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
 		} else {
-			$page['post_title'] = htmlspecialchars($title);
+			$pageMeta->setPostTitle($title);
 		}
-		$page['post_name']  = sanitize_title_with_dashes( $page['post_title'] );
-		$post               = get_page_by_title( $page['post_title'] );
+		$pageMeta->setPostName($pageMeta->getPostTitle());
+		$post               = get_page_by_title( $pageMeta->getPostTitle() );
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
-				$page['ID'] = $html_post_lookup[$source_file];
+				$pageMeta->setPostId($html_post_lookup[$source_file]);
 			}
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
-				$page['ID'] = $post->ID;
+				$pageMeta->setPostId($post->ID);
+				echo '<li>Page with title '.$pageMeta->getPostTitle().' and ID '.$pageMeta->getPostId().' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		if ( $stub_only ) {
-			$page['post_status'] = 'publish'; // needs to be published in order to set categories( was that the issue?)
-		} else {
-			$page['post_status']  = 'publish';
+		$pageMeta->setPostStatus('publish');
+		if ( !$stub_only ) {
 			if (!is_null($file_as_xml_obj)) {
-				$page['post_content'] = $this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter();
-			} else {
-				$page['post_content'] = '';
+				$pageMeta->setPostContent($this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter());
 			}
 		}
-		$page['post_type']      = 'page';
-		$page['comment_status'] = 'closed';
-		$page['ping_status']    = 'closed';
-		$page['post_category']  = $category;
-		$page['post_excerpt']   = '';
-		$page['post_date']      = date( 'Y-m-d H:i:s', filemtime( $source_file ) );
-		if ( isset( $parent_page_id ) && ( $parent_page_id > 0 ) ) {
+		$pageMeta->setPostType('page');
+		$pageMeta->setCommentStatus('closed');
+		$pageMeta->setPingStatus('closed');
+		$pageMeta->setPostCategory($category);
+		$pageMeta->setPostDate(date( 'Y-m-d H:i:s', filemtime( $source_file ) ));
 
-			$page['post_parent'] = $parent_page_id;
+		if (!is_null($parent_page)) {
+			$pageMeta->setPostParent($parent_page->getPostId());
 		}
+
 		if ( isset ( $order ) ) {
-			$page['menu_order'] = $order;
+			$pageMeta->setMenuOrder($order);
 		}
-		$page['post_author'] = wp_get_current_user()->ID;
+		$pageMeta->setPostAuthor(wp_get_current_user()->ID);
 
 		if ( is_null( $post ) ) {
-			$page_id = wp_insert_post( $page );
-			if ( is_wp_error( $page_id ) ) {
-				echo '<li>***Unable to create content ' . $page['post_title'] . ' from ' . $source_file . '</li>';
+			$updateResult = $pageMeta->updateWPPost();
+			if ( is_wp_error( $updateResult ) ) {
+				echo '<li>***Unable to create content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . '</li>';
+				return 0;
 			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Stub post created from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
+				$pageMeta->setPostId($updateResult);
 			}
 		} else {
-			$page_id = wp_update_post( $page, true );
-			if ( is_wp_error($page_id) ) {
-				echo '<li>***Unable to fill content ' . $page['post_title'] . ' from ' . $source_file . ': '.$page_id->get_error_message().'</li>';
+			$updateResult = $pageMeta->updateWPPost();
+			if ( is_wp_error($updateResult) ) {
+				echo '<li>***Unable to fill content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . ': '.$updateResult->get_error_message().'</li>';
+				return 0;
 			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $page_id . ' with title ' . $page['post_title'] . '</li>';
+				echo '<li>Content filled from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
+				$pageMeta->setPostId($updateResult);
 			}
 		}
 
-		return $page_id;
+		return $pageMeta;
 	}
 
 	private function importMedia( $post_id, $source_path, &$media_lookup ) {
@@ -444,13 +425,7 @@ class HTMLImportPlugin {
 		}
 		$media_table = Array();
 
-		$doc                      = new DOMDocument();
-		$doc->strictErrorChecking = false;
-		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTML( $body/*, LIBXML_HTML_NOIMPLIED */); // server uses 5.3.28, this is added in 5.4
-		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
-		$file_as_xml_obj = simplexml_import_dom( $doc );
-
+		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromString($body);
 
 		// import img srcs
 		$all_imgs = $file_as_xml_obj->xpath( '//img[@src]' );
@@ -578,14 +553,13 @@ class HTMLImportPlugin {
 
 	}
 
-	private function processNode( $xml_path, DOMNode $node, $stubs_only = true, &$html_post_lookup, &$media_lookup, $parent_id = null, $template_name = '' ) {
+	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
-		$category   = Array();
+		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
 		$order      = 0;
-		$my_id      = $parent_id;
 
 		if ( isset( $attributes ) ) {
 			for ( $i = 0; $i < $attributes->length; $i ++ ) {
@@ -597,10 +571,11 @@ class HTMLImportPlugin {
 					case 'src':
 						$src = $attributes->item( $i )->nodeValue;
 						if ( $src[0] != '/' ) {
-							$src = realpath( dirname( $xml_path ) . '/' . $src );
+							$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
 						}
 						break;
-					case 'category':
+					case 'category': // if category is set in XML, then overrides the web settings
+													 // TODO: should have a setting for if to use xml or web settings
 						$category = explode( ',', $attributes->item( $i )->nodeValue );
 						break;
 					case 'tag':
@@ -635,12 +610,12 @@ class HTMLImportPlugin {
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
 				if ( $stubs_only ) {
-					$my_id                  = $this->importAnHTML( $src, true, $parent_id, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $my_id;
+					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $parent_page->getPostId();
 				} else {
-					$my_id = $this->importAnHTML( $src, false, $parent_id, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$this->importMedia( $my_id, $src, $media_lookup );
-					update_post_meta( $my_id, '_wp_page_template', $template_name );
+					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
+					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -652,40 +627,225 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $xml_path, $children->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $my_id, $template_name );
+				$this->processNode( $children->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
 			}
 		}
 	}
 
-
-	private function process_xml_file( $xml_path, $stubs_only = true, &$html_post_lookup = null, &$media_lookup, $parent_page_id, $template_name ) {
+	private function process_xml_file( $stubs_only = true, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
 
 		$doc = new DOMDocument();
-		$doc->load( $xml_path, LIBXML_NOBLANKS );
+		$doc->load( $settings->getFileLocation()->getValue(), LIBXML_NOBLANKS );
 
 		$nodelist = $doc->childNodes;
+
+		$parent_page = new \html_import\WPMetaConfigs();
+		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		if (!$hasParent) {
+			$parent_page = null;
+		}
+
 		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $xml_path, $nodelist->item( $i ), $stubs_only, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
+			$this->processNode( $nodelist->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
 		}
 
 		return $html_post_lookup;
 	}
 
-	public function import_html_from_xml_index( $xml_path, $parent_page_id, $template_name ) {
+	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
+
+		$title      = $pageTitle;
+		$src = realpath( $flare_path . $pagePath );
+
+		$category   = $settings->getCategories()->getValuesArray();
+		$tag        = Array();
+		$order      = $orderNum;
+
+		if ( ! is_null( $category ) && is_array( $category ) ) {
+			foreach ( $category as $index => $cat ) {
+				$cat_id              = wp_create_category( trim( $cat ) );
+				$categoryIDs[$index] = intval( $cat_id );
+			}
+		}
+		if ( ! is_null( $tag ) && is_array( $tag ) ) {
+			foreach ( $tag as $t ) {
+				//TODO: support tags
+			}
+		}
+
+
+		if ( isset( $src ) ) {
+			if ( file_exists( $src ) ) {
+				if ( $stubs_only ) {
+					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $parent_page->getPostId();
+				} else {
+					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
+					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
+				}
+			} else {
+				echo '<li>Unable to find ' . $src . '</li>';
+			}
+		}
+
+		return $parent_page;
+	}
+
+	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+
+		// TODO: this algorithm must be reimagined!  this is horrid and hacky!
+
+		for ( $i = $index; $i < sizeof($orderIds); $i++) {
+			$order = $orderIds[$i];
+			$tail = $elementTails[$i];
+			$pagePath = key($pages[$order]);
+			$pageTitle = $pages[$order][$pagePath];
+
+			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $order, $pagePath, $pageTitle, $settings);
+			//echo $index.' '.$order.' '.$pageTitle.'<br>';
+			if (strcmp($tail, '}') == 0) {
+				// next element is a sibling
+				continue;
+			} else if (strcmp($tail, ',n:[') == 0) {
+				//next element is a child
+				$i++;
+
+				$levels = $this->process_flare_node($flare_path, $i, $orderIds, $elementTails, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
+				if ($levels > 0) {
+					$index = $i; // this is to keep the counter counting
+					return $levels - 1;
+				}
+			} else {
+				// move up
+				$levels = substr_count($tail, '}');
+				if ($i == (sizeof($orderIds) - 1)){
+					$levels = $levels - 2;
+				}
+				$index = $i;
+				return $levels -2; // return number of levels to return
+			}
+
+		}
+		return 0;
+	}
+
+	private function process_flare_index( $flare_path, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
+
+		set_time_limit(520);
+		if ( ! isset( $html_post_lookup ) ) {
+			$html_post_lookup = Array();
+		}
+
+		$index = 0;
+
+		$parent_page = new \html_import\WPMetaConfigs();
+		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		if (!$hasParent) {
+			$parent_page = null;
+		}
+		$this->process_flare_node($flare_path, $index, $orderIds, $elementTails, $pages, $stubs_only, $parent_page,$html_post_lookup, $media_lookup, $settings);
+
+		return $html_post_lookup;
+	}
+
+	public function import_html_from_xml_index( html_import\admin\HtmlImportSettings $settings ) {
 		$media_lookup = Array();
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
-		if ( $this->valid_xml_file( $xml_path ) ) {
+		if ( \html_import\XMLHelper::valid_xml_file( $settings->getFileLocation()->getValue() ) ) {
 			echo '<ul>';
-			$html_post_lookup = $this->process_xml_file( $xml_path, true, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
-			$this->process_xml_file( $xml_path, false, $html_post_lookup, $media_lookup, $parent_page_id, $template_name );
+			$html_post_lookup = $this->process_xml_file( true, $html_post_lookup, $media_lookup, $settings );
+			$this->process_xml_file( false, $html_post_lookup, $media_lookup, $settings );
 			echo '</ul>';
 		} else {
-			echo 'Cannot find file '.$xml_path."<br>Current path is ".getcwd().'<br>';
+			echo 'Cannot find file '.$settings->getFileLocation()->getEscapedHTMLValue()."<br>Current path is ".getcwd().'<br>';
 		}
 	}
 
+	private function findFile($filename, $root) {
+		$allFiles = scandir(realpath($root));
+		foreach ($allFiles as $file) {
+			if ((strcmp($file, '.') == 0) || (strcmp($file, '..')) == 0) {
+				continue;
+			}
+			if (strcmp($filename, $file) == 0) {
+				return $root.'/'.$file;
+			}
+			if (is_dir($root.'/'.$file)) {
+				$foundFile = $this->findFile($filename, $root.'/'.$file);
+				if (!is_null($foundFile)) {
+					return $foundFile;
+				}
+			}
+		}
+	}
+
+	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
+		/*
+		 * $zip_to_uplaod is an array with elements:
+		 * 	name
+		 * 	type
+		 * 	tmp_name
+		 * 	error
+		 * 	size
+		 *
+		 * .rar    application/x-rar-compressed, application/octet-stream
+				.zip    application/zip, application/octet-stream
+		 */
+		echo '<h2>Output from Import</h2><br>Please be patient</br>';
+		echo '<ul>';
+		$mime_type = $zip_to_upload['type'];
+	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0)) {
+			$zip = new ZipArchive;
+			$res = $zip->open($zip_to_upload['tmp_name']);
+			if ($res === TRUE) {
+				$upload_dir = wp_upload_dir();
+				$path = $upload_dir['path'].'/import';
+				$path_modifier = 1;
+				while (file_exists($path.'-'.$path_modifier)) {
+					$path_modifier++;
+				}
+				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
+				$closeSuccess = $zip->close();
+
+				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
+				$tocContents = file_get_contents($tocJS);
+				preg_match('/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch);
+				$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
+				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
+				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
+
+				$tocChunk0JS = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
+				$tocChunkContents = file_get_contents($tocChunk0JS);
+				// parses the chunk file and gets the list of all files to import
+				preg_match_all("/('(.*)':\\{i:\\[(\\d*)\\],t:\\['(.*)?'\\],b:\\[''\\]\\})/U", $tocChunkContents, $regMatches);
+				$length = sizeof($regMatches[2]);
+				$fileList = Array();
+				for ($i = 0; $i < $length; $i++) {
+					// key is the identifier id, value is hash with key relative file location and value title
+					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
+				}
+
+				// now to walk the tree
+				$matches = null;
+				$returnValue = preg_match_all('/\\{i:(\\d*),c:(\\d*)(,n:\\[|[\\}\\]]*)/', $tocContents, $matches);
+				$fileOrder = $matches[1];
+				$elementTail = $matches[3];
+
+				$media_lookup = Array();
+				$html_post_lookup = $this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, true, $html_post_lookup, $media_lookup, $settings );
+				$this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, false, $html_post_lookup, $media_lookup, $settings );
+
+			} else {
+				echo '<H4>Failed to read ZIP: failed, code :' . $res.'</H4>';
+			}
+		} else {
+			echo '<H4>File uploaded is not ZIP or RAR</H4>';
+		}
+		echo '</ul>';
+	}
 }

@@ -175,7 +175,7 @@ class HTMLImportPluginAdmin {
 		$this->plugin_screen_hook_suffix = add_options_page(
 				__( 'GDN HTML Importer', $this->plugin_slug ),
 				__( 'GDN HTML Importer', $this->plugin_slug ),
-				'manage_options',
+				'edit_pages',
 				$this->plugin_slug,
 				array( $this, 'display_plugin_admin_page' )
 		);
