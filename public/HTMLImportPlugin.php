@@ -2,6 +2,10 @@
 require_once( dirname( __FILE__ ) . '/../admin/includes/HtmlImportSettings.php' );
 require_once( dirname( __FILE__ ) . '/includes/WPMetaConfigs.php' );
 require_once( dirname( __FILE__ ) . '/includes/XMLHelper.php' );
+require_once( dirname( __FILE__ ) . '/includes/HTMLImportStages.php' );
+require_once( dirname( __FILE__ ) . '/includes/GridDeveloperHeaderFooterImportStage.php' );
+require_once( dirname( __FILE__ ) . '/includes/ImportHTMLStage.php' );
+require_once( dirname( __FILE__ ) . '/includes/UpdateLinksImportStage.php' );
 /**
  * Plugin Name.
  *
@@ -278,21 +282,6 @@ class HTMLImportPlugin {
 		wp_enqueue_script( $this->plugin_slug . '-plugin-script', plugins_url( 'assets/js/public.js', __FILE__ ), array( 'jquery' ), self::VERSION );
 	}
 
-	private function getGridDirectorHeader($title) {
-		$title = 'Grid Director Developer Network : '.$title;
-		$subTitle = '';
-//		$header = '[vc_row][vc_column width="1/1"][mk_fancy_title tag_name="h2" style="true" color="#4a266d" size="24" font_weight="bolder" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$title.'[/mk_fancy_title][mk_fancy_title tag_name="h2" style="false" color="#393836" size="24" font_weight="300" margin_top="0" margin_bottom="18" font_family="Ubuntu" font_type="google" align="left"]'.$subTitle.'[/mk_fancy_title][mk_padding_divider size="10" width="1/1" el_position="first last"][vc_column_text disable_pattern="false" align="left" margin_bottom="0" p_margin_bottom="20" width="1/1" el_position="first last"]';
-		$header = '<h2 class="resource-title">'.$title.'</h2>';
-		return $header;
-	}
-
-	private function getGridDirectorFooter() {
-		//$footer = '[/vc_column_text][mk_padding_divider size="20" width="1/1" el_position="first last"][/vc_column][/vc_row]';
-		//return $footer;
-		return '';
-	}
-
-
 	private function get_title( SimpleXMLElement $html_file ) {
 		$title = '';
 		foreach ( $html_file->head->title as $titleElement ) {
@@ -302,56 +291,10 @@ class HTMLImportPlugin {
 		return $title;
 	}
 
-	private function get_body( SimpleXMLElement $html_file, $filepath, $html_post_lookup ) {
-		// TODO: paths are all unix specific?
-
-		$body = $html_file->body->asXML();
-
-		$link_table = Array();
-		$all_links  = $html_file->xpath( '//a[@href]' );
-		// TODO: encapsulate this in a function
-		if ( $all_links ) {
-			foreach ( $all_links as $link ) {
-
-				foreach ( $link->attributes() as $attribute => $value ) {
-					$path = '' . $value;
-					if ( 0 == strcasecmp( 'href', $attribute ) ) {
-						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) {
-							if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) { // if html or htm
-								if ( $path[0] != '/' ) {
-									$fullpath = realpath( $filepath . '/' . $path );
-								} else {
-									$fullpath = $path;
-								}
-								if ($fullpath) {
-									if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
-										$link_table[$path] = $fullpath;
-									}
-								}
-								else {
-									echo '<span>***could not update link '.$path.'</span><br>';
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		foreach ( $link_table as $link => $full_link ) {
-			$post_id    = $html_post_lookup[$full_link];
-			$post_link  = get_permalink( $post_id );
-			$search_str = '/(\b[hH][rR][eE][fF]\s*=\s*")(\b' . preg_quote( $link, '/' ) . '\b)(")/';
-			$body       = preg_replace( $search_str, '$1' . preg_quote( $post_link, '/' ) . '$3', $body );
-		}
-
-
-		return $body;
-	}
-
 	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
 		$pageMeta = new \html_import\WPMetaConfigs();
+		$stages = new \html_import\HTMLImportStages();
 
 		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
 
@@ -373,9 +316,19 @@ class HTMLImportPlugin {
 			}
 		}
 		$pageMeta->setPostStatus('publish');
+		$pageMeta->setSourcePath($source_file);
 		if ( !$stub_only ) {
 			if (!is_null($file_as_xml_obj)) {
-				$pageMeta->setPostContent($this->getGridDirectorHeader(htmlspecialchars($title)).$this->get_body( $file_as_xml_obj, dirname( $source_file ), $html_post_lookup ).$this->getGridDirectorFooter());
+				$htmlImportStage = new html_import\ImportHTMLStage();
+				$GDNHeaderFooterStage = new html_import\GridDeveloperHeaderFooterImportStage();
+				$updateLinksImportStage = new html_import\UpdateLinksImportStage();
+
+				$htmlImportStage->process($stages, $pageMeta, $file_as_xml_obj->body->asXML());
+
+				$GDNHeaderFooterStage->process($stages, $pageMeta, $pageMeta->getPostContent());
+
+				$updateLinksImportStage->process($stages, $pageMeta, $pageMeta->getPostContent(), $html_post_lookup);
+
 			}
 		}
 		$pageMeta->setPostType('page');

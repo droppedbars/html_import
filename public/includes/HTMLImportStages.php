@@ -13,7 +13,7 @@ class HTMLImportStages {
 	private $importHtml = true;
 	private $importMedia = true;
 	private $updateLinks = true;
-	private $addGDNHeaderAndFooter = false;
+	private $addGDNHeaderAndFooter = true;
 
 	/**
 	 * @param boolean $addGDNHeaderAndFooter
