@@ -6,6 +6,7 @@ require_once( dirname( __FILE__ ) . '/includes/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/includes/GridDeveloperHeaderFooterImportStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/ImportHTMLStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/UpdateLinksImportStage.php' );
+require_once( dirname( __FILE__ ) . '/includes/MediaImportStage.php' );
 /**
  * Plugin Name.
  *
@@ -291,10 +292,9 @@ class HTMLImportPlugin {
 		return $title;
 	}
 
-	private function importAnHTML( $source_file, $stub_only = true, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
+	private function importAnHTML( $source_file, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
 		$pageMeta = new \html_import\WPMetaConfigs();
-		$stages = new \html_import\HTMLImportStages();
 
 		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
 
@@ -369,144 +369,7 @@ class HTMLImportPlugin {
 		return $pageMeta;
 	}
 
-	private function importMedia( $post_id, $source_path, &$media_lookup ) {
-
-		$body        = get_post( $post_id )->post_content;
-		if (is_null($body) || strcmp('', $body) == 0) {
-			echo '** the body for post '.$post_id.' was empty, no media to import.';
-			return;
-		}
-		$media_table = Array();
-
-		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromString($body);
-
-		// import img srcs
-		$all_imgs = $file_as_xml_obj->xpath( '//img[@src]' );
-		if ( $all_imgs ) {
-			foreach ( $all_imgs as $img ) {
-
-				foreach ( $img->attributes() as $attribute => $value ) {
-					$path = '' . $value;
-					if ( 0 == strcasecmp( 'src', $attribute ) ) {
-						// TODO: this is duplicated above, refactor it out
-						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // if it's local
-							if ( ( ! is_null( $media_lookup ) && ( ! array_key_exists( $path, $media_table ) ) ) ) {
-
-								if ( $path[0] != '/' ) {
-									$fullpath = realpath( dirname( $source_path ) . '/' . $path );
-								} else {
-									$fullpath = $path;
-								}
-								if ( array_key_exists( $fullpath, $media_lookup ) ) {
-									$attach_id = $media_lookup[$fullpath];
-									require_once( ABSPATH . 'wp-admin/includes/image.php' );
-									$attach_data = wp_get_attachment_metadata( $attach_id );
-									wp_update_attachment_metadata( $attach_id, $attach_data );
-								} else {
-									$filename = basename( $fullpath );
-									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
-									if ( $upload['error'] ) {
-										echo '<li>***Unable to upload media file ' . $filename . '</li>';
-									} else {
-										echo '<li>' . $filename . ' media file uploaded.</li>';
-										$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
-										$attachment  = array(
-												'guid'           => $upload['file'],
-												'post_mime_type' => $wp_filetype['type'],
-												'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $upload['file'] ) ),
-												'post_content'   => '',
-												'post_status'    => 'inherit' );
-										$attach_id   = wp_insert_attachment( $attachment, $upload['file'], $post_id );
-										require_once( ABSPATH . 'wp-admin/includes/image.php' );
-										$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
-										wp_update_attachment_metadata( $attach_id, $attach_data );
-										$media_lookup[$fullpath] = $attach_id;
-										$media_table[$path]      = $fullpath;
-										echo '<li>' . $filename . ' attached to post ' . $post_id . '</li>';
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// linked media
-		$all_links = $file_as_xml_obj->xpath( '//a[@href]' );
-		// TODO: encapsulate this in a function
-		if ( $all_links ) {
-			foreach ( $all_links as $link ) {
-
-				foreach ( $link->attributes() as $attribute => $value ) {
-					$path = '' . $value;
-					if ( 0 == strcasecmp( 'href', $attribute ) ) {
-						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) {
-
-							if ( preg_match( '/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower( $path ) ) ) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
-								if ( ( ! is_null( $media_lookup ) ) ) {
-									if ( $path[0] != '/' ) {
-										$fullpath = realpath( dirname( $source_path ) . '/' . $path );
-									} else {
-										$fullpath = $path;
-									}
-									if ( array_key_exists( $fullpath, $media_lookup ) ) {
-										$attach_id = $media_lookup[$fullpath];
-										require_once( ABSPATH . 'wp-admin/includes/image.php' );
-										$attach_data = wp_get_attachment_metadata( $attach_id );
-										wp_update_attachment_metadata( $attach_id, $attach_data );
-									} else {
-										$filename = basename( $fullpath );
-
-										$upload = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
-										if ( $upload['error'] ) {
-											echo '<li>***Unable to upload media file ' . $filename . '</li>';
-										} else {
-											echo '<li>' . $filename . ' media file uploaded.</li>';
-											$wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
-											$attachment  = array(
-													'guid'           => $upload['file'],
-													'post_mime_type' => $wp_filetype['type'],
-													'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $upload['file'] ) ),
-													'post_content'   => '',
-													'post_status'    => 'inherit' );
-											$attach_id   = wp_insert_attachment( $attachment, $upload['file'], $post_id );
-											require_once( ABSPATH . 'wp-admin/includes/image.php' );
-											$attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
-											wp_update_attachment_metadata( $attach_id, $attach_data );
-											$media_lookup[$fullpath] = $attach_id;
-
-											$media_table[$path] = $fullpath;
-											echo '<li>' . $filename . ' attached to post ' . $post_id . '</li>';
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		foreach ( $media_table as $media_item => $full_media_path ) {
-			$media_id   = $media_lookup[$full_media_path];
-			$media_url  = wp_get_attachment_url( $media_id );
-			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/';
-			$body       = preg_replace( $search_str, '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // img src
-			$body       = preg_replace( '/(\b[hH][rR][eE][fF]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/', '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // a href
-		}
-
-		$page['ID']           = $post_id;
-		$page['post_content'] = $body;
-		if ( wp_update_post( $page ) > 0 ) {
-			echo '<li>Post ' . $page['ID'] . ' updated with correct image links.</li>';
-		} else {
-			echo '<li>***Post ' . $page['ID'] . ' could not be updated with correct image links.</li>';
-		}
-
-	}
-
-	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 		$attributes = $node->attributes;
 		$title      = null;
 		$src        = null;
@@ -562,13 +425,16 @@ class HTMLImportPlugin {
 
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
+				$stages = new \html_import\HTMLImportStages();
 				if ( $stubs_only ) {
-					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $parent_page->getPostId();
+					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $postMeta->getPostId();
 				} else {
-					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
-					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
+					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$mediaImportStage = new html_import\MediaImportStage();
+					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
+					$postMeta->updateWPPost();
+					update_post_meta( $postMeta->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -580,7 +446,7 @@ class HTMLImportPlugin {
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
 			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $children->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
+				$this->processNode( $children->item( $i ), $stubs_only, $postMeta, $html_post_lookup, $media_lookup, $settings );
 			}
 		}
 	}
@@ -609,7 +475,7 @@ class HTMLImportPlugin {
 		return $html_post_lookup;
 	}
 
-	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
+	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
 
 		$title      = $pageTitle;
 		$src = realpath( $flare_path . $pagePath );
@@ -633,20 +499,24 @@ class HTMLImportPlugin {
 
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
+				$stages = new \html_import\HTMLImportStages();
 				if ( $stubs_only ) {
-					$parent_page = $this->importAnHTML( $src, true, $settings, $parent_page, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $parent_page->getPostId();
+					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+					$html_post_lookup[$src] = $postMeta->getPostId();
 				} else {
-					$parent_page = $this->importAnHTML( $src, false, $settings, $parent_page, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
-					update_post_meta( $parent_page->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
+					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$mediaImportStage = new html_import\MediaImportStage();
+					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
+					$postMeta->updateWPPost();
+					//$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
+					update_post_meta( $postMeta->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
 			}
 		}
 
-		return $parent_page;
+		return $postMeta;
 	}
 
 	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
