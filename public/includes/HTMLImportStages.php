@@ -13,6 +13,21 @@ class HTMLImportStages {
 	private $importHtml = true;
 	private $importMedia = true;
 	private $updateLinks = true;
+	private $configureTemplate = true;
+
+	/**
+	 * @param boolean $setTemplate
+	 */
+	public function setConfigureTemplate( $setTemplate ) {
+		$this->configureTemplate = $setTemplate;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function doesConfigureTemplate() {
+		return $this->configureTemplate;
+	}
 	private $addGDNHeaderAndFooter = true;
 
 	/**

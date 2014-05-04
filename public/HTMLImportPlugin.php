@@ -7,6 +7,8 @@ require_once( dirname( __FILE__ ) . '/includes/GridDeveloperHeaderFooterImportSt
 require_once( dirname( __FILE__ ) . '/includes/ImportHTMLStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/UpdateLinksImportStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/MediaImportStage.php' );
+require_once( dirname( __FILE__ ) . '/includes/SetTemplateStage.php' );
+
 /**
  * Plugin Name.
  *
@@ -434,7 +436,9 @@ class HTMLImportPlugin {
 					$mediaImportStage = new html_import\MediaImportStage();
 					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 					$postMeta->updateWPPost();
-					update_post_meta( $postMeta->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
+					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
+					$setTemplateStage = new html_import\SetTemplateStage();
+					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -508,8 +512,9 @@ class HTMLImportPlugin {
 					$mediaImportStage = new html_import\MediaImportStage();
 					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 					$postMeta->updateWPPost();
-					//$this->importMedia( $parent_page->getPostId(), $src, $media_lookup );
-					update_post_meta( $postMeta->getPostId(), '_wp_page_template', $settings->getTemplate()->getValue() );
+					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
+					$setTemplateStage = new html_import\SetTemplateStage();
+					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
