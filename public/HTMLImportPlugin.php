@@ -524,59 +524,33 @@ class HTMLImportPlugin {
 		return $postMeta;
 	}
 
-	private function process_flare_node( $flare_path, &$index, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parent_page = null, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+	function processN(Array $anN, $flare_path, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parentPage = null, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings) {
+		foreach ($anN as $value) {
+			$iValue = $value['i'];
 
-		// TODO: this algorithm must be reimagined!  this is horrid and hacky!
+			$pagePath = key($pages[$iValue]);
+			$pageTitle = json_decode('"'.$pages[$iValue][$pagePath].'"'); // converts unicode chars
 
-		for ( $i = $index; $i < sizeof($orderIds); $i++) {
-			$order = $orderIds[$i];
-			$tail = $elementTails[$i];
-			$pagePath = key($pages[$order]);
-			$pageTitle = $pages[$order][$pagePath];
+			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $iValue, $pagePath, $pageTitle, $settings);
 
-			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $order, $pagePath, $pageTitle, $settings);
-			//echo $index.' '.$order.' '.$pageTitle.'<br>';
-			if (strcmp($tail, '}') == 0) {
-				// next element is a sibling
-				continue;
-			} else if (strcmp($tail, ',n:[') == 0) {
-				//next element is a child
-				$i++;
-
-				$levels = $this->process_flare_node($flare_path, $i, $orderIds, $elementTails, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
-				if ($levels > 0) {
-					$index = $i; // this is to keep the counter counting
-					return $levels - 1;
-				}
-			} else {
-				// move up
-				$levels = substr_count($tail, '}');
-				if ($i == (sizeof($orderIds) - 1)){
-					$levels = $levels - 2;
-				}
-				$index = $i;
-				return $levels -2; // return number of levels to return
+			if (array_key_exists('n', $value)) {
+				$this->processN($value['n'], $flare_path, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
 			}
-
 		}
-		return 0;
 	}
 
-	private function process_flare_index( $flare_path, Array $orderIds, Array $elementTails, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
+	private function process_flare_index( Array $flareIndex, $flare_path, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
 		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
-
-		$index = 0;
-
 		$parent_page = new \html_import\WPMetaConfigs();
 		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
 		if (!$hasParent) {
 			$parent_page = null;
 		}
-		$this->process_flare_node($flare_path, $index, $orderIds, $elementTails, $pages, $stubs_only, $parent_page,$html_post_lookup, $media_lookup, $settings);
+		$this->processN($flareIndex,$flare_path, $pages, $stubs_only, $parent_page,$html_post_lookup, $media_lookup, $settings);
 
 		return $html_post_lookup;
 	}
@@ -653,21 +627,28 @@ class HTMLImportPlugin {
 				preg_match_all("/('(.*)':\\{i:\\[(\\d*)\\],t:\\['(.*)?'\\],b:\\[''\\]\\})/U", $tocChunkContents, $regMatches);
 				$length = sizeof($regMatches[2]);
 				$fileList = Array();
+				// TODO: can simplify this with the json decoder
 				for ($i = 0; $i < $length; $i++) {
 					// key is the identifier id, value is hash with key relative file location and value title
 					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
 				}
 
 				// now to walk the tree
+				$count = null;
 				$matches = null;
-				$returnValue = preg_match_all('/\\{i:(\\d*),c:(\\d*)(,n:\\[|[\\}\\]]*)/', $tocContents, $matches);
-				$fileOrder = $matches[1];
-				$elementTail = $matches[3];
+				preg_match('/^define\((.*)\);$/', $tocContents, $matches);
+
+				$returnValue = preg_replace('/(\\w*):/U', '"$1":', $matches[1], -1, $count);
+
+				$jsonString = str_replace("'", "\"", $returnValue);
+
+
+				$jsonArray = json_decode($jsonString, true);
 
 				$media_lookup = Array();
-				$html_post_lookup = $this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, true, $html_post_lookup, $media_lookup, $settings );
-				$this->process_flare_index( $path.'-'.$path_modifier, $fileOrder, $elementTail, $fileList, false, $html_post_lookup, $media_lookup, $settings );
-
+				$html_post_lookup = Array();
+				$html_post_lookup = $this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, true, $html_post_lookup, $media_lookup, $settings);
+				$this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, false, $html_post_lookup, $media_lookup, $settings);
 			} else {
 				echo '<H4>Failed to read ZIP: failed, code :' . $res.'</H4>';
 			}
