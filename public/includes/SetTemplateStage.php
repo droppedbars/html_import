@@ -12,19 +12,13 @@ require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
 
-class ImportHTMLStage extends ImportStage {
+class SetTemplateStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
-		return $stagesSettings->doesImportHtml();
+		return $stagesSettings->doesConfigureTemplate();
 	}
 
 	protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$other = null) {
-		$meta->setPostContent($this->replaceBodyWithDivs($body));
-	}
-
-
-	private function replaceBodyWithDivs($body) {
-		// TODO
-		return $body;
+		update_post_meta( $meta->getPostId(), '_wp_page_template', $meta->getPageTemplate() );
 	}
 
 } 

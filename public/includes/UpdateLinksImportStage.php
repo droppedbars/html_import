@@ -8,6 +8,9 @@
 
 namespace html_import;
 
+require_once( dirname( __FILE__ ) . '/ImportStage.php' );
+require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
+require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
 
 class UpdateLinksImportStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
