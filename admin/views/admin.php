@@ -20,6 +20,17 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 	if (isset($_POST['submit'])) {
 		$settingsToProcess = new html_import\admin\HtmlImportSettings();
 		$settingsToProcess->loadFromDB(); //loads the defaults in case not all settings are passed in the POST
+
+
+		// TODO: temp to simplify interface for now
+		if (strcmp($_POST['index-type'], 'xml') == 0) {
+			$_POST['file-type'] = 'xml';
+			$_POST['import-source'] = 'location';
+		} else {
+			$_POST['file-type'] = 'flare';
+			$_POST['import-source'] = 'upload';
+		}
+
 		$settingsToProcess->loadFromPOST();
 		$settingsToProcess->saveToDB();
 		// TODO: improve support for combinations:
@@ -29,6 +40,31 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		 *  upload, xml
 		 *  upload, flare
 		 */
+		?>
+
+			<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+			<script>
+				$(document).ready(function() {
+					$('#noLogMessages').click(function() {
+						$('#noLogMessages').hide('fast');
+						$('#logMessages').show('fast');
+					});
+					$('#logMessages').click(function() {
+						$('#noLogMessages').show('fast');
+						$('#logMessages').hide('fast');
+					});
+				});
+			</script>
+
+		<?php
+
+		echo '<div id="noLogMessages" style="display:none;">';
+		echo "<b>show log messages</b>";
+		echo '</div>';
+		echo '<div id="logMessages" style="display:visible;">';
+
+		echo "<b>hide log messages</b>";
+
 		if ((strcmp('location', $settingsToProcess->getImportSource()->getValue()) == 0) && (strcmp('xml', $settingsToProcess->getIndexType()->getValue()) == 0) && (strcmp('index', $settingsToProcess->getFileType()->getValue()) == 0)) {
 			HTMLImportPlugin::get_instance()->import_html_from_xml_index( $settingsToProcess );
 		} else if ((strcmp('upload', $settingsToProcess->getImportSource()->getValue()) == 0) && (strcmp('flare', $settingsToProcess->getIndexType()->getValue()) == 0) && (strcmp('zip', $settingsToProcess->getFileType()->getValue()) == 0)) {
@@ -36,6 +72,7 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		} else {
 			echo '<H1>Unsupported combination of location/upload</H1>';
 		}
+		echo '</div>';
 	}
 }
 $settings = new html_import\admin\HtmlImportSettings();
@@ -51,10 +88,11 @@ $settings->loadFromDB();
 
 		<p id="index-type">
 			<h3>Select the type of import index</h3>
-			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>XML</label><br>
-			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
+			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>Confluence XML</label><br>
+			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" onclick="javascript: jQuery('#define-upload').show('fast'); jQuery('#define-location').hide('fast');" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
 			<!-- <label for="import-type-raw"><input type="radio" name="import-type" id="import-type-raw" value="raw" />No Index</label><br> -->
 		</p>
+		<div style="display:none;">
 		<p id="file-type">
 			<h3>Select the source file type</h3>
 			<label for="file-type-index"><input type="radio" name="file-type" id="file-type-index" value="index"  <?php checked(strcmp('index', $settings->getFileType()->getValue()),0,true); ?> />Index File</label><br>
@@ -65,6 +103,7 @@ $settings->loadFromDB();
 			<label for="import-source-location"><input type="radio" name="import-source" id="import-source-location" value="location" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('location', $settings->getImportSource()->getValue()),0,true); ?> />Location (local or remote)</label><br>
 			<label for="import-source-upload"><input type="radio" name="import-source" id="import-source-upload" value="upload" onclick="javascript: jQuery('#define-upload').show('fast'); jQuery('#define-location').hide('fast');"<?php checked(strcmp('upload', $settings->getImportSource()->getValue()),0,true); ?> />Upload ZIP</label><br>
 		</p>
+		</div>
 		<p id="define-location" style="display:<?php echo (strcmp('location', $settings->getImportSource()->getValue()) == 0 ? 'visible' : 'none');?>;">
 			<label for="file-location"><?php _e( 'Enter in the absolute file location of the index file:', 'file_location' ); ?></label>
 			<input type="text" id="file-location" name="file-location" size="50" value="<?php echo $settings->getFileLocation()->getEscapedAttributeValue();?>"/>
@@ -101,7 +140,11 @@ $settings->loadFromDB();
 				$pages = get_pages($search_args);
 				if (isset($pages)) {
 					foreach ($pages as $page) {
-						echo '<option value="'.$page->ID.'" '.selected($settings->getParentPage()->getValue() == $page->ID, true, false).'>'.htmlspecialchars($page->post_title).'</option>';
+						$ancestors = get_ancestors($page->ID, 'page');
+						$strlen = strlen($page->post_title) + (2*sizeof($ancestors));
+						$pageName = str_pad($page->post_title, $strlen, " ", STR_PAD_LEFT);
+						$pageName = str_replace(" ", "&nbsp;", $pageName);
+						echo '<option value="'.$page->ID.'" '.selected($settings->getParentPage()->getValue() == $page->ID, true, false).'>'.$pageName.'</option>';
 					}
 				}
 				?>
@@ -147,8 +190,13 @@ $settings->loadFromDB();
 			$categories = get_categories($search_args);
 			if (isset($categories)) {
 				foreach ($categories as $category) {
+					$ancestors = get_ancestors($category->cat_ID, 'category');
+					$strlen = strlen($category->name) + (2*sizeof($ancestors));
+					$catName = str_pad($category->name, $strlen, " ", STR_PAD_LEFT);
+					$catName = str_replace(" ", "&nbsp;", $catName);
+
 					// TODO: value should be the cat_ID but need to modify back end to support this
-					echo '<option value="'.$category->name.'" '.selected($settings->getCategories()->testValue($category->name), true, false).'>'.htmlspecialchars($category->name).'</option>';
+					echo '<option value="'.$category->name.'" '.selected($settings->getCategories()->testValue($category->name), true, false).'>'.$catName.'</option>';
 				}
 			} ?>
 			</select>
