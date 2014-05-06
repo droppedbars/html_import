@@ -24,10 +24,10 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 
 		// TODO: temp to simplify interface for now
 		if (strcmp($_POST['index-type'], 'xml') == 0) {
-			$_POST['file-type'] = 'xml';
+			$_POST['file-type'] = 'index';
 			$_POST['import-source'] = 'location';
 		} else {
-			$_POST['file-type'] = 'flare';
+			$_POST['file-type'] = 'zip';
 			$_POST['import-source'] = 'upload';
 		}
 
@@ -173,6 +173,7 @@ $settings->loadFromDB();
 		<select multiple name="category[]">
 			<?php
 			// TODO: this should only have to be run for the first element, not repeatedly
+			// TODO: bug, does not sort them by hierarchy...
 			$search_args = array(		'type'                     => 'post',
 															 'child_of'                 => 0,
 															 'parent'                   => '',
