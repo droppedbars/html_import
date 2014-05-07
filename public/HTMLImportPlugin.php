@@ -601,7 +601,8 @@ class HTMLImportPlugin {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
 		$mime_type = $zip_to_upload['type'];
-	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0)) {
+	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0)) {
+			echo 'mime-type: '.$mime_type;
 			$zip = new ZipArchive;
 			$res = $zip->open($zip_to_upload['tmp_name']);
 			if ($res === TRUE) {
