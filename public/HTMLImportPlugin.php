@@ -298,9 +298,13 @@ class HTMLImportPlugin {
 
 		$pageMeta = new \html_import\WPMetaConfigs();
 
-		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
+		if (is_null($source_file)) {
+			$file_as_xml_obj = null;
+		} else {
+			$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
+		}
 
-		if (is_null($title)) {
+		if ((is_null($title)) && (!is_null($file_as_xml_obj))) {
 			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
 		} else {
 			$pageMeta->setPostTitle($title);
@@ -482,7 +486,11 @@ class HTMLImportPlugin {
 	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
 
 		$title      = $pageTitle;
-		$src = realpath( $flare_path . $pagePath );
+		if (is_null($pagePath)) {
+			$src = null;
+		} else {
+			$src = realpath( $flare_path . $pagePath );
+		}
 
 		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
@@ -528,8 +536,9 @@ class HTMLImportPlugin {
 		foreach ($anN as $value) {
 			$iValue = $value['i'];
 
-			$pagePath = key($pages[$iValue]);
-			$pageTitle = json_decode('"'.$pages[$iValue][$pagePath].'"'); // converts unicode chars
+			$pagePath = $pages[$iValue]['path'];
+
+			$pageTitle = json_decode('"'.$pages[$iValue]['title'].'"'); // converts unicode chars
 
 			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $iValue, $pagePath, $pageTitle, $settings);
 
@@ -586,6 +595,39 @@ class HTMLImportPlugin {
 		}
 	}
 
+	private function getFlareFileList( $chunkFile ) {
+
+		$tocChunkContents = file_get_contents($chunkFile);
+
+		$count = null;
+		$matches = null;
+		preg_match('/^define\((.*)\);$/', $tocChunkContents, $matches);
+
+		$returnValue = preg_replace('/(\\w):/', '"$1":', $matches[1], -1, $count);
+
+		$jsonString = str_replace("'", "\"", $returnValue);
+
+
+		$jsonArray = json_decode($jsonString, true);
+
+		$fileList = Array();
+		foreach ($jsonArray as $path => $chunk) {
+			$id = $chunk['i'];
+			$title = $chunk['t'];
+			if (sizeof($id) > 1) {
+				foreach ($id as $key => $value) {
+					$fileList[$value]['path'] = null;
+					$fileList[$value]['title'] = $title[$key];
+				}
+			} else {
+				$fileList[$id[0]]['path'] = $path;
+				$fileList[$id[0]]['title'] = $title[0];
+			}
+		}
+
+		return $fileList;
+	}
+
 	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
 		/*
 		 * $zip_to_uplaod is an array with elements:
@@ -622,17 +664,10 @@ class HTMLImportPlugin {
 				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
 				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
 
-				$tocChunk0JS = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
-				$tocChunkContents = file_get_contents($tocChunk0JS);
-				// parses the chunk file and gets the list of all files to import
-				preg_match_all("/('(.*)':\\{i:\\[(\\d*)\\],t:\\['(.*)?'\\],b:\\[''\\]\\})/U", $tocChunkContents, $regMatches);
-				$length = sizeof($regMatches[2]);
-				$fileList = Array();
-				// TODO: can simplify this with the json decoder
-				for ($i = 0; $i < $length; $i++) {
-					// key is the identifier id, value is hash with key relative file location and value title
-					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
-				}
+
+				// TODO: handle chunk name and number of chunks
+				$chunkFile = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
+				$fileList = $this->getFlareFileList($chunkFile);
 
 				// now to walk the tree
 				$count = null;
