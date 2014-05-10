@@ -82,12 +82,12 @@ class WPMetaConfigs {
 	 *
 	 * @return bool
 	 */
-	public function loadFromPostID($post_id) {
-		$post_object = get_post($post_id, 'OBJECT');
-		if (is_null($post_object)) {
+	public function loadFromPostID( $post_id ) {
+		$post_object = get_post( $post_id, 'OBJECT' );
+		if ( is_null( $post_object ) ) {
 			return false;
 		} else {
-			return $this->loadFromPostObject($post_object);
+			return $this->loadFromPostObject( $post_object );
 		}
 	}
 
@@ -96,23 +96,23 @@ class WPMetaConfigs {
 	 *
 	 * @return bool
 	 */
-	public function loadFromPostObject(\WP_Post $post) {
-		if (is_null($post)) {
+	public function loadFromPostObject( \WP_Post $post ) {
+		if ( is_null( $post ) ) {
 			return false;
 		}
 
-		$this->post_id = $post->ID;
+		$this->post_id     = $post->ID;
 		$this->post_author = $post->post_author;
-		$this->post_name = $post->post_name;
-		$this->post_type = $post->post_type;
-		$this->post_title = $post->post_title;
-		$this->post_date = $post->post_date;
+		$this->post_name   = $post->post_name;
+		$this->post_type   = $post->post_type;
+		$this->post_title  = $post->post_title;
+		$this->post_date   = $post->post_date;
 		// $post->post_date_gmt
-		$this->post_content = $post->content;
-		$this->post_excerpt = $post->post_excerpt;
+		$this->post_content   = $post->content;
+		$this->post_excerpt   = $post->post_excerpt;
 		$this->comment_status = $post->comment_status;
-		$this->ping_status = $post->ping_status;
-		$this->post_status = $post->post_status;
+		$this->ping_status    = $post->ping_status;
+		$this->post_status    = $post->post_status;
 		// $post->post_password
 		$this->post_parent = $post->post_parent;
 		// $post->post_modified
@@ -129,26 +129,26 @@ class WPMetaConfigs {
 	public function getPostArray() {
 		$post_array = Array(
 
-			'ID' => $this->post_id,
-			'post_author' => $this->post_author,
-			'post_name' => $this->post_name,
-			'post_type' => $this->post_type,
-			'post_title' => $this->post_title,
-			'post_date' => $this->post_date,
+				'ID'             => $this->post_id,
+				'post_author'    => $this->post_author,
+				'post_name'      => $this->post_name,
+				'post_type'      => $this->post_type,
+				'post_title'     => $this->post_title,
+				'post_date'      => $this->post_date,
 			// 'post_date_gmt' $post->post_date_gmt
-			'post_content' => $this->post_content,
-			'post_excerpt' => $this->post_excerpt,
-			'comment_status' => $this->comment_status,
-			'ping_status' => $this->ping_status,
-			'post_status' => $this->post_status,
+				'post_content'   => $this->post_content,
+				'post_excerpt'   => $this->post_excerpt,
+				'comment_status' => $this->comment_status,
+				'ping_status'    => $this->ping_status,
+				'post_status'    => $this->post_status,
 			// $post->post_password
-			'post_parent' => $this->post_parent,
+				'post_parent'    => $this->post_parent,
 			// $post->post_modified
 			// 'post_date_gmt' $post->post_modified_gmt
 			// $post->comment_count
-			'menu_order' => $this->menu_order,
-			'post_category' => $this->post_category,
-			'page_template' => $this->page_template
+				'menu_order'     => $this->menu_order,
+				'post_category'  => $this->post_category,
+				'page_template'  => $this->page_template
 
 		);
 
@@ -158,7 +158,10 @@ class WPMetaConfigs {
 
 	public function updateWPPost() {
 		// TODO: handle WP_Error object if set to true.
-		$result = wp_insert_post($this->getPostArray(), true);
+		$result = wp_insert_post( $this->getPostArray(), true );
+		if (!is_wp_error($result)) {
+			$this->setPostId($result);
+		}
 		return $result;
 	}
 
@@ -283,7 +286,7 @@ class WPMetaConfigs {
 	 * @param mixed $post_name
 	 */
 	public function setPostName( $post_name ) {
-		$this->post_name = sanitize_title_with_dashes($post_name);
+		$this->post_name = sanitize_title_with_dashes( $post_name );
 	}
 
 	/**
@@ -327,7 +330,7 @@ class WPMetaConfigs {
 	 * @param mixed $post_title
 	 */
 	public function setPostTitle( $post_title ) {
-		$this->post_title = htmlspecialchars($post_title);
+		$this->post_title = htmlspecialchars( $post_title );
 	}
 
 	/**
@@ -352,6 +355,56 @@ class WPMetaConfigs {
 		return $this->post_type;
 	}
 
+	private function getTitleFromTag( \SimpleXMLElement $html_file ) {
+		$title = '';
+		foreach ( $html_file->head->title as $titleElement ) {
+			$title = '' . $titleElement;
+		}
 
+		return $title;
+	}
+
+	public function buildConfig( admin\HtmlImportSettings $settings, $source_file, $post_id = null, WPMetaConfigs $parent_page = null ) {
+
+		if ( ! is_null( $post_id ) ) {
+			$this->loadFromPostID( $post_id );
+		}
+
+		if ( is_null( $source_file ) ) {
+			$file_as_xml_obj = null;
+		} else {
+			$file_as_xml_obj = XMLHelper::getXMLObjectFromFile( $source_file );
+			$this->setPostContent($file_as_xml_obj->body->asXML());
+			$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
+		}
+
+
+		$this->setPostName( $this->getPostTitle() );
+		$this->setPostStatus( 'publish' );
+		$this->setSourcePath( $source_file );
+		$this->setPostType( 'page' );
+		$this->setCommentStatus( 'closed' );
+		$this->setPingStatus( 'closed' );
+
+		$category    = $settings->getCategories()->getValuesArray();
+		$categoryIDs = null;
+		if ( ! is_null( $category ) && is_array( $category ) ) {
+			foreach ( $category as $index => $cat ) {
+				$cat_id              = wp_create_category( trim( $cat ) );
+				$categoryIDs[$index] = intval( $cat_id );
+			}
+		}
+
+		$this->setPostCategory( $categoryIDs );
+		$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
+		if ( ! is_null( $parent_page ) ) {
+			$this->setPostParent( $parent_page->getPostId() );
+		}
+
+		if ( isset ( $order ) ) {
+			$this->setMenuOrder( $order );
+		}
+		$this->setPostAuthor( wp_get_current_user()->ID ); // TODO: should be in the settings object
+	}
 
 } 

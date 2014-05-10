@@ -296,80 +296,26 @@ class HTMLImportPlugin {
 
 	private function importAnHTML( $source_file, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
+		// TODO: category and order overrides
+
 		$pageMeta = new \html_import\WPMetaConfigs();
+		$post_id = null;
 
-		if (is_null($source_file)) {
-			$file_as_xml_obj = null;
-		} else {
-			$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
-		}
-
-		if ((is_null($title)) && (!is_null($file_as_xml_obj))) {
-			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
-		} else {
-			$pageMeta->setPostTitle($title);
-		}
-		$pageMeta->setPostName($pageMeta->getPostTitle());
-		$post               = get_page_by_title( $pageMeta->getPostTitle() );
+		$post = get_page_by_title( $title );
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
-				$pageMeta->setPostId($html_post_lookup[$source_file]);
+				$post_id = $html_post_lookup[$source_file];
 			}
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
-				$pageMeta->setPostId($post->ID);
-				echo '<li>Page with title '.$pageMeta->getPostTitle().' and ID '.$pageMeta->getPostId().' already exists, now tagged to be overwritten.</li>';
+				$post_id = $post->ID;
+				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		$pageMeta->setPostStatus('publish');
-		$pageMeta->setSourcePath($source_file);
-		if ( !$stub_only ) {
-			if (!is_null($file_as_xml_obj)) {
-				$htmlImportStage = new html_import\ImportHTMLStage();
-				$GDNHeaderFooterStage = new html_import\GridDeveloperHeaderFooterImportStage();
-				$updateLinksImportStage = new html_import\UpdateLinksImportStage();
+		$pageMeta->buildConfig($settings, $source_file, $post_id, $parent_page);
 
-				$htmlImportStage->process($stages, $pageMeta, $file_as_xml_obj->body->asXML());
-
-				$GDNHeaderFooterStage->process($stages, $pageMeta, $pageMeta->getPostContent());
-
-				$updateLinksImportStage->process($stages, $pageMeta, $pageMeta->getPostContent(), $html_post_lookup);
-
-			}
-		}
-		$pageMeta->setPostType('page');
-		$pageMeta->setCommentStatus('closed');
-		$pageMeta->setPingStatus('closed');
-		$pageMeta->setPostCategory($category);
-		$pageMeta->setPostDate(date( 'Y-m-d H:i:s', filemtime( $source_file ) ));
-
-		if (!is_null($parent_page)) {
-			$pageMeta->setPostParent($parent_page->getPostId());
-		}
-
-		if ( isset ( $order ) ) {
-			$pageMeta->setMenuOrder($order);
-		}
-		$pageMeta->setPostAuthor(wp_get_current_user()->ID);
-
-		if ( is_null( $post ) ) {
-			$updateResult = $pageMeta->updateWPPost();
-			if ( is_wp_error( $updateResult ) ) {
-				echo '<li>***Unable to create content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . '</li>';
-				return 0;
-			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
-				$pageMeta->setPostId($updateResult);
-			}
-		} else {
-			$updateResult = $pageMeta->updateWPPost();
-			if ( is_wp_error($updateResult) ) {
-				echo '<li>***Unable to fill content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . ': '.$updateResult->get_error_message().'</li>';
-				return 0;
-			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
-				$pageMeta->setPostId($updateResult);
-			}
+		if (!is_null($title)) {
+			$pageMeta->setPostTitle($title);
 		}
 
 		return $pageMeta;
@@ -434,15 +380,39 @@ class HTMLImportPlugin {
 				$stages = new \html_import\HTMLImportStages();
 				if ( $stubs_only ) {
 					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+					$updateResult = $postMeta->updateWPPost();
 					$html_post_lookup[$src] = $postMeta->getPostId();
+
+					if ( is_wp_error( $updateResult ) ) {
+						echo '<li>***Unable to create content ' . $postMeta->getPostTitle() . ' from ' . $postMeta->getSourcePath() . '</li>';
+					} else {
+						echo '<li>Stub post created from ' . $postMeta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $postMeta->getPostTitle() . '</li>';
+					}
 				} else {
 					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$htmlImportStage = new html_import\ImportHTMLStage();
+					$GDNHeaderFooterStage = new html_import\GridDeveloperHeaderFooterImportStage();
+					$updateLinksImportStage = new html_import\UpdateLinksImportStage();
 					$mediaImportStage = new html_import\MediaImportStage();
+
+					$htmlImportStage->process($stages, $postMeta, $postMeta->getPostContent());
+					$GDNHeaderFooterStage->process($stages, $postMeta, $postMeta->getPostContent());
+					$updateLinksImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup);
 					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 					$postMeta->updateWPPost();
 					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
 					$setTemplateStage = new html_import\SetTemplateStage();
 					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
+
+					$updateResult = $postMeta->updateWPPost();
+					if ( is_wp_error($updateResult)) {
+						echo '<li>***Unable to fill content ' . $postMeta->getPostTitle() . ' from ' . $postMeta->getSourcePath() . ': '.$updateResult->get_error_message().'</li>';
+
+					} else {
+						echo '<li>Content filled from ' . $postMeta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $postMeta->getPostTitle() . '</li>';
+					}
+
+
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -508,21 +478,45 @@ class HTMLImportPlugin {
 			}
 		}
 
+// TODO: create a new type of import for folders.
+		// refactor importAnHTML out into a class to generate the postmeta
 
 		if ( isset( $src ) ) {
 			if ( file_exists( $src ) ) {
 				$stages = new \html_import\HTMLImportStages();
 				if ( $stubs_only ) {
 					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+					$updateResult = $postMeta->updateWPPost();
 					$html_post_lookup[$src] = $postMeta->getPostId();
+
+					if ( is_wp_error( $updateResult ) ) {
+						echo '<li>***Unable to create content ' . $postMeta->getPostTitle() . ' from ' . $postMeta->getSourcePath() . '</li>';
+					} else {
+						echo '<li>Stub post created from ' . $postMeta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $postMeta->getPostTitle() . '</li>';
+					}
 				} else {
 					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
+					$htmlImportStage = new html_import\ImportHTMLStage();
+					$GDNHeaderFooterStage = new html_import\GridDeveloperHeaderFooterImportStage();
+					$updateLinksImportStage = new html_import\UpdateLinksImportStage();
 					$mediaImportStage = new html_import\MediaImportStage();
+
+					$htmlImportStage->process($stages, $postMeta, $postMeta->getPostContent());
+					$GDNHeaderFooterStage->process($stages, $postMeta, $postMeta->getPostContent());
+					$updateLinksImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup);
 					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
 					$postMeta->updateWPPost();
 					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
 					$setTemplateStage = new html_import\SetTemplateStage();
 					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
+
+					$updateResult = $postMeta->updateWPPost();
+					if ( is_wp_error($updateResult)) {
+						echo '<li>***Unable to fill content ' . $postMeta->getPostTitle() . ' from ' . $postMeta->getSourcePath() . ': '.$updateResult->get_error_message().'</li>';
+
+					} else {
+						echo '<li>Content filled from ' . $postMeta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $postMeta->getPostTitle() . '</li>';
+					}
 				}
 			} else {
 				echo '<li>Unable to find ' . $src . '</li>';
@@ -603,7 +597,7 @@ class HTMLImportPlugin {
 		$matches = null;
 		preg_match('/^define\((.*)\);$/', $tocChunkContents, $matches);
 
-		$returnValue = preg_replace('/(\\w):/', '"$1":', $matches[1], -1, $count);
+		$returnValue = preg_replace('/(\\w):([\{\[])/', '"$1":$2', $matches[1], -1, $count);
 
 		$jsonString = str_replace("'", "\"", $returnValue);
 
