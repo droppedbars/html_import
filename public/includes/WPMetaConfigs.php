@@ -405,6 +405,8 @@ class WPMetaConfigs {
 			$this->setMenuOrder( $order );
 		}
 		$this->setPostAuthor( wp_get_current_user()->ID ); // TODO: should be in the settings object
+		$this->setPageTemplate($settings->getTemplate()->getValue());
+
 	}
 
 } 

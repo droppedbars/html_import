@@ -10,18 +10,18 @@ namespace html_import;
 
 require_once( dirname( __FILE__ ) . '/Importer.php' );
 
-class HTMLStubImporter extends Importer{
+class FolderImporter extends Importer{
+
 
 	function __construct() {
 	}
 	protected function doImport(admin\HtmlImportSettings $settings, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null) {
 		$updateResult = $meta->updateWPPost();
-		$html_post_lookup[$meta->getSourcePath()] = $meta->getPostId();
 
 		if ( is_wp_error( $updateResult ) ) {
-			echo '<li>***Unable to create content ' . $meta->getPostTitle() . ' from ' . $meta->getSourcePath() . '</li>';
+			echo '<li>***Unable to folder ' . $meta->getPostTitle() . ' from ' . $meta->getSourcePath() . '</li>';
 		} else {
-			echo '<li>Stub post created from ' . $meta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
+			echo '<li>Folder created from ' . $meta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
 		}
 
 	}
