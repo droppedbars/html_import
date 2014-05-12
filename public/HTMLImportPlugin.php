@@ -325,74 +325,77 @@ class HTMLImportPlugin {
 	}
 
 	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
-		$attributes = $node->attributes;
-		$title      = null;
-		$src        = null;
-		$category   = $settings->getCategories()->getValuesArray();
-		$tag        = Array();
-		$order      = 0;
 
-		if ( isset( $attributes ) ) {
-			for ( $i = 0; $i < $attributes->length; $i ++ ) {
-				$attribute = $attributes->item( $i )->nodeName;
-				switch ( $attribute ) {
-					case 'title':
-						$title = $attributes->item( $i )->nodeValue;
-						break;
-					case 'src':
-						$src = $attributes->item( $i )->nodeValue;
-						if ( $src[0] != '/' ) {
-							$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
-						}
-						break;
-					case 'category': // if category is set in XML, then overrides the web settings
-													 // TODO: should have a setting for if to use xml or web settings
-						$category = explode( ',', $attributes->item( $i )->nodeValue );
-						break;
-					case 'tag':
-						$tag = explode( ',', $attributes->item( $i )->nodeValue );
-						break;
-					case 'order':
-						$order = $attributes->item( $i )->nodeValue;
-						break;
-					/* future cases
-					case 'overwrite-existing':
-						break;
-					*/
-					default:
-						break;
+		if (strcmp($node->nodeName, 'document') == 0) {
+			$attributes = $node->attributes;
+			$title      = null;
+			$src        = null;
+			$category   = $settings->getCategories()->getValuesArray();
+			$tag        = Array();
+			$order      = 0;
+
+			if ( isset( $attributes ) ) {
+				for ( $i = 0; $i < $attributes->length; $i ++ ) {
+					$attribute = $attributes->item( $i )->nodeName;
+					switch ( $attribute ) {
+						case 'title':
+							$title = $attributes->item( $i )->nodeValue;
+							break;
+						case 'src':
+							$src = $attributes->item( $i )->nodeValue;
+							if ( $src[0] != '/' ) {
+								$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
+							}
+							break;
+						case 'category': // if category is set in XML, then overrides the web settings
+														 // TODO: should have a setting for if to use xml or web settings
+							$category = explode( ',', $attributes->item( $i )->nodeValue );
+							break;
+						case 'tag':
+							$tag = explode( ',', $attributes->item( $i )->nodeValue );
+							break;
+						case 'order':
+							$order = $attributes->item( $i )->nodeValue;
+							break;
+						/* future cases
+						case 'overwrite-existing':
+							break;
+						*/
+						default:
+							break;
+					}
 				}
 			}
-		}
 
-		if ( ! is_null( $category ) && is_array( $category ) ) {
-			foreach ( $category as $index => $cat ) {
-				$cat_id              = wp_create_category( trim( $cat ) );
-				$categoryIDs[$index] = intval( $cat_id );
+			if ( ! is_null( $category ) && is_array( $category ) ) {
+				foreach ( $category as $index => $cat ) {
+					$cat_id              = wp_create_category( trim( $cat ) );
+					$categoryIDs[$index] = intval( $cat_id );
+				}
 			}
-		}
-		if ( ! is_null( $tag ) && is_array( $tag ) ) {
-			foreach ( $tag as $t ) {
-				//TODO: support tags
+			if ( ! is_null( $tag ) && is_array( $tag ) ) {
+				foreach ( $tag as $t ) {
+					//TODO: support tags
+				}
 			}
-		}
 
 
-		$stages = new \html_import\HTMLImportStages();
-		$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
-		if ( file_exists( $src ) ) {
-			if ( $stubs_only ) {
-				$stubImport = new html_import\HTMLStubImporter();
-				$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+			$stages = new \html_import\HTMLImportStages();
+			$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+			if ( file_exists( $src ) ) {
+				if ( $stubs_only ) {
+					$stubImport = new html_import\HTMLStubImporter();
+					$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+				} else {
+					$fullImport = new html_import\HTMLFullImporter();
+					$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+				}
 			} else {
-				$fullImport = new html_import\HTMLFullImporter();
-				$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+				// Confluence imports do not have folders
+				//$folderImport = new html_import\FolderImporter();
+				//$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 			}
-		} else {
-			$folderImport = new html_import\FolderImporter();
-			$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 		}
-
 		// recurse through children nodes
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
