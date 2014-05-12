@@ -51,6 +51,7 @@ class MediaImportStage extends ImportStage {
 									require_once( ABSPATH . 'wp-admin/includes/image.php' );
 									$attach_data = wp_get_attachment_metadata( $attach_id );
 									wp_update_attachment_metadata( $attach_id, $attach_data );
+									$media_table[$path]      = $fullpath;
 								} else {
 									$filename = basename( $fullpath );
 									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
@@ -104,6 +105,8 @@ class MediaImportStage extends ImportStage {
 										require_once( ABSPATH . 'wp-admin/includes/image.php' );
 										$attach_data = wp_get_attachment_metadata( $attach_id );
 										wp_update_attachment_metadata( $attach_id, $attach_data );
+										$media_table[$path]      = $fullpath;
+
 									} else {
 										$filename = basename( $fullpath );
 
@@ -140,7 +143,7 @@ class MediaImportStage extends ImportStage {
 		foreach ( $media_table as $media_item => $full_media_path ) {
 			$media_id   = $media_lookup[$full_media_path];
 			$media_url  = wp_get_attachment_url( $media_id );
-			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/';
+			$search_str = '/(\b[iI][mM][gG]\s*[^>]*\s+[sS][rR][cC]\s*=\s*")([\b\/\.]*' . preg_quote( $media_item, '/' ) . '\b)(")/';
 			$body       = preg_replace( $search_str, '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // img src
 			$body       = preg_replace( '/(\b[hH][rR][eE][fF]\s*=\s*")(\b' . preg_quote( $media_item, '/' ) . '\b)(")/', '$1' . preg_quote( $media_url, '/' ) . '$3', $body ); // a href
 		}

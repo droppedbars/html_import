@@ -8,6 +8,9 @@ require_once( dirname( __FILE__ ) . '/includes/ImportHTMLStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/UpdateLinksImportStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/MediaImportStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/SetTemplateStage.php' );
+require_once( dirname( __FILE__ ) . '/includes/HTMLFullImporter.php' );
+require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
+require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 
 /**
  * Plugin Name.
@@ -296,156 +299,103 @@ class HTMLImportPlugin {
 
 	private function importAnHTML( $source_file, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
 
+		// TODO: category and order overrides
+
 		$pageMeta = new \html_import\WPMetaConfigs();
+		$post_id = null;
 
-		$file_as_xml_obj = \html_import\XMLHelper::getXMLObjectFromFile( $source_file );
-
-		if (is_null($title)) {
-			$pageMeta->setPostTitle($this->get_title( $file_as_xml_obj ));
-		} else {
-			$pageMeta->setPostTitle($title);
-		}
-		$pageMeta->setPostName($pageMeta->getPostTitle());
-		$post               = get_page_by_title( $pageMeta->getPostTitle() );
+		$post = get_page_by_title( $title );
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
-				$pageMeta->setPostId($html_post_lookup[$source_file]);
+				$post_id = $html_post_lookup[$source_file];
 			}
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
-				$pageMeta->setPostId($post->ID);
-				echo '<li>Page with title '.$pageMeta->getPostTitle().' and ID '.$pageMeta->getPostId().' already exists, now tagged to be overwritten.</li>';
+				$post_id = $post->ID;
+				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		$pageMeta->setPostStatus('publish');
-		$pageMeta->setSourcePath($source_file);
-		if ( !$stub_only ) {
-			if (!is_null($file_as_xml_obj)) {
-				$htmlImportStage = new html_import\ImportHTMLStage();
-				$GDNHeaderFooterStage = new html_import\GridDeveloperHeaderFooterImportStage();
-				$updateLinksImportStage = new html_import\UpdateLinksImportStage();
+		$pageMeta->buildConfig($settings, $source_file, $post_id, $parent_page, $order);
 
-				$htmlImportStage->process($stages, $pageMeta, $file_as_xml_obj->body->asXML());
-
-				$GDNHeaderFooterStage->process($stages, $pageMeta, $pageMeta->getPostContent());
-
-				$updateLinksImportStage->process($stages, $pageMeta, $pageMeta->getPostContent(), $html_post_lookup);
-
-			}
-		}
-		$pageMeta->setPostType('page');
-		$pageMeta->setCommentStatus('closed');
-		$pageMeta->setPingStatus('closed');
-		$pageMeta->setPostCategory($category);
-		$pageMeta->setPostDate(date( 'Y-m-d H:i:s', filemtime( $source_file ) ));
-
-		if (!is_null($parent_page)) {
-			$pageMeta->setPostParent($parent_page->getPostId());
-		}
-
-		if ( isset ( $order ) ) {
-			$pageMeta->setMenuOrder($order);
-		}
-		$pageMeta->setPostAuthor(wp_get_current_user()->ID);
-
-		if ( is_null( $post ) ) {
-			$updateResult = $pageMeta->updateWPPost();
-			if ( is_wp_error( $updateResult ) ) {
-				echo '<li>***Unable to create content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . '</li>';
-				return 0;
-			} else {
-				echo '<li>Stub post created from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
-				$pageMeta->setPostId($updateResult);
-			}
-		} else {
-			$updateResult = $pageMeta->updateWPPost();
-			if ( is_wp_error($updateResult) ) {
-				echo '<li>***Unable to fill content ' . $pageMeta->getPostTitle() . ' from ' . $source_file . ': '.$updateResult->get_error_message().'</li>';
-				return 0;
-			} else {
-				echo '<li>Content filled from ' . $source_file . ' into post #' . $updateResult . ' with title ' . $pageMeta->getPostTitle() . '</li>';
-				$pageMeta->setPostId($updateResult);
-			}
+		if (!is_null($title)) {
+			$pageMeta->setPostTitle($title);
 		}
 
 		return $pageMeta;
 	}
 
 	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
-		$attributes = $node->attributes;
-		$title      = null;
-		$src        = null;
-		$category   = $settings->getCategories()->getValuesArray();
-		$tag        = Array();
-		$order      = 0;
 
-		if ( isset( $attributes ) ) {
-			for ( $i = 0; $i < $attributes->length; $i ++ ) {
-				$attribute = $attributes->item( $i )->nodeName;
-				switch ( $attribute ) {
-					case 'title':
-						$title = $attributes->item( $i )->nodeValue;
-						break;
-					case 'src':
-						$src = $attributes->item( $i )->nodeValue;
-						if ( $src[0] != '/' ) {
-							$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
-						}
-						break;
-					case 'category': // if category is set in XML, then overrides the web settings
-													 // TODO: should have a setting for if to use xml or web settings
-						$category = explode( ',', $attributes->item( $i )->nodeValue );
-						break;
-					case 'tag':
-						$tag = explode( ',', $attributes->item( $i )->nodeValue );
-						break;
-					case 'order':
-						$order = $attributes->item( $i )->nodeValue;
-						break;
-					/* future cases
-					case 'overwrite-existing':
-						break;
-					*/
-					default:
-						break;
+		if (strcmp($node->nodeName, 'document') == 0) {
+			$attributes = $node->attributes;
+			$title      = null;
+			$src        = null;
+			$category   = $settings->getCategories()->getValuesArray();
+			$tag        = Array();
+			$order      = 0;
+
+			if ( isset( $attributes ) ) {
+				for ( $i = 0; $i < $attributes->length; $i ++ ) {
+					$attribute = $attributes->item( $i )->nodeName;
+					switch ( $attribute ) {
+						case 'title':
+							$title = $attributes->item( $i )->nodeValue;
+							break;
+						case 'src':
+							$src = $attributes->item( $i )->nodeValue;
+							if ( $src[0] != '/' ) {
+								$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
+							}
+							break;
+						case 'category': // if category is set in XML, then overrides the web settings
+														 // TODO: should have a setting for if to use xml or web settings
+							$category = explode( ',', $attributes->item( $i )->nodeValue );
+							break;
+						case 'tag':
+							$tag = explode( ',', $attributes->item( $i )->nodeValue );
+							break;
+						case 'order':
+							$order = $attributes->item( $i )->nodeValue;
+							break;
+						/* future cases
+						case 'overwrite-existing':
+							break;
+						*/
+						default:
+							break;
+					}
 				}
 			}
-		}
 
-		if ( ! is_null( $category ) && is_array( $category ) ) {
-			foreach ( $category as $index => $cat ) {
-				$cat_id              = wp_create_category( trim( $cat ) );
-				$categoryIDs[$index] = intval( $cat_id );
+			if ( ! is_null( $category ) && is_array( $category ) ) {
+				foreach ( $category as $index => $cat ) {
+					$cat_id              = wp_create_category( trim( $cat ) );
+					$categoryIDs[$index] = intval( $cat_id );
+				}
 			}
-		}
-		if ( ! is_null( $tag ) && is_array( $tag ) ) {
-			foreach ( $tag as $t ) {
-				//TODO: support tags
+			if ( ! is_null( $tag ) && is_array( $tag ) ) {
+				foreach ( $tag as $t ) {
+					//TODO: support tags
+				}
 			}
-		}
 
 
-		if ( isset( $src ) ) {
+			$stages = new \html_import\HTMLImportStages();
+			$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
 			if ( file_exists( $src ) ) {
-				$stages = new \html_import\HTMLImportStages();
 				if ( $stubs_only ) {
-					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $postMeta->getPostId();
+					$stubImport = new html_import\HTMLStubImporter();
+					$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 				} else {
-					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$mediaImportStage = new html_import\MediaImportStage();
-					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
-					$postMeta->updateWPPost();
-					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
-					$setTemplateStage = new html_import\SetTemplateStage();
-					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
+					$fullImport = new html_import\HTMLFullImporter();
+					$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 				}
 			} else {
-				echo '<li>Unable to find ' . $src . '</li>';
+				// Confluence imports do not have folders
+				//$folderImport = new html_import\FolderImporter();
+				//$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 			}
 		}
-
-
 		// recurse through children nodes
 		$children = $node->childNodes;
 		if ( isset( $children ) ) {
@@ -482,7 +432,11 @@ class HTMLImportPlugin {
 	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
 
 		$title      = $pageTitle;
-		$src = realpath( $flare_path . $pagePath );
+		if (is_null($pagePath)) {
+			$src = null;
+		} else {
+			$src = realpath( $flare_path . $pagePath );
+		}
 
 		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
@@ -500,38 +454,41 @@ class HTMLImportPlugin {
 			}
 		}
 
+// TODO: create a new type of import for folders.
+		// refactor importAnHTML out into a class to generate the postmeta
 
-		if ( isset( $src ) ) {
-			if ( file_exists( $src ) ) {
-				$stages = new \html_import\HTMLImportStages();
-				if ( $stubs_only ) {
-					$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
-					$html_post_lookup[$src] = $postMeta->getPostId();
-				} else {
-					$postMeta = $this->importAnHTML( $src, false, $stages, $settings, $postMeta, $categoryIDs, null, $order, $html_post_lookup, $title );
-					$mediaImportStage = new html_import\MediaImportStage();
-					$mediaImportStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
-					$postMeta->updateWPPost();
-					$postMeta->setPageTemplate($settings->getTemplate()->getValue());
-					$setTemplateStage = new html_import\SetTemplateStage();
-					$setTemplateStage->process($stages, $postMeta, $postMeta->getPostContent(), $media_lookup);
-				}
+		$stages = new \html_import\HTMLImportStages();
+		$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
+		if ( file_exists( $src ) ) {
+			if ( $stubs_only ) {
+				$stubImport = new html_import\HTMLStubImporter();
+				$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 			} else {
-				echo '<li>Unable to find ' . $src . '</li>';
+				$fullImport = new html_import\HTMLFullImporter();
+				$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 			}
+		} else {
+			$folderImport = new html_import\FolderImporter();
+			$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 		}
 
 		return $postMeta;
 	}
 
 	function processN(Array $anN, $flare_path, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parentPage = null, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings) {
+
+		// TODO position in $anN determines order
+		$position = 0;
+
 		foreach ($anN as $value) {
+			$position++;
 			$iValue = $value['i'];
 
-			$pagePath = key($pages[$iValue]);
-			$pageTitle = json_decode('"'.$pages[$iValue][$pagePath].'"'); // converts unicode chars
+			$pagePath = $pages[$iValue]['path'];
 
-			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $iValue, $pagePath, $pageTitle, $settings);
+			$pageTitle = json_decode('"'.$pages[$iValue]['title'].'"'); // converts unicode chars
+
+			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $position, $pagePath, $pageTitle, $settings);
 
 			if (array_key_exists('n', $value)) {
 				$this->processN($value['n'], $flare_path, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
@@ -586,6 +543,39 @@ class HTMLImportPlugin {
 		}
 	}
 
+	private function getFlareFileList( $chunkFile ) {
+
+		$tocChunkContents = file_get_contents($chunkFile);
+
+		$count = null;
+		$matches = null;
+		preg_match('/^define\((.*)\);$/', $tocChunkContents, $matches);
+
+		$returnValue = preg_replace('/(\\w):([\{\[])/', '"$1":$2', $matches[1], -1, $count);
+
+		$jsonString = str_replace("'", "\"", $returnValue);
+
+
+		$jsonArray = json_decode($jsonString, true);
+
+		$fileList = Array();
+		foreach ($jsonArray as $path => $chunk) {
+			$id = $chunk['i'];
+			$title = $chunk['t'];
+			if (sizeof($id) > 1) {
+				foreach ($id as $key => $value) {
+					$fileList[$value]['path'] = null;
+					$fileList[$value]['title'] = $title[$key];
+				}
+			} else {
+				$fileList[$id[0]]['path'] = $path;
+				$fileList[$id[0]]['title'] = $title[0];
+			}
+		}
+
+		return $fileList;
+	}
+
 	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
 		/*
 		 * $zip_to_uplaod is an array with elements:
@@ -601,7 +591,8 @@ class HTMLImportPlugin {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
 		$mime_type = $zip_to_upload['type'];
-	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0)) {
+	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0)) {
+			echo 'mime-type: '.$mime_type;
 			$zip = new ZipArchive;
 			$res = $zip->open($zip_to_upload['tmp_name']);
 			if ($res === TRUE) {
@@ -621,17 +612,10 @@ class HTMLImportPlugin {
 				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
 				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
 
-				$tocChunk0JS = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
-				$tocChunkContents = file_get_contents($tocChunk0JS);
-				// parses the chunk file and gets the list of all files to import
-				preg_match_all("/('(.*)':\\{i:\\[(\\d*)\\],t:\\['(.*)?'\\],b:\\[''\\]\\})/U", $tocChunkContents, $regMatches);
-				$length = sizeof($regMatches[2]);
-				$fileList = Array();
-				// TODO: can simplify this with the json decoder
-				for ($i = 0; $i < $length; $i++) {
-					// key is the identifier id, value is hash with key relative file location and value title
-					$fileList[$regMatches[3][$i]] = Array($regMatches[2][$i] => $regMatches[4][$i]);
-				}
+
+				// TODO: handle chunk name and number of chunks
+				$chunkFile = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
+				$fileList = $this->getFlareFileList($chunkFile);
 
 				// now to walk the tree
 				$count = null;
