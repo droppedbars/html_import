@@ -364,7 +364,7 @@ class WPMetaConfigs {
 		return $title;
 	}
 
-	public function buildConfig( admin\HtmlImportSettings $settings, $source_file, $post_id = null, WPMetaConfigs $parent_page = null ) {
+	public function buildConfig( admin\HtmlImportSettings $settings, $source_file, $post_id = null, WPMetaConfigs $parent_page = null, $order = null ) {
 
 		if ( ! is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
@@ -396,7 +396,11 @@ class WPMetaConfigs {
 		}
 
 		$this->setPostCategory( $categoryIDs );
-		$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
+		if ( ! is_null($source_file)) {
+			$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
+		} else {
+			$this->setPostDate( date( 'Y-m-d H:i:s' ));
+		}
 		if ( ! is_null( $parent_page ) ) {
 			$this->setPostParent( $parent_page->getPostId() );
 		}

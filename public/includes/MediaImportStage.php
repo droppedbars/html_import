@@ -51,6 +51,7 @@ class MediaImportStage extends ImportStage {
 									require_once( ABSPATH . 'wp-admin/includes/image.php' );
 									$attach_data = wp_get_attachment_metadata( $attach_id );
 									wp_update_attachment_metadata( $attach_id, $attach_data );
+									$media_table[$path]      = $fullpath;
 								} else {
 									$filename = basename( $fullpath );
 									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
@@ -104,6 +105,8 @@ class MediaImportStage extends ImportStage {
 										require_once( ABSPATH . 'wp-admin/includes/image.php' );
 										$attach_data = wp_get_attachment_metadata( $attach_id );
 										wp_update_attachment_metadata( $attach_id, $attach_data );
+										$media_table[$path]      = $fullpath;
+
 									} else {
 										$filename = basename( $fullpath );
 

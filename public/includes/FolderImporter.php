@@ -21,7 +21,7 @@ class FolderImporter extends Importer{
 		if ( is_wp_error( $updateResult ) ) {
 			echo '<li>***Unable to folder ' . $meta->getPostTitle() . ' from ' . $meta->getSourcePath() . '</li>';
 		} else {
-			echo '<li>Folder created from ' . $meta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
+			echo '<li>Folder created from ' . $meta->getPostTitle() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
 		}
 
 	}

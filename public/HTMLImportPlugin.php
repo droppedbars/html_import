@@ -315,7 +315,7 @@ class HTMLImportPlugin {
 				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		$pageMeta->buildConfig($settings, $source_file, $post_id, $parent_page);
+		$pageMeta->buildConfig($settings, $source_file, $post_id, $parent_page, $order);
 
 		if (!is_null($title)) {
 			$pageMeta->setPostTitle($title);
@@ -473,14 +473,19 @@ class HTMLImportPlugin {
 	}
 
 	function processN(Array $anN, $flare_path, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parentPage = null, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings) {
+
+		// TODO position in $anN determines order
+		$position = 0;
+
 		foreach ($anN as $value) {
+			$position++;
 			$iValue = $value['i'];
 
 			$pagePath = $pages[$iValue]['path'];
 
 			$pageTitle = json_decode('"'.$pages[$iValue]['title'].'"'); // converts unicode chars
 
-			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $iValue, $pagePath, $pageTitle, $settings);
+			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $position, $pagePath, $pageTitle, $settings);
 
 			if (array_key_exists('n', $value)) {
 				$this->processN($value['n'], $flare_path, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
