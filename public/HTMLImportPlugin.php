@@ -2,6 +2,7 @@
 require_once( dirname( __FILE__ ) . '/../admin/includes/HtmlImportSettings.php' );
 require_once( dirname( __FILE__ ) . '/includes/WPMetaConfigs.php' );
 require_once( dirname( __FILE__ ) . '/includes/XMLHelper.php' );
+require_once( dirname( __FILE__ ) . '/includes/FileHelper.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/includes/GridDeveloperHeaderFooterImportStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/ImportHTMLStage.php' );
@@ -633,6 +634,8 @@ class HTMLImportPlugin {
 				$html_post_lookup = Array();
 				$html_post_lookup = $this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, true, $html_post_lookup, $media_lookup, $settings);
 				$this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, false, $html_post_lookup, $media_lookup, $settings);
+
+				html_import\FileHelper::delTree($path.'-'.$path_modifier);
 			} else {
 				echo '<H4>Failed to read ZIP: failed, code :' . $res.'</H4>';
 			}
