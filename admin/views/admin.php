@@ -168,28 +168,38 @@ $settings->loadFromDB();
 		<p id="categories">
 		<h3>Select the Categories for the imported files</h3>
 		<div id="settings-categories">
-		<?php
-		?>
-		<select multiple name="category[]">
-			<?php
-			// TODO: this should only have to be run for the first element, not repeatedly
-			// TODO: bug, does not sort them by hierarchy...
-			$search_args = array(		'type'                     => 'post',
-															 'child_of'                 => 0,
-															 'parent'                   => '',
-															 'orderby'                  => 'name',
-															 'order'                    => 'ASC',
-															 'hide_empty'               => 0,
-															 'hierarchical'             => 1,
-															 'exclude'                  => '',
-															 'include'                  => '',
-															 'number'                   => '',
-															 'taxonomy'                 => 'category',
-															 'pad_counts'               => false
-			);
+		<!--	<ul>
+		<?php /*
+		$selected_cats = array();
+		$cats = $settings->getCategories()->getValuesArray();
+		foreach ($cats as $cat) {
+			array_push($selected_cats, get_cat_ID($cat));
+		}
 
-			$categories = get_categories($search_args);
-			if (isset($categories)) {
+		wp_category_checklist( 0, 0, $selected_cats );
+*/
+		?>
+				</ul> -->
+		 <select id="select-categories" multiple name="category[]" size="8">
+			<?php
+
+			function outputChildCategories($category_id, $settings) {
+				$search_args = array(		'type'                     => 'post',
+																 'child_of'                 => 0,
+																 'parent'                   => $category_id,
+																 'orderby'                  => 'name',
+																 'order'                    => 'ASC',
+																 'hide_empty'               => 0,
+																 'hierarchical'             => 1,
+																 'exclude'                  => '',
+																 'include'                  => '',
+																 'number'                   => '',
+																 'taxonomy'                 => 'category',
+																 'pad_counts'               => false
+				);
+
+				$categories = get_categories($search_args);
+
 				foreach ($categories as $category) {
 					$ancestors = get_ancestors($category->cat_ID, 'category');
 					$strlen = strlen($category->name) + (2*sizeof($ancestors));
@@ -198,9 +208,16 @@ $settings->loadFromDB();
 
 					// TODO: value should be the cat_ID but need to modify back end to support this
 					echo '<option value="'.$category->name.'" '.selected($settings->getCategories()->testValue($category->name), true, false).'>'.$catName.'</option>';
+
+					outputChildCategories($category->cat_ID, $settings);
 				}
-			} ?>
-			</select>
+
+			}
+
+			outputChildCategories(0, $settings);
+
+		 ?>
+		 </select>
 			<br>
 		</div>
 		</p>

@@ -23,6 +23,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	private $parent_page = null;
 	private $template = null;
 	private $category = null;
+	private $doesOverwriteFiles = null;
 
 	const INDEX_DEFAULT = 'flare';
 	const FILE_TYPE_DEFAULT = 'zip';
@@ -30,6 +31,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	const PARENT_PAGE_DEFAULT = 0;
 	const TEMPLATE_DEFAULT = 0;
 	const FILE_LOCATION_DEFAULT = '';
+	const OVERWRITE_FILES_DEFAULT = 'true';
 
 	function __construct() {
 		$this->index_type = new StringSetting('index-type');
@@ -39,6 +41,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->parent_page = new StringSetting('parent_page');
 		$this->template = new StringSetting('template');
 		$this->category = new ArraySetting('category');
+		$this->doesOverwriteFiles = new StringSetting('overwrite-files'); // TODO: should make a BoolSetting
 	}
 
 	private function loadDefaults() {
@@ -49,6 +52,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->template->setSettingValue(self::TEMPLATE_DEFAULT);
 		$this->file_location->setSettingValue(self::FILE_LOCATION_DEFAULT);
 		$this->category->setSettingValue(0, 0); // TODO: 0 as default "none", could be better
+		$this->doesOverwriteFiles->setSettingValue(self::OVERWRITE_FILES_DEFAULT);
 	}
 
 	/**
@@ -83,6 +87,10 @@ class HtmlImportSettings implements PluginSettingsInterface {
 			$file_location = $plugin_options_arr['file-location'];
 			$this->file_location->setSettingValue($file_location);
 		}
+		if (isset($plugin_options_arr['overwrite-files'])) {
+			$overwrite_files = $plugin_options_arr['overwrite-files'];
+			$this->doesOverwriteFiles->setSettingValue($overwrite_files);
+		}
 		$counter = 0;
 		$this->category = new ArraySetting('category');
 		do {
@@ -104,7 +112,8 @@ class HtmlImportSettings implements PluginSettingsInterface {
 											$this->import_source->getName() => $this->import_source->getValue(),
 											$this->file_location->getName() => $this->file_location->getValue(),
 											$this->parent_page->getName() 	=> $this->parent_page->getValue(),
-											$this->template->getName() 			=> $this->template->getValue());
+											$this->template->getName() 			=> $this->template->getValue(),
+											$this->doesOverwriteFiles->getName() => $this->doesOverwriteFiles->getValue());
 		$counter = 0;
 		do {
 			if (!is_null($this->category->getValue($counter))) {
@@ -173,6 +182,16 @@ class HtmlImportSettings implements PluginSettingsInterface {
 				$this->category->addValue($cat);
 			}
 		}
+
+		if (isset($_POST[$this->doesOverwriteFiles->getName()])) {
+			if (strcmp($_POST[$this->doesOverwriteFiles->getName()], 'false') == 0) {
+				$overwrite_source = 'false';
+				} else {
+				$overwrite_source = 'true';
+			}
+			$this->doesOverwriteFiles->setSettingValue($overwrite_source);
+		}
+
 	}
 
 	/**
@@ -203,6 +222,9 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	}
 	public function getCategories() {
 		return $this->category;
+	}
+	public function doesOverwriteFiles() {
+		return $this->doesOverwriteFiles;
 	}
 
 } 
