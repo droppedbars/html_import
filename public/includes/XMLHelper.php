@@ -38,4 +38,20 @@ class XMLHelper {
 
 		return false;
 	}
+
+	/**
+	 * source from: http://stackoverflow.com/questions/8163298/how-do-i-change-xml-tag-names-with-php
+	 * @param $xml
+	 * @param $old
+	 * @param $new
+	 *
+	 * @return mixed
+	 */
+	public static function renameTags($xml, $old, $new)
+	{
+		// TODO: safer to do this via the DOM, but cannot guarantee good XML, and may not be full HTML
+		$count = null;
+		$returnValue = preg_replace('/(<.*?\\/?)\\b'.$old.'\\b(.*?>)/is', '$1'.$new.'$2', $xml, -1, $count);
+		return $returnValue;
+	}
 } 
