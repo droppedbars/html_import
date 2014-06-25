@@ -11,6 +11,7 @@ namespace html_import;
 require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/XMLHelper.php' );
 
 class ImportHTMLStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
@@ -23,8 +24,9 @@ class ImportHTMLStage extends ImportStage {
 
 
 	private function replaceBodyWithDivs($body) {
-		// TODO
-		return $body;
+		$divBody = XMLHelper::renameTags($body, 'body', 'div');
+
+		return $divBody;
 	}
 
 } 
