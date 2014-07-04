@@ -12,6 +12,7 @@ require_once( dirname( __FILE__ ) . '/includes/SetTemplateStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLFullImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/LocalIndexSource.php' );
 
 /**
  * Plugin Name.
@@ -413,7 +414,9 @@ class HTMLImportPlugin {
 		}
 
 		$doc = new DOMDocument();
-		$doc->load( $settings->getFileLocation()->getValue(), LIBXML_NOBLANKS );
+		$indexFile = new html_import\indices\LocalIndexSource($settings->getFileLocation()->getValue());
+
+		$doc->loadXML( $indexFile->getContents(), LIBXML_NOBLANKS );
 
 		$nodelist = $doc->childNodes;
 
@@ -455,9 +458,6 @@ class HTMLImportPlugin {
 			}
 		}
 
-// TODO: create a new type of import for folders.
-		// refactor importAnHTML out into a class to generate the postmeta
-
 		$stages = new \html_import\HTMLImportStages();
 		$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
 		if ( file_exists( $src ) ) {
@@ -478,7 +478,6 @@ class HTMLImportPlugin {
 
 	function processN(Array $anN, $flare_path, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parentPage = null, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings) {
 
-		// TODO position in $anN determines order
 		$position = 0;
 
 		foreach ($anN as $value) {
@@ -546,7 +545,8 @@ class HTMLImportPlugin {
 
 	private function getFlareFileList( $chunkFile ) {
 
-		$tocChunkContents = file_get_contents($chunkFile);
+		$toc = new \html_import\indices\LocalIndexSource($chunkFile);
+		$tocChunkContents = $toc->getContents();
 
 		$count = null;
 		$matches = null;
@@ -607,10 +607,10 @@ class HTMLImportPlugin {
 				$closeSuccess = $zip->close();
 
 				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
-				$tocContents = file_get_contents($tocJS);
-				preg_match('/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch);
+				$tocContents = new \html_import\indices\LocalIndexSource($tocJS);
+				preg_match('/numchunks:([0-9]*?),/', $tocContents->getContents(), $numChunksMatch);
 				$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
-				preg_match("/prefix:'(.*?)',/", $tocContents, $tocMatches);
+				preg_match("/prefix:'(.*?)',/", $tocContents->getContents(), $tocMatches);
 				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
 
 
@@ -621,7 +621,7 @@ class HTMLImportPlugin {
 				// now to walk the tree
 				$count = null;
 				$matches = null;
-				preg_match('/^define\((.*)\);$/', $tocContents, $matches);
+				preg_match('/^define\((.*)\);$/', $tocContents->getContents(), $matches);
 
 				$returnValue = preg_replace('/(\\w*):/U', '"$1":', $matches[1], -1, $count);
 
