@@ -13,6 +13,8 @@ require_once( dirname( __FILE__ ) . '/includes/HTMLFullImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/LocalIndexSource.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/FlareIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/retriever/LocalFileRetriever.php' );
 
 /**
  * Plugin Name.
@@ -525,58 +527,6 @@ class HTMLImportPlugin {
 		}
 	}
 
-	private function findFile($filename, $root) {
-		$allFiles = scandir(realpath($root));
-		foreach ($allFiles as $file) {
-			if ((strcmp($file, '.') == 0) || (strcmp($file, '..')) == 0) {
-				continue;
-			}
-			if (strcmp($filename, $file) == 0) {
-				return $root.'/'.$file;
-			}
-			if (is_dir($root.'/'.$file)) {
-				$foundFile = $this->findFile($filename, $root.'/'.$file);
-				if (!is_null($foundFile)) {
-					return $foundFile;
-				}
-			}
-		}
-	}
-
-	private function getFlareFileList( $chunkFile ) {
-
-		$toc = new \html_import\indices\LocalIndexSource($chunkFile);
-		$tocChunkContents = $toc->getContents();
-
-		$count = null;
-		$matches = null;
-		preg_match('/^define\((.*)\);$/', $tocChunkContents, $matches);
-
-		$returnValue = preg_replace('/(\\w):([\{\[])/', '"$1":$2', $matches[1], -1, $count);
-
-		$jsonString = str_replace("'", "\"", $returnValue);
-
-
-		$jsonArray = json_decode($jsonString, true);
-
-		$fileList = Array();
-		foreach ($jsonArray as $path => $chunk) {
-			$id = $chunk['i'];
-			$title = $chunk['t'];
-			if (sizeof($id) > 1) {
-				foreach ($id as $key => $value) {
-					$fileList[$value]['path'] = null;
-					$fileList[$value]['title'] = $title[$key];
-				}
-			} else {
-				$fileList[$id[0]]['path'] = $path;
-				$fileList[$id[0]]['title'] = $title[0];
-			}
-		}
-
-		return $fileList;
-	}
-
 	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
 		/*
 		 * $zip_to_uplaod is an array with elements:
@@ -594,9 +544,10 @@ class HTMLImportPlugin {
 		$mime_type = $zip_to_upload['type'];
 	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0)) {
 			echo 'mime-type: '.$mime_type;
+		// ==== this portion is to upload and unzip the zip file
 			$zip = new ZipArchive;
-			$res = $zip->open($zip_to_upload['tmp_name']);
-			if ($res === TRUE) {
+			$zipOpenResult = $zip->open($zip_to_upload['tmp_name']);
+			if ($zipOpenResult === TRUE) {
 				$upload_dir = wp_upload_dir();
 				$path = $upload_dir['path'].'/import';
 				$path_modifier = 1;
@@ -605,30 +556,18 @@ class HTMLImportPlugin {
 				}
 				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
 				$closeSuccess = $zip->close();
+		// ====
+		// ==== this portion is to get a tree of all the webpages to import
 
-				$tocJS = $this->findFile('Toc.js', $path.'-'.$path_modifier);
-				$tocContents = new \html_import\indices\LocalIndexSource($tocJS);
-				preg_match('/numchunks:([0-9]*?),/', $tocContents->getContents(), $numChunksMatch);
-				$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
-				preg_match("/prefix:'(.*?)',/", $tocContents->getContents(), $tocMatches);
-				$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
+				$localFileRetriever = new \droppedbars\files\LocalFileRetriever($path.'-'.$path_modifier);
+				$flareIndex = new \html_import\indices\FlareIndex($localFileRetriever);
+				$flareIndex->readIndex();
 
+				//Working from here....
 
-				// TODO: handle chunk name and number of chunks
-				$chunkFile = $this->findFile('Toc_Chunk0.js', $path.'-'.$path_modifier);
-				$fileList = $this->getFlareFileList($chunkFile);
+				$flareIndex->setToFirstFile();
+				$flareIndex->getNextFile();
 
-				// now to walk the tree
-				$count = null;
-				$matches = null;
-				preg_match('/^define\((.*)\);$/', $tocContents->getContents(), $matches);
-
-				$returnValue = preg_replace('/(\\w*):/U', '"$1":', $matches[1], -1, $count);
-
-				$jsonString = str_replace("'", "\"", $returnValue);
-
-
-				$jsonArray = json_decode($jsonString, true);
 
 				$media_lookup = Array();
 				$html_post_lookup = Array();
@@ -637,7 +576,7 @@ class HTMLImportPlugin {
 
 				html_import\FileHelper::delTree($path.'-'.$path_modifier);
 			} else {
-				echo '<H4>Failed to read ZIP: failed, code :' . $res.'</H4>';
+				echo '<H4>Failed to read ZIP: failed, code :' . $zipOpenResult.'</H4>';
 			}
 		} else {
 			echo '<H4>File uploaded is not ZIP or RAR</H4>';

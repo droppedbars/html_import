@@ -10,10 +10,13 @@ namespace html_import\indices;
 
 
 abstract class IndexSource {
+	private $index = null;
 	private $indexPath = null;
 
-	public function __construct($pathToIndex) {
-		$this->indexPath = $pathToIndex;
+	public function __construct(Index $index, $indexPath) {
+		$this->index = $index;
+		$this->indexPath = $indexPath;
+		$this->index->readIndex($this->getContents());
 	}
 
 	protected function getIndexPath() {
@@ -21,5 +24,12 @@ abstract class IndexSource {
 	}
 
 	abstract public function getContents();
+
+	/**
+	 * @return \html_import\WPMetaConfigs
+	 */
+	public function getNextFile() {
+		return $this->index->getNextFile();
+	}
 
 } 
