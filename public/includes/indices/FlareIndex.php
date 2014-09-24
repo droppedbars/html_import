@@ -12,13 +12,10 @@ use droppedbars\datastructure\LinkedTree;
 
 require_once(dirname( __FILE__ ) . '/Index.php');
 require_once(dirname( __FILE__ ) . '/../retriever/FileRetriever.php');
-require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
 
 
 class FlareIndex extends Index {
 
-	private $iterator = -1;
-	private $tree = null;
 
 	public function readIndex($indexFile = null) {
 		$tocJS = $this->retriever->findFile('Toc.js'); // this file defines the hierarchy
@@ -41,20 +38,19 @@ class FlareIndex extends Index {
 		// TODO: deal with no files
 		$fileTree = $this->getFlareFileList($chunkContents);
 		$fileOrder = $jsonArray['tree']['n'];
-		// TODO: build up the tree
-		$parentNode = new LinkedTree(null);
-		$this->buildTree($fileOrder, $fileTree, $parentNode);
-		$this->tree = $parentNode;
+
+		$this->buildTree($fileOrder, $fileTree, $this->tree);
 	}
 
 	/**
 	 * Encodes it as a json string, 'path' and 'title'.
 	 * @param $fileOrder
 	 * @param $fileList
+	 * @param	$parentNode
 	 *
 	 * @return LinkedTree|null
 	 */
-	private function buildTree($fileOrder, $fileList, $parentNode = null) {
+	protected function buildTree($fileOrder, $fileList, $parentNode = null) {
 		$firstNode = null;
 		$counter = 0;
 		foreach ($fileOrder as $item) {
@@ -72,22 +68,13 @@ class FlareIndex extends Index {
 			}
 			if (array_key_exists('n', $item)) {
 				$itemChildren = $item['n'];
-				$childNode = $this->buildTree($itemChildren, $fileList, $node);
+				$this->buildTree($itemChildren, $fileList, $node);
 			}
 			$counter++;
 		}
 		return $firstNode;
 	}
 
-	/**
-	 * @return \html_import\WPMetaConfigs
-	 */
-	public function getNextFile() {
-	}
-
-	public function setToFirstFile() {
-		$this->iterator = 0;
-	}
 
 	private function getFlareFileList( $tocChunkContents ) {
 		$count = null;

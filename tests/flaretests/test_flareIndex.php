@@ -13,4 +13,11 @@ require_once dirname( __FILE__ ) . "/../../includes/LinkedTree.php";
 $localFileRetriever = new \droppedbars\files\LocalFileRetriever('./');
 $flareIndex = new \html_import\indices\FlareIndex($localFileRetriever);
 $flareIndex->readIndex();
-echo 'foo';
+
+$counter = 0;
+$node = $flareIndex->getNextFile();
+while (!is_null($node)) {
+	echo $counter.' '.$node->payload()."\n";
+	$counter++;
+	$node = $flareIndex->getNextFile();
+}
