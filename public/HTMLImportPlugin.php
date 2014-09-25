@@ -12,8 +12,7 @@ require_once( dirname( __FILE__ ) . '/includes/SetTemplateStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLFullImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
-require_once( dirname( __FILE__ ) . '/includes/indices/LocalIndexSource.php' );
-require_once( dirname( __FILE__ ) . '/includes/indices/FlareIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/LocalFileRetriever.php' );
 
 /**
@@ -560,13 +559,13 @@ class HTMLImportPlugin {
 		// ==== this portion is to get a tree of all the webpages to import
 
 				$localFileRetriever = new \droppedbars\files\LocalFileRetriever($path.'-'.$path_modifier);
-				$flareIndex = new \html_import\indices\FlareIndex($localFileRetriever);
-				$flareIndex->readIndex();
+				$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
+				$flareIndex->buildHierarchyFromWebsiteIndex();
 
 				//Working from here....
 
 				$flareIndex->setToFirstFile();
-				$flareIndex->getNextFile();
+				$flareIndex->getNextHTMLFile();
 
 
 				$media_lookup = Array();

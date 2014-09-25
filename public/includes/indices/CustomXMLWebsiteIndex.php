@@ -9,6 +9,6 @@
 namespace html_import\indices;
 
 
-class CustomXMLIndex extends Index {
+class CustomXMLWebsiteIndex extends WebsiteIndex {
 
 } 
