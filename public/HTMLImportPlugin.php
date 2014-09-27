@@ -12,7 +12,10 @@ require_once( dirname( __FILE__ ) . '/includes/SetTemplateStage.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLFullImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/WebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
+require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/LocalFileRetriever.php' );
 
 /**
@@ -300,17 +303,18 @@ class HTMLImportPlugin {
 		return $title;
 	}
 
-	private function importAnHTML( $source_file, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $order = null, $html_post_lookup, $title = null ) {
+	private function importAnHTML( \html_import\indices\WebPage $webPage, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $html_post_lookup ) {
 
 		// TODO: category and order overrides
+		$title = $webPage->getTitle();
 
 		$pageMeta = new \html_import\WPMetaConfigs();
 		$post_id = null;
 
 		$post = get_page_by_title( $title );
 		if ( isset( $html_post_lookup ) ) {
-			if ( array_key_exists( $source_file, $html_post_lookup ) ) { // stub was created during this cycle
-				$post_id = $html_post_lookup[$source_file];
+			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
+				$post_id = $html_post_lookup[$webPage->getRelativePath()];
 			}
 		} else {
 			if ( ! is_null( $post ) ) { // post was previously created
@@ -318,7 +322,7 @@ class HTMLImportPlugin {
 				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		$pageMeta->buildConfig($settings, $source_file, $post_id, $parent_page, $order);
+		$pageMeta->buildConfig($settings, $webPage, $post_id, $parent_page);
 
 		if (!is_null($title)) {
 			$pageMeta->setPostTitle($title);
@@ -434,18 +438,10 @@ class HTMLImportPlugin {
 		return $html_post_lookup;
 	}
 
-	private function importFlareNode( $flare_path, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, $orderNum, $pagePath, $pageTitle, html_import\admin\HtmlImportSettings $settings) {
-
-		$title      = $pageTitle;
-		if (is_null($pagePath)) {
-			$src = null;
-		} else {
-			$src = realpath( $flare_path . $pagePath );
-		}
+	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings) {
 
 		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
-		$order      = $orderNum;
 
 		if ( ! is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
@@ -460,8 +456,8 @@ class HTMLImportPlugin {
 		}
 
 		$stages = new \html_import\HTMLImportStages();
-		$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
-		if ( file_exists( $src ) ) {
+		$postMeta = $this->importAnHTML( $webPage, true, $stages, $settings, $postMeta, $categoryIDs, null, null );
+		if ( !$webPage->isFolder() ) {
 			if ( $stubs_only ) {
 				$stubImport = new html_import\HTMLStubImporter();
 				$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
@@ -477,27 +473,7 @@ class HTMLImportPlugin {
 		return $postMeta;
 	}
 
-	function processN(Array $anN, $flare_path, Array $pages, $stubs_only = true, \html_import\WPMetaConfigs $parentPage = null, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings) {
-
-		$position = 0;
-
-		foreach ($anN as $value) {
-			$position++;
-			$iValue = $value['i'];
-
-			$pagePath = $pages[$iValue]['path'];
-
-			$pageTitle = json_decode('"'.$pages[$iValue]['title'].'"'); // converts unicode chars
-
-			$parent_page = $this->importFlareNode($flare_path, $stubs_only, $parentPage, $html_post_lookup, $media_lookup, $position, $pagePath, $pageTitle, $settings);
-
-			if (array_key_exists('n', $value)) {
-				$this->processN($value['n'], $flare_path, $pages, $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings);
-			}
-		}
-	}
-
-	private function process_flare_index( Array $flareIndex, $flare_path, Array $pages, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
+	private function process_flare_index( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
 		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
@@ -508,7 +484,12 @@ class HTMLImportPlugin {
 		if (!$hasParent) {
 			$parent_page = null;
 		}
-		$this->processN($flareIndex,$flare_path, $pages, $stubs_only, $parent_page,$html_post_lookup, $media_lookup, $settings);
+		$siteIndex->setToFirstFile();
+		$fileNode = $siteIndex->getNextHTMLFile();
+		while (!is_null($fileNode)) {
+			$parent_page = $this->importFlareNode($fileNode, $stubs_only, $parent_page, $html_post_lookup, $media_lookup,$settings);
+			$fileNode = $siteIndex->getNextHTMLFile();
+		}
 
 		return $html_post_lookup;
 	}
@@ -564,14 +545,12 @@ class HTMLImportPlugin {
 
 				//Working from here....
 
-				$flareIndex->setToFirstFile();
-				$flareIndex->getNextHTMLFile();
 
 
 				$media_lookup = Array();
 				$html_post_lookup = Array();
-				$html_post_lookup = $this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, true, $html_post_lookup, $media_lookup, $settings);
-				$this->process_flare_index($jsonArray['tree']['n'], $path.'-'.$path_modifier, $fileList, false, $html_post_lookup, $media_lookup, $settings);
+				$html_post_lookup = $this->process_flare_index($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
+				$this->process_flare_index($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
 
 				html_import\FileHelper::delTree($path.'-'.$path_modifier);
 			} else {

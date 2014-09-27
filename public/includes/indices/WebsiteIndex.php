@@ -83,11 +83,11 @@ abstract class WebsiteIndex {
 
 	/**
 	 * Return a LinkedTree node that contains the reference to the next HTML file indicated by the source index. If there is no next HTML file, return null.
-	 * @return \droppedbars\datastructure\LinkedTree|null the next HTML file
+	 * @return \html_import\indices\WebPage|null the next HTML file
 	 */
 	public function getNextHTMLFile() {
 		$this->nodeCounter++;
 		return $this->recurseTreeNodeForNext($this->tree, $this->nodeCounter);
 	}
-
+// TODO: should I be getting the HTML file contents instead of just the title and path?
 } 

@@ -9,6 +9,8 @@
 namespace html_import;
 
 
+use html_import\indices\WebPage;
+
 class WPMetaConfigs {
 	private $post_title = '';
 	private $post_name = '';
@@ -71,7 +73,7 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 *
+	 * TODO: create constructors for the load functions
 	 */
 	function __construct() {
 
@@ -158,7 +160,8 @@ class WPMetaConfigs {
 
 	public function updateWPPost() {
 		// TODO: handle WP_Error object if set to true.
-		$result = wp_insert_post( $this->getPostArray(), true );
+		$postArray = $this->getPostArray();
+		$result = wp_insert_post( $postArray, true );
 		if (!is_wp_error($result)) {
 			$this->setPostId($result);
 		}
@@ -364,24 +367,22 @@ class WPMetaConfigs {
 		return $title;
 	}
 
-	public function buildConfig( admin\HtmlImportSettings $settings, $source_file, $post_id = null, WPMetaConfigs $parent_page = null, $order = null ) {
+	public function buildConfig( admin\HtmlImportSettings $settings, WebPage $webPage, $post_id = null, WPMetaConfigs $parent_page = null, $order = null ) {
 
 		if ( ! is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
 		}
 
-		if ( is_null( $source_file ) ) {
+		if ( is_null( $webPage ) ) {
 			$file_as_xml_obj = null;
 		} else {
-			$file_as_xml_obj = XMLHelper::getXMLObjectFromFile( $source_file );
+			$file_as_xml_obj = XMLHelper::getXMLObjectFromString( $webPage->getContent() );
 			$this->setPostContent($file_as_xml_obj->body->asXML());
 			$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
 		}
 
-
 		$this->setPostName( $this->getPostTitle() );
 		$this->setPostStatus( 'publish' );
-		$this->setSourcePath( $source_file );
 		$this->setPostType( 'page' );
 		$this->setCommentStatus( 'closed' );
 		$this->setPingStatus( 'closed' );
@@ -396,11 +397,13 @@ class WPMetaConfigs {
 		}
 
 		$this->setPostCategory( $categoryIDs );
-		if ( ! is_null($source_file)) {
-			$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
-		} else {
+
+		// TODO need a way to track the date and time of the original file
+		//if ( ! is_null($source_file)) {
+		//	$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
+		//} else {
 			$this->setPostDate( date( 'Y-m-d H:i:s' ));
-		}
+		//}
 		if ( ! is_null( $parent_page ) ) {
 			$this->setPostParent( $parent_page->getPostId() );
 		}

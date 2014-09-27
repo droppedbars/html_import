@@ -58,7 +58,8 @@ class FlareWebsiteIndex extends WebsiteIndex {
 	 * Build a LinkedTree tree from the file ordering and the file listing derived from the Flare index files.
 	 * The HTML file information is stored in the payload of the LinkedTree with the values 'path' for the URL of the HTML file, and 'title' for the title of the HTML file.
 	 *
-	 * TODO: define array formats
+	 * TODO: deal with HTML pages that are actually folders!
+	 *
 	 *
 	 * @param Array $fileOrder array based on Toc.js
 	 * @param Array $fileList array based on Toc_Chunk0.js
@@ -72,10 +73,9 @@ class FlareWebsiteIndex extends WebsiteIndex {
 		foreach ($fileOrder as $item) {
 			$itemIndex = $item['i'];
 			$pagePath = $fileList[$itemIndex]['path'];
-			$pageTitle = json_decode('"'.$fileList[$itemIndex]['title'].'"'); // converts unicode chars
+			$pageTitle = $fileList[$itemIndex]['title'];
 
-			$jsonEncoded = json_encode(Array('path' => $pagePath, 'title' => $pageTitle));
-			$node = new LinkedTree($jsonEncoded);
+			$node = new WebPage($this->retriever, $pageTitle, $pagePath);
 			if (!is_null($parentNode)) {
 				$parentNode->addChild($node);
 			}

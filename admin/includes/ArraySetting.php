@@ -83,7 +83,7 @@ class ArraySetting implements PluginSettingInterface {
 		if (is_null($index)) {
 			$i = $this->index;
 		}
-		if (is_null($this->value[$i])) {
+		if (($i >= sizeof($this->value)) || (is_null($this->value[$i]))) {
 			return null;
 		} else {
 			return $this->value[$i];
