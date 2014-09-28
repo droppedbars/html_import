@@ -12,9 +12,7 @@ require_once( dirname( __FILE__ ) . '/Importer.php' );
 
 class HTMLStubImporter extends Importer{
 
-	function __construct() {
-	}
-	protected function doImport(admin\HtmlImportSettings $settings, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null) {
+	protected function doImport(WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null) {
 		$updateResult = $meta->updateWPPost();
 		$html_post_lookup[$meta->getSourcePath()] = $meta->getPostId();
 

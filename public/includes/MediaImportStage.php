@@ -8,19 +8,22 @@
 
 namespace html_import;
 
+use html_import\indices\WebPage;
+
 require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 class MediaImportStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
 		return $stagesSettings->doesImportMedia();
 	}
 
-	protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$media_lookup = null) {
+	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$media_lookup = null) {
 
 		$post_id = $meta->getPostId();
-
+		$body = $meta->getPostContent();
 		if (is_null($body) || strcmp('', $body) == 0) {
 			echo '** the body for post '.$post_id.' was empty, no media to import.';
 			return;

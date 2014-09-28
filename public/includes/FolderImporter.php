@@ -12,10 +12,7 @@ require_once( dirname( __FILE__ ) . '/Importer.php' );
 
 class FolderImporter extends Importer{
 
-
-	function __construct() {
-	}
-	protected function doImport(admin\HtmlImportSettings $settings, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null) {
+	protected function doImport(WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null) {
 		$updateResult = $meta->updateWPPost();
 
 		if ( is_wp_error( $updateResult ) ) {

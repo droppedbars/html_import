@@ -391,11 +391,11 @@ class HTMLImportPlugin {
 			$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
 			if ( file_exists( $src ) ) {
 				if ( $stubs_only ) {
-					$stubImport = new html_import\HTMLStubImporter();
-					$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+					$stubImport = new html_import\HTMLStubImporter($settings, $stages);
+					$stubImport->import($webPage, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 				} else {
-					$fullImport = new html_import\HTMLFullImporter();
-					$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+					$fullImport = new html_import\HTMLFullImporter($settings, $stages);
+					$fullImport->import($webPage, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
 				}
 			} else {
 				// Confluence imports do not have folders
@@ -459,15 +459,15 @@ class HTMLImportPlugin {
 		$postMeta = $this->importAnHTML( $webPage, true, $stages, $settings, $postMeta, $categoryIDs, null, null );
 		if ( !$webPage->isFolder() ) {
 			if ( $stubs_only ) {
-				$stubImport = new html_import\HTMLStubImporter();
-				$stubImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+				$stubImport = new html_import\HTMLStubImporter($settings, $stages);
+				$stubImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
 			} else {
-				$fullImport = new html_import\HTMLFullImporter();
-				$fullImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+				$fullImport = new html_import\HTMLFullImporter($settings, $stages);
+				$fullImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
 			}
 		} else {
-			$folderImport = new html_import\FolderImporter();
-			$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
+			$folderImport = new html_import\FolderImporter($settings, $stages);
+			$folderImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
 		}
 
 		return $postMeta;

@@ -11,15 +11,23 @@ namespace html_import;
 
 abstract class Importer {
 
- public function import(admin\HtmlImportSettings $settings, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null){
-	 $this->doImport($settings, $stages, $meta, $body, $html_post_lookup, $media_lookup);
+	protected $settings = null;
+	protected $stages = null;
+
+	public function __construct(admin\HtmlImportSettings $settings, HTMLImportStages $stages) {
+		$this->settings = $settings;
+		$this->$stages = $stages;
+	}
+
+	public function import(WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null){
+	 $this->doImport($meta, $body, $html_post_lookup, $media_lookup);
 	 $this->save($meta);
- }
+	}
 
-	abstract protected function doImport(admin\HtmlImportSettings $settings, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$html_post_lookup = null, &$media_lookup = null);
+	abstract protected function doImport(WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null);
 
-	protected function stageParse(ImportStage $stage, HTMLImportStages $stages, WPMetaConfigs $meta, $body, &$other) {
-		$stage->process($stages, $meta, $body, $other);
+	protected function stageParse(ImportStage $stage, WPMetaConfigs $meta, &$other) {
+		$stage->process($this->stages, $meta, $other);
 	}
 	protected function save(WPMetaConfigs $meta) {
 		return $meta->updateWPPost();
