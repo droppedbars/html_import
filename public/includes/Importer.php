@@ -9,6 +9,10 @@
 namespace html_import;
 
 
+use html_import\indices\WebPage;
+
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
+
 abstract class Importer {
 
 	protected $settings = null;
@@ -16,18 +20,18 @@ abstract class Importer {
 
 	public function __construct(admin\HtmlImportSettings $settings, HTMLImportStages $stages) {
 		$this->settings = $settings;
-		$this->$stages = $stages;
+		$this->stages = $stages;
 	}
 
-	public function import(WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null){
-	 $this->doImport($meta, $body, $html_post_lookup, $media_lookup);
+	public function import(WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null){
+	 $this->doImport($webPage, $meta, $html_post_lookup, $media_lookup);
 	 $this->save($meta);
 	}
 
-	abstract protected function doImport(WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null);
+	abstract protected function doImport(WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null);
 
-	protected function stageParse(ImportStage $stage, WPMetaConfigs $meta, &$other) {
-		$stage->process($this->stages, $meta, $other);
+	protected function stageParse(WebPage $webPage, ImportStage $stage, WPMetaConfigs $meta, &$other) {
+		$stage->process($webPage, $this->stages, $meta, $other);
 	}
 	protected function save(WPMetaConfigs $meta) {
 		return $meta->updateWPPost();

@@ -22,7 +22,7 @@ class ImportHTMLStage extends ImportStage {
 	}
 
 	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null) {
-		$meta->setPostContent($this->replaceBodyWithDivs($meta->body));
+		$meta->setPostContent($this->replaceBodyWithDivs($meta->getPostContent()));
 	}
 
 
