@@ -37,11 +37,8 @@ class UpdateLinksImportStage extends ImportStage {
 						if ( 0 == strcasecmp( 'href', $attribute ) ) { // TODO: handle foo.html#rar
 							if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // TODO: need to handle foo.html without handling http://...
 								if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) { // if html or htm
-									if ( $path[0] != '/' ) {
-										$fullpath = realpath( $filepath . '/' . $path );
-									} else {
-										$fullpath = $path;
-									}
+
+									$fullpath = $webPage->getFullPath($path);
 									if ($fullpath) {
 										if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
 											$link_table[$path] = $fullpath;
