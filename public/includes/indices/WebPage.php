@@ -37,6 +37,22 @@ class WebPage extends LinkedTree{
 	}
 
 	/**
+	 * @param string $relativePath
+	 */
+	public function getFullPath($relativePath) {
+		return $this->retriever->getFullFilePath($relativePath, dirname($this->relativePath));
+	}
+
+	/**
+	 * @param $relativePath
+	 *
+	 * @return mixed
+	 */
+	public function getLinkContents($relativePath) {
+		return $this->retriever->retrieveFileContents($relativePath, dirname($this->relativePath));
+	}
+
+	/**
 	 * @return string
 	 */
 	public function getTitle() {

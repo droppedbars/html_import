@@ -20,11 +20,21 @@ class LocalFileRetriever extends FileRetriever {
 	}
 
 	public function retrieveFileContents( $file, $relativePath = '' ) {
+		// TODO: checks for if it is in fact a valid relative Path... ie "/foo" is a root file or directory
 		$fullPath = realPath($this->localPath.'/'.$relativePath.'/'.$file);
 		if (file_exists($fullPath)) {
 			return file_get_contents($fullPath);
 		} else {
 			return null;
+		}
+	}
+
+	public function getFullFilePath($file, $relativePath = '') {
+		$relativeFile = realPath($relativePath.'/'.$file);
+		if ( $relativeFile[0] == '/' ) {
+			return $relativeFile;
+		} else {
+			return realpath($this->localPath.'/'.$relativePath.'/'.$file);
 		}
 	}
 
