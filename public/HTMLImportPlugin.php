@@ -303,7 +303,7 @@ class HTMLImportPlugin {
 		return $title;
 	}
 
-	private function importAnHTML( \html_import\indices\WebPage $webPage, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, \html_import\WPMetaConfigs $parent_page = null, $category = null, $tag = null, $html_post_lookup ) {
+	private function importAnHTML( \html_import\indices\WebPage $webPage, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, $parent_page_id, $category = null, $tag = null, $html_post_lookup ) {
 
 		// TODO: category and order overrides
 		$title = $webPage->getTitle();
@@ -322,7 +322,7 @@ class HTMLImportPlugin {
 				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
 			}
 		}
-		$pageMeta->buildConfig($settings, $webPage, $post_id, $parent_page);
+		$pageMeta->buildConfig($settings, $webPage, $post_id, $parent_page_id);
 
 		if (!is_null($title)) {
 			$pageMeta->setPostTitle($title);
@@ -438,7 +438,7 @@ class HTMLImportPlugin {
 		return $html_post_lookup;
 	}
 
-	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings) {
+	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings) {
 
 		$category   = $settings->getCategories()->getValuesArray();
 		$tag        = Array();
@@ -455,8 +455,24 @@ class HTMLImportPlugin {
 			}
 		}
 
+		$parent_page = new \html_import\WPMetaConfigs();
+		// TODO: simplify this, only need to check that the ID is in fact a valid post
+		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		$parent_page_id = null;
+		if ($hasParent) {
+			$parent_page_id = $settings->getParentPage()->getValue();
+		}
+
+		$parentWebPage = $webPage->getParent();
+		if (!is_null($parentWebPage)) {
+			if (array_key_exists( $parentWebPage->getRelativePath(), $html_post_lookup )) {
+				$parent_page_id = $html_post_lookup[$parentWebPage->getRelativePath()];
+			}
+		}
+
+
 		$stages = new \html_import\HTMLImportStages();
-		$postMeta = $this->importAnHTML( $webPage, true, $stages, $settings, $postMeta, $categoryIDs, null, null );
+		$postMeta = $this->importAnHTML( $webPage, true, $stages, $settings, $parent_page_id, $categoryIDs, null, null, $html_post_lookup );
 		if ( !$webPage->isFolder() ) {
 			if ( $stubs_only ) {
 				$stubImport = new html_import\HTMLStubImporter($settings, $stages);
@@ -479,16 +495,11 @@ class HTMLImportPlugin {
 		if ( ! isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
-		$parent_page = new \html_import\WPMetaConfigs();
-		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
-		if (!$hasParent) {
-			$parent_page = null;
-		}
 		$siteIndex->setToFirstFile();
 		$fileNode = $siteIndex->getNextHTMLFile();
 		// TODO need to get the parent from the node, but the method of the top parent creates an issue!  need null
 		while (!is_null($fileNode)) {
-			$this->importFlareNode($fileNode, $stubs_only, $parent_page, $html_post_lookup, $media_lookup,$settings);
+			$this->importFlareNode($fileNode, $stubs_only, $html_post_lookup, $media_lookup,$settings);
 			$fileNode = $siteIndex->getNextHTMLFile();
 		}
 
