@@ -24,7 +24,7 @@ require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
 abstract class WebsiteIndex {
 	protected $retriever = null;
 	private $nodeCounter = -1;
-	protected $tree = null; // first node is always null
+	protected $trees = null; // This is an Array to store trees
 
 
 	/**
@@ -32,7 +32,7 @@ abstract class WebsiteIndex {
 	 */
 	public function __construct(\droppedbars\files\FileRetriever $fileRetriever) {
 		$this->retriever = $fileRetriever;
-		$this->tree = new \droppedbars\datastructure\LinkedTree(null);
+		$this->trees = Array();
 	}
 
 	/**
@@ -65,20 +65,37 @@ abstract class WebsiteIndex {
 	 * @return null|\droppedbars\datastructure\LinkedTree Tree node identified by @param $limit.
 	 * @throws \droppedbars\datastructure\ChildPayloadNotLinkedTreeException
 	 */
-	private function recurseTreeNodeForNext(\droppedbars\datastructure\LinkedTree $currentNode, $limit, &$counter = 0) {
-		$child = $currentNode->headChild();
-		while (!is_null($child)) {
-			if ($limit == $counter) {
-				return $child;
+	private function recurseTreeNodeForNext(\droppedbars\datastructure\LinkedTree $currentNode = null, &$counter = 0) {
+		if (is_null($currentNode)) {
+			$child = null;
+
+			foreach ($this->trees as $tree) {
+				if ($counter >= $this->nodeCounter) {
+					return $tree;
+				}
+				$child = $this->recurseTreeNodeForNext($tree, $counter);
+				if ((!is_null($child)) &&($counter >= $this->nodeCounter)) {
+					return $child;
+				}
+				$counter++;
 			}
-			$counter++;
-			$grandChild = $this->recurseTreeNodeForNext($child, $limit, $counter);
-			if (!is_null($grandChild) && ($limit == $counter)) {
-				return $grandChild;
+			return $child;
+		} else {
+			$child = $currentNode->headChild();
+			while ( !is_null( $child ) ) {
+				if ( $counter >= $this->nodeCounter ) {
+					return $child;
+				}
+				$counter ++;
+				$grandChild = $this->recurseTreeNodeForNext( $child, $counter );
+				if ( !is_null( $grandChild ) && ( $counter >= $this->nodeCounter ) ) {
+					return $grandChild;
+				}
+				$child = $currentNode->nextChild();
 			}
-			$child = $currentNode->nextChild();
+
+			return null;
 		}
-		return null;
 	}
 
 	/**
@@ -87,7 +104,7 @@ abstract class WebsiteIndex {
 	 */
 	public function getNextHTMLFile() {
 		$this->nodeCounter++;
-		return $this->recurseTreeNodeForNext($this->tree, $this->nodeCounter);
+		return $this->recurseTreeNodeForNext(null);
 	}
 // TODO: should I be getting the HTML file contents instead of just the title and path?
 } 

@@ -12,6 +12,7 @@ use droppedbars\datastructure\LinkedTree;
 
 require_once( dirname( __FILE__ ) . '/WebsiteIndex.php' );
 require_once(dirname( __FILE__ ) . '/../retriever/FileRetriever.php');
+require_once(dirname( __FILE__ ) . '/WebPage.php');
 
 /**
  * Class FlareWebsiteIndex
@@ -51,7 +52,7 @@ class FlareWebsiteIndex extends WebsiteIndex {
 		$fileTree = $this->getFlareFileList($chunkContents);
 		$fileOrder = $jsonArray['tree']['n'];
 
-		$this->buildTree($fileOrder, $fileTree, $this->tree);
+		$this->buildTree($fileOrder, $fileTree, null);
 	}
 
 	/**
@@ -78,6 +79,8 @@ class FlareWebsiteIndex extends WebsiteIndex {
 			$node = new WebPage($this->retriever, $pageTitle, $pagePath);
 			if (!is_null($parentNode)) {
 				$parentNode->addChild($node);
+			} else {
+				$this->trees[] = $node;
 			}
 			if ($counter == 0) {
 				$firstNode = $node;

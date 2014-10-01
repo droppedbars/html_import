@@ -486,8 +486,9 @@ class HTMLImportPlugin {
 		}
 		$siteIndex->setToFirstFile();
 		$fileNode = $siteIndex->getNextHTMLFile();
+		// TODO need to get the parent from the node, but the method of the top parent creates an issue!  need null
 		while (!is_null($fileNode)) {
-			$parent_page = $this->importFlareNode($fileNode, $stubs_only, $parent_page, $html_post_lookup, $media_lookup,$settings);
+			$this->importFlareNode($fileNode, $stubs_only, $parent_page, $html_post_lookup, $media_lookup,$settings);
 			$fileNode = $siteIndex->getNextHTMLFile();
 		}
 
