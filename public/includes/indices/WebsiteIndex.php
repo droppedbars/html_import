@@ -73,11 +73,11 @@ abstract class WebsiteIndex {
 				if ($counter >= $this->nodeCounter) {
 					return $tree;
 				}
+				$counter++;
 				$child = $this->recurseTreeNodeForNext($tree, $counter);
 				if ((!is_null($child)) &&($counter >= $this->nodeCounter)) {
 					return $child;
 				}
-				$counter++;
 			}
 			return $child;
 		} else {

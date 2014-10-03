@@ -57,10 +57,7 @@ class FlareWebsiteIndex extends WebsiteIndex {
 
 	/**
 	 * Build a LinkedTree tree from the file ordering and the file listing derived from the Flare index files.
-	 * The HTML file information is stored in the payload of the LinkedTree with the values 'path' for the URL of the HTML file, and 'title' for the title of the HTML file.
-	 *
-	 * TODO: deal with HTML pages that are actually folders!
-	 *
+	 * The HTML file information is stored in the payload of the LinkedTree with WebPage object representing the file.
 	 *
 	 * @param Array $fileOrder array based on Toc.js
 	 * @param Array $fileList array based on Toc_Chunk0.js
@@ -97,7 +94,6 @@ class FlareWebsiteIndex extends WebsiteIndex {
 
 	/**
 	 * Converts the contents of a Toc_Chunk file into an array
-	 * TODO: define array format
 	 * @param string $tocChunkContents
 	 *
 	 * @return array

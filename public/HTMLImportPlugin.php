@@ -303,7 +303,8 @@ class HTMLImportPlugin {
 		return $title;
 	}
 
-	private function importAnHTML( \html_import\indices\WebPage $webPage, $stub_only = true, html_import\HTMLImportStages $stages, html_import\admin\HtmlImportSettings $settings, $parent_page_id, $category = null, $tag = null, $html_post_lookup ) {
+
+	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $settings, $parent_page_id, $html_post_lookup ) {
 
 		// TODO: category and order overrides
 		$title = $webPage->getTitle();
@@ -315,11 +316,11 @@ class HTMLImportPlugin {
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
 				$post_id = $html_post_lookup[$webPage->getRelativePath()];
-			}
-		} else {
-			if ( ! is_null( $post ) ) { // post was previously created
-				$post_id = $post->ID;
-				echo '<li>Page with title '.$title.' and ID '.$post_id.' already exists, now tagged to be overwritten.</li>';
+			} else {
+				if ( !is_null( $post ) ) { // post was previously created
+					$post_id = $post->ID;
+					echo '<li>Page with title ' . $title . ' and ID ' . $post_id . ' already exists, now tagged to be overwritten.</li>';
+				}
 			}
 		}
 		$pageMeta->buildConfig($settings, $webPage, $post_id, $parent_page_id);
@@ -413,21 +414,21 @@ class HTMLImportPlugin {
 	}
 
 	private function process_xml_file( $stubs_only = true, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
-		set_time_limit(520);
-		if ( ! isset( $html_post_lookup ) ) {
+		set_time_limit( 520 );
+		if ( !isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
 
-		$doc = new DOMDocument();
-		$indexFile = new html_import\indices\LocalIndexSource($settings->getFileLocation()->getValue());
+		$doc       = new DOMDocument();
+		$indexFile = new html_import\indices\LocalIndexSource( $settings->getFileLocation()->getValue() );
 
 		$doc->loadXML( $indexFile->getContents(), LIBXML_NOBLANKS );
 
 		$nodelist = $doc->childNodes;
 
 		$parent_page = new \html_import\WPMetaConfigs();
-		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
-		if (!$hasParent) {
+		$hasParent   = $parent_page->loadFromPostID( $settings->getParentPage()->getValue() );
+		if ( !$hasParent ) {
 			$parent_page = null;
 		}
 
@@ -472,7 +473,7 @@ class HTMLImportPlugin {
 
 
 		$stages = new \html_import\HTMLImportStages();
-		$postMeta = $this->importAnHTML( $webPage, true, $stages, $settings, $parent_page_id, $categoryIDs, null, null, $html_post_lookup );
+		$postMeta = $this->importAnHTML( $webPage, $settings, $parent_page_id, $html_post_lookup );
 		if ( !$webPage->isFolder() ) {
 			if ( $stubs_only ) {
 				$stubImport = new html_import\HTMLStubImporter($settings, $stages);
@@ -557,7 +558,7 @@ class HTMLImportPlugin {
 
 				//Working from here....
 
-
+				// TODO: no way to track the order right now
 
 				$media_lookup = Array();
 				$html_post_lookup = Array();
