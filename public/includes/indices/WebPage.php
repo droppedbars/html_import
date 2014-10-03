@@ -47,7 +47,7 @@ class WebPage extends LinkedTree{
 	 * @param string $relativePath
 	 */
 	public function getFullPath($relativePath = null) {
-		if (is_null($relativePath)) {
+		if (!is_null($relativePath)) {
 			return $this->retriever->getFullFilePath( $relativePath, dirname( $this->relativePath ) );
 		} else {
 			return $this->retriever->getFullFilePath( $this->relativePath );
