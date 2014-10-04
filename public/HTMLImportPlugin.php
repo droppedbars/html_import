@@ -14,6 +14,7 @@ require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/CustomXMLWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/LocalFileRetriever.php' );
@@ -294,16 +295,6 @@ class HTMLImportPlugin {
 		wp_enqueue_script( $this->plugin_slug . '-plugin-script', plugins_url( 'assets/js/public.js', __FILE__ ), array( 'jquery' ), self::VERSION );
 	}
 
-	private function get_title( SimpleXMLElement $html_file ) {
-		$title = '';
-		foreach ( $html_file->head->title as $titleElement ) {
-			$title = '' . $titleElement;
-		}
-
-		return $title;
-	}
-
-
 	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $settings, $parent_page_id, $html_post_lookup ) {
 
 		// TODO: category and order overrides
@@ -332,112 +323,6 @@ class HTMLImportPlugin {
 		return $pageMeta;
 	}
 
-	private function processNode( DOMNode $node, $stubs_only = true, \html_import\WPMetaConfigs $postMeta = null, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
-
-		if (strcmp($node->nodeName, 'document') == 0) {
-			$attributes = $node->attributes;
-			$title      = null;
-			$src        = null;
-			$category   = $settings->getCategories()->getValuesArray();
-			$tag        = Array();
-			$order      = 0;
-
-			if ( isset( $attributes ) ) {
-				for ( $i = 0; $i < $attributes->length; $i ++ ) {
-					$attribute = $attributes->item( $i )->nodeName;
-					switch ( $attribute ) {
-						case 'title':
-							$title = $attributes->item( $i )->nodeValue;
-							break;
-						case 'src':
-							$src = $attributes->item( $i )->nodeValue;
-							if ( $src[0] != '/' ) {
-								$src = realpath( dirname( $settings->getFileLocation()->getValue() ) . '/' . $src );
-							}
-							break;
-						case 'category': // if category is set in XML, then overrides the web settings
-														 // TODO: should have a setting for if to use xml or web settings
-							$category = explode( ',', $attributes->item( $i )->nodeValue );
-							break;
-						case 'tag':
-							$tag = explode( ',', $attributes->item( $i )->nodeValue );
-							break;
-						case 'order':
-							$order = $attributes->item( $i )->nodeValue;
-							break;
-						/* future cases
-						case 'overwrite-existing':
-							break;
-						*/
-						default:
-							break;
-					}
-				}
-			}
-
-			if ( ! is_null( $category ) && is_array( $category ) ) {
-				foreach ( $category as $index => $cat ) {
-					$cat_id              = wp_create_category( trim( $cat ) );
-					$categoryIDs[$index] = intval( $cat_id );
-				}
-			}
-			if ( ! is_null( $tag ) && is_array( $tag ) ) {
-				foreach ( $tag as $t ) {
-					//TODO: support tags
-				}
-			}
-
-
-			$stages = new \html_import\HTMLImportStages();
-			$postMeta = $this->importAnHTML( $src, true, $stages, $settings, $postMeta, $categoryIDs, null, $order, null, $title );
-			if ( file_exists( $src ) ) {
-				if ( $stubs_only ) {
-					$stubImport = new html_import\HTMLStubImporter($settings, $stages);
-					$stubImport->import($webPage, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
-				} else {
-					$fullImport = new html_import\HTMLFullImporter($settings, $stages);
-					$fullImport->import($webPage, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
-				}
-			} else {
-				// Confluence imports do not have folders
-				//$folderImport = new html_import\FolderImporter();
-				//$folderImport->import($settings, $stages, $postMeta, $postMeta->getPostContent(), $html_post_lookup, $media_lookup);
-			}
-		}
-		// recurse through children nodes
-		$children = $node->childNodes;
-		if ( isset( $children ) ) {
-			for ( $i = 0; $i < $children->length; $i ++ ) {
-				$this->processNode( $children->item( $i ), $stubs_only, $postMeta, $html_post_lookup, $media_lookup, $settings );
-			}
-		}
-	}
-
-	private function process_xml_file( $stubs_only = true, &$html_post_lookup = null, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
-		set_time_limit( 520 );
-		if ( !isset( $html_post_lookup ) ) {
-			$html_post_lookup = Array();
-		}
-
-		$doc       = new DOMDocument();
-		$indexFile = new html_import\indices\LocalIndexSource( $settings->getFileLocation()->getValue() );
-
-		$doc->loadXML( $indexFile->getContents(), LIBXML_NOBLANKS );
-
-		$nodelist = $doc->childNodes;
-
-		$parent_page = new \html_import\WPMetaConfigs();
-		$hasParent   = $parent_page->loadFromPostID( $settings->getParentPage()->getValue() );
-		if ( !$hasParent ) {
-			$parent_page = null;
-		}
-
-		for ( $i = 0; $i < $nodelist->length; $i ++ ) {
-			$this->processNode( $nodelist->item( $i ), $stubs_only, $parent_page, $html_post_lookup, $media_lookup, $settings );
-		}
-
-		return $html_post_lookup;
-	}
 
 	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings) {
 
@@ -490,7 +375,7 @@ class HTMLImportPlugin {
 		return $postMeta;
 	}
 
-	private function process_flare_index( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
+	private function importFromWebsiteIndex( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
 		set_time_limit(520);
 		if ( ! isset( $html_post_lookup ) ) {
@@ -508,16 +393,16 @@ class HTMLImportPlugin {
 	}
 
 	public function import_html_from_xml_index( html_import\admin\HtmlImportSettings $settings ) {
-		$media_lookup = Array();
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
-		if ( \html_import\XMLHelper::valid_xml_file( $settings->getFileLocation()->getValue() ) ) {
-			echo '<ul>';
-			$html_post_lookup = $this->process_xml_file( true, $html_post_lookup, $media_lookup, $settings );
-			$this->process_xml_file( false, $html_post_lookup, $media_lookup, $settings );
-			echo '</ul>';
-		} else {
-			echo 'Cannot find file '.$settings->getFileLocation()->getEscapedHTMLValue()."<br>Current path is ".getcwd().'<br>';
-		}
+
+		$localFileRetriever = new \droppedbars\files\LocalFileRetriever(dirname($settings->getFileLocation()->getValue()));
+		$xmlIndex = new \html_import\indices\CustomXMLWebsiteIndex($localFileRetriever);
+		$xmlIndex->buildHierarchyFromWebsiteIndex(basename($settings->getFileLocation()->getValue()));
+
+		$media_lookup = Array();
+		$html_post_lookup = Array();
+		$html_post_lookup = $this->importFromWebsiteIndex($xmlIndex, true, $html_post_lookup, $media_lookup, $settings);
+		$this->importFromWebsiteIndex($xmlIndex, false, $html_post_lookup, $media_lookup, $settings);
 	}
 
 	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
@@ -562,8 +447,8 @@ class HTMLImportPlugin {
 
 				$media_lookup = Array();
 				$html_post_lookup = Array();
-				$html_post_lookup = $this->process_flare_index($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
-				$this->process_flare_index($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
+				$html_post_lookup = $this->importFromWebsiteIndex($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
+				$this->importFromWebsiteIndex($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
 
 				html_import\FileHelper::delTree($path.'-'.$path_modifier);
 			} else {
