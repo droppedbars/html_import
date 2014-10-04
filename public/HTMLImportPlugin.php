@@ -312,7 +312,7 @@ class HTMLImportPlugin {
 		$pageMeta = new \html_import\WPMetaConfigs();
 		$post_id = null;
 
-		$post = get_page_by_title( $title );
+		$post = get_page_by_title( htmlspecialchars( $title ));// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
 				$post_id = $html_post_lookup[$webPage->getRelativePath()];
