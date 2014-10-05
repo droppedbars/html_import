@@ -51,6 +51,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			$title      = null;
 			$src        = null;
 			$tag        = Array();
+			$order      = null;
 
 			// TODO: currently no mechanism to read settings in on a per file bases from the index
 			if ( isset( $attributes ) ) {
