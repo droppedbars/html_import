@@ -367,7 +367,7 @@ class WPMetaConfigs {
 		return $title;
 	}
 
-	public function buildConfig( admin\HtmlImportSettings $settings, WebPage $webPage, $post_id = null, $parent_page_id = null, $order = null ) {
+	public function buildConfig( admin\HtmlImportSettings $settings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
 
 		if ( ! is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
@@ -408,6 +408,7 @@ class WPMetaConfigs {
 			$this->setPostParent( $parent_page_id );
 		}
 
+		$order = $webPage->getOrderPosition();
 		if ( isset ( $order ) ) {
 			$this->setMenuOrder( $order );
 		}

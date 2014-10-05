@@ -21,12 +21,27 @@ class WebPage extends LinkedTree{
 	private $content = null;
 	private $relativePath = null;
 	private $retriever = null;
+	private $order = null;
 
 	public function __construct(FileRetriever $retriever, $title, $relativePath, $content = null) {
 		$this->title = $title;
 		$this->content = $content;
 		$this->relativePath = $relativePath;
 		$this->retriever = $retriever;
+	}
+
+	/**
+	 * @param int $order
+	 */
+	public function setOrderPosition($order) {
+		$this->order = $order;
+	}
+
+	/**
+	 * @return null|int
+	 */
+	public function getOrderPosition() {
+		return $this->order;
 	}
 
 	/**

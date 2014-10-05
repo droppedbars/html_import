@@ -73,9 +73,9 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 //						case 'tag':
 //							$tag = explode( ',', $attributes->item( $i )->nodeValue );
 //							break;
-//						case 'order':
-//							$order = $attributes->item( $i )->nodeValue;
-//							break;
+						case 'order':
+							$order = $attributes->item( $i )->nodeValue;
+							break;
 //						/* future cases
 //						case 'overwrite-existing':
 //							break;
@@ -99,6 +99,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			}*/
 
 			$webPage = new WebPage($this->retriever, $title, $src);
+			$webPage->setOrderPosition($order);
 			if (is_null($parentPage)) {
 				$this->trees[] = $webPage;
 			} else {

@@ -74,6 +74,7 @@ class FlareWebsiteIndex extends WebsiteIndex {
 			$pageTitle = $fileList[$itemIndex]['title'];
 
 			$node = new WebPage($this->retriever, $pageTitle, $pagePath);
+			$node->setOrderPosition($itemIndex);
 			if (!is_null($parentNode)) {
 				$parentNode->addChild($node);
 			} else {
