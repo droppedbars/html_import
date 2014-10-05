@@ -8,15 +8,18 @@
 
 namespace html_import;
 
+use html_import\indices\WebPage;
+
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 abstract class ImportStage {
 	abstract protected function isValid(HTMLImportStages $stagesSettings);
 
-	abstract protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$other = null);
+	abstract protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null);
 
-	final public function process(HTMLImportStages $stagesSettings, WPMetaConfigs $meta, $body, &$other = null) {
+	final public function process(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs $meta, &$other = null) {
 		if ($this->isValid($stagesSettings)) {
-			$this->performStage($stagesSettings, $meta, $body, $other);
+			$this->performStage($webPage, $stagesSettings, $meta, $other);
 		}
 	}
 } 

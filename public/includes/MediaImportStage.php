@@ -8,19 +8,22 @@
 
 namespace html_import;
 
+use html_import\indices\WebPage;
+
 require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 class MediaImportStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
 		return $stagesSettings->doesImportMedia();
 	}
 
-	protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$media_lookup = null) {
+	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$media_lookup = null) {
 
 		$post_id = $meta->getPostId();
-
+		$body = $meta->getPostContent();
 		if (is_null($body) || strcmp('', $body) == 0) {
 			echo '** the body for post '.$post_id.' was empty, no media to import.';
 			return;
@@ -41,11 +44,12 @@ class MediaImportStage extends ImportStage {
 						if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // if it's local
 							if ( ( ! is_null( $media_lookup ) && ( ! array_key_exists( $path, $media_table ) ) ) ) {
 
-								if ( $path[0] != '/' ) {
+								/*if ( $path[0] != '/' ) {
 									$fullpath = realpath( dirname( $meta->getSourcePath() ) . '/' . $path );
 								} else {
 									$fullpath = $path;
-								}
+								}*/
+								$fullpath = $webPage->getFullPath($path);
 								if ( array_key_exists( $fullpath, $media_lookup ) ) {
 									$attach_id = $media_lookup[$fullpath];
 									require_once( ABSPATH . 'wp-admin/includes/image.php' );
@@ -54,7 +58,7 @@ class MediaImportStage extends ImportStage {
 									$media_table[$path]      = $fullpath;
 								} else {
 									$filename = basename( $fullpath );
-									$upload   = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
+									$upload   = wp_upload_bits( $filename, null, $webPage->getLinkContents($path) );
 									if ( $upload['error'] ) {
 										echo '<li>***Unable to upload media file ' . $filename . '</li>';
 									} else {
@@ -95,11 +99,12 @@ class MediaImportStage extends ImportStage {
 
 							if ( preg_match( '/\.(png|bmp|jpg|jpeg|gif|pdf|doc|docx|mp3|ogg|wav)$/', strtolower( $path ) ) ) { // media png,bmp,jpg,jpeg,gif,pdf,doc,docx,mp3,ogg,wav
 								if ( ( ! is_null( $media_lookup ) ) ) {
-									if ( $path[0] != '/' ) {
+									/*if ( $path[0] != '/' ) {
 										$fullpath = realpath( dirname( $meta->getSourcePath() ) . '/' . $path );
 									} else {
 										$fullpath = $path;
-									}
+									}*/
+									$fullpath = $webPage->getFullPath($path);
 									if ( array_key_exists( $fullpath, $media_lookup ) ) {
 										$attach_id = $media_lookup[$fullpath];
 										require_once( ABSPATH . 'wp-admin/includes/image.php' );
@@ -110,7 +115,7 @@ class MediaImportStage extends ImportStage {
 									} else {
 										$filename = basename( $fullpath );
 
-										$upload = wp_upload_bits( $filename, null, file_get_contents( $fullpath ) );
+										$upload = wp_upload_bits( $filename, null, $webPage->getLinkContents($path) );
 										if ( $upload['error'] ) {
 											echo '<li>***Unable to upload media file ' . $filename . '</li>';
 										} else {

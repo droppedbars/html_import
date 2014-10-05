@@ -8,17 +8,20 @@
 
 namespace html_import;
 
+use html_import\indices\WebPage;
+
 require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 class UpdateLinksImportStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
 		return $stagesSettings->doesUpdateLinks();
 	}
 
-	protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$html_post_lookup = null) {
-
+	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$html_post_lookup = null) {
+		$body =  $meta->getPostContent();
 		if (!is_null($html_post_lookup)) {
 			$bodyXML = XMLHelper::getXMLObjectFromString($body);
 			$filepath = dirname($meta->getSourcePath());
@@ -34,11 +37,8 @@ class UpdateLinksImportStage extends ImportStage {
 						if ( 0 == strcasecmp( 'href', $attribute ) ) { // TODO: handle foo.html#rar
 							if ( ! preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // TODO: need to handle foo.html without handling http://...
 								if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) { // if html or htm
-									if ( $path[0] != '/' ) {
-										$fullpath = realpath( $filepath . '/' . $path );
-									} else {
-										$fullpath = $path;
-									}
+
+									$fullpath = $webPage->getFullPath($path);
 									if ($fullpath) {
 										if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
 											$link_table[$path] = $fullpath;

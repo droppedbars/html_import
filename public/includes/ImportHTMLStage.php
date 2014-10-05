@@ -8,18 +8,21 @@
 
 namespace html_import;
 
+use html_import\indices\WebPage;
+
 require_once( dirname( __FILE__ ) . '/ImportStage.php' );
 require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
 require_once( dirname( __FILE__ ) . '/XMLHelper.php' );
+require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 class ImportHTMLStage extends ImportStage {
 	protected function isValid(HTMLImportStages $stagesSettings) {
 		return $stagesSettings->doesImportHtml();
 	}
 
-	protected function performStage(HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, $body, &$other = null) {
-		$meta->setPostContent($this->replaceBodyWithDivs($body));
+	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null) {
+		$meta->setPostContent($this->replaceBodyWithDivs($meta->getPostContent()));
 	}
 
 
