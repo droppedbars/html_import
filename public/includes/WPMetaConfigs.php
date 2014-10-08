@@ -8,6 +8,7 @@
 
 namespace html_import;
 
+require_once( dirname( __FILE__ ) . '/indices/WebPageSettings.php' );
 
 use html_import\indices\WebPage;
 
@@ -367,7 +368,9 @@ class WPMetaConfigs {
 		return $title;
 	}
 
-	public function buildConfig( admin\HtmlImportSettings $settings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
+	public function buildConfig( admin\HtmlImportSettings $globalSettings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
+
+		$overrideSettings = $webPage->getSettings();
 
 		if ( ! is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
@@ -387,14 +390,19 @@ class WPMetaConfigs {
 		$this->setCommentStatus( 'closed' );
 		$this->setPingStatus( 'closed' );
 
-		$category    = $settings->getCategories()->getValuesArray();
-		$categoryIDs = null;
-		if ( ! is_null( $category ) && is_array( $category ) ) {
-			foreach ( $category as $index => $cat ) {
-				$cat_id              = wp_create_category( trim( $cat ) );
-				$categoryIDs[$index] = intval( $cat_id );
+		$categoryIDs = $overrideSettings->getCategoryIds();
+		// TODO: need to determine if index can override by providing no categories, and what that means
+		if ((is_null($overrideSettings)) || (is_null($categoryIDs)) || (sizeof($categoryIDs) <= 0)) {
+			$category    = $globalSettings->getCategories()->getValuesArray();
+			$categoryIDs = null;
+			if ( ! is_null( $category ) && is_array( $category ) ) {
+				foreach ( $category as $index => $cat ) {
+					$cat_id              = wp_create_category( trim( $cat ) );
+					$categoryIDs[$index] = intval( $cat_id );
+				}
 			}
 		}
+
 
 		$this->setPostCategory( $categoryIDs );
 
@@ -413,7 +421,8 @@ class WPMetaConfigs {
 			$this->setMenuOrder( $order );
 		}
 		$this->setPostAuthor( wp_get_current_user()->ID ); // TODO: should be in the settings object
-		$this->setPageTemplate($settings->getTemplate()->getValue());
+		$this->setPageTemplate($globalSettings->getTemplate()->getValue());
+
 
 	}
 

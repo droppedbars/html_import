@@ -10,6 +10,7 @@ namespace html_import\indices;
 
 require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
 require_once( dirname( __FILE__ ) . '/../retriever/FileRetriever.php' );
+require_once( dirname( __FILE__ ) . '/WebPageSettings.php' );
 
 
 use droppedbars\datastructure\LinkedTree;
@@ -22,12 +23,14 @@ class WebPage extends LinkedTree{
 	private $relativePath = null;
 	private $retriever = null;
 	private $order = null;
+	private $settings = null;
 
-	public function __construct(FileRetriever $retriever, $title, $relativePath, $content = null) {
+	public function __construct(FileRetriever $retriever, $title, $relativePath, $content = null, WebPageSettings $settings = null) {
 		$this->title = $title;
 		$this->content = $content;
 		$this->relativePath = $relativePath;
 		$this->retriever = $retriever;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -104,6 +107,10 @@ class WebPage extends LinkedTree{
 			$content = $this->retriever->retrieveFileContents($this->getRelativePath());
 		}
 		return is_null($content);
+	}
+
+	public function getSettings() {
+		return $this->settings;
 	}
 
 } 

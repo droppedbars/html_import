@@ -295,7 +295,7 @@ class HTMLImportPlugin {
 		wp_enqueue_script( $this->plugin_slug . '-plugin-script', plugins_url( 'assets/js/public.js', __FILE__ ), array( 'jquery' ), self::VERSION );
 	}
 
-	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $settings, $parent_page_id, $html_post_lookup ) {
+	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $globalSettings, $parent_page_id, $html_post_lookup ) {
 
 		// TODO: category and order overrides
 		$title = $webPage->getTitle();
@@ -314,7 +314,7 @@ class HTMLImportPlugin {
 				}
 			}
 		}
-		$pageMeta->buildConfig($settings, $webPage, $post_id, $parent_page_id);
+		$pageMeta->buildConfig($globalSettings, $webPage, $post_id, $parent_page_id);
 
 		if (!is_null($title)) {
 			$pageMeta->setPostTitle($title);
