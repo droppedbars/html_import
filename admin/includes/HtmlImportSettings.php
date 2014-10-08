@@ -8,6 +8,8 @@
 
 namespace html_import\admin;
 
+use html_import\indices\WebPageSettings;
+
 require_once( dirname( __FILE__ ) . '/PluginSettingsInterface.php' );
 require_once( dirname( __FILE__ ) . '/StringSetting.php' );
 require_once( dirname( __FILE__ ) . '/ArraySetting.php' );

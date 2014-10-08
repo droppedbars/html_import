@@ -11,6 +11,7 @@ namespace html_import\indices;
 require_once( dirname( __FILE__ ) . '/WebsiteIndex.php' );
 require_once(dirname( __FILE__ ) . '/../retriever/FileRetriever.php');
 require_once(dirname( __FILE__ ) . '/WebPage.php');
+require_once(dirname( __FILE__ ) . '/WebPageSettings.php');
 
 class CustomXMLWebsiteIndex extends WebsiteIndex {
 	/**
@@ -45,6 +46,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 
 	private function readInChildNode( \DOMNode $node, WebPage $parentPage = null ) {
 		$webPage = $parentPage;
+		$settings = new WebPageSettings();
 
 		if ( strcmp( $node->nodeName, 'document' ) == 0 ) {
 			$attributes = $node->attributes;
@@ -52,6 +54,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			$src        = null;
 			$tag        = Array();
 			$order      = null;
+			$category   = Array();
 
 			// TODO: currently no mechanism to read settings in on a per file bases from the index
 			if ( isset( $attributes ) ) {
@@ -67,10 +70,10 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 								$src = basename( $this->retriever->getFullFilePath($src) );
 							}
 							break;
-//						case 'category': // if category is set in XML, then overrides the web settings
-//							// TODO: should have a setting for if to use xml or web settings
-//							$category = explode( ',', $attributes->item( $i )->nodeValue );
-//							break;
+						case 'category': // if category is set in XML, then overrides the web settings
+							// TODO: should have a setting for if to use xml or web settings
+							$category = explode( ',', $attributes->item( $i )->nodeValue );
+							break;
 //						case 'tag':
 //							$tag = explode( ',', $attributes->item( $i )->nodeValue );
 //							break;
@@ -81,25 +84,25 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 //						case 'overwrite-existing':
 //							break;
 //						*/
-//						default:
-//							break;
+						default:
+							break;
 					}
 				}
 			}
 
-	/*		if ( !is_null( $category ) && is_array( $category ) ) {
+			if ( !is_null( $category ) && is_array( $category ) ) {
 				foreach ( $category as $index => $cat ) {
 					$cat_id              = wp_create_category( trim( $cat ) );
-					$categoryIDs[$index] = intval( $cat_id );
+					$settings->addCategory(intval( $cat_id ));
 				}
 			}
-			if ( !is_null( $tag ) && is_array( $tag ) ) {
+		/*	if ( !is_null( $tag ) && is_array( $tag ) ) {
 				foreach ( $tag as $t ) {
 					//TODO: support tags
 				}
 			}*/
 
-			$webPage = new WebPage($this->retriever, $title, $src);
+			$webPage = new WebPage($this->retriever, $title, $src, null, $settings);
 			$webPage->setOrderPosition($order);
 			if (is_null($parentPage)) {
 				$this->trees[] = $webPage;
