@@ -392,12 +392,10 @@ class HTMLImportPlugin {
 		return $html_post_lookup;
 	}
 
-	public function import_html_from_xml_index( html_import\admin\HtmlImportSettings $settings ) {
-		echo '<h2>Output from Import</h2><br>Please be patient</br>';
-
-		$localFileRetriever = new \droppedbars\files\LocalFileRetriever(dirname($settings->getFileLocation()->getValue()));
+	public function import_html_from_xml_index( $filePath, html_import\admin\HtmlImportSettings $settings ) {
+		$localFileRetriever = new \droppedbars\files\LocalFileRetriever(dirname($filePath));
 		$xmlIndex = new \html_import\indices\CustomXMLWebsiteIndex($localFileRetriever);
-		$xmlIndex->buildHierarchyFromWebsiteIndex(basename($settings->getFileLocation()->getValue()));
+		$xmlIndex->buildHierarchyFromWebsiteIndex(basename($filePath));
 
 		$media_lookup = Array();
 		$html_post_lookup = Array();
@@ -405,58 +403,89 @@ class HTMLImportPlugin {
 		$this->importFromWebsiteIndex($xmlIndex, false, $html_post_lookup, $media_lookup, $settings);
 	}
 
-	public function import_html_from_flare( $zip_to_upload, html_import\admin\HtmlImportSettings $settings) {
+	private function isFileMimeTypeCompressed($mime_type) {
+		// TODO: better would be to actually check the zip rather than just assume the mime-type is correct
+		return ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0));
+	}
+
+	private function decompressAndUploadFiletoSite($zip_to_upload) {
+		$zip = new ZipArchive;
+		// TODO: not handling failure to open the zip
+		$zipOpenResult = $zip->open($zip_to_upload['tmp_name']);
+		if ($zipOpenResult === TRUE) {
+			$upload_dir    = wp_upload_dir();
+			$path          = $upload_dir['path'] . '/import';
+			$path_modifier = 1;
+			while ( file_exists( $path . '-' . $path_modifier ) ) {
+				$path_modifier ++;
+			}
+			$resultingPath = $path . '-' . $path_modifier;
+			// TODO: not handling extract and close errors.
+			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
+			$closeSuccess   = $zip->close();
+			return $resultingPath;
+		} else {
+			return null;
+		}
+	}
+
+	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings) {
 		/*
-		 * $zip_to_uplaod is an array with elements:
+		 * $zip_to_upload is an array with elements:
 		 * 	name
 		 * 	type
 		 * 	tmp_name
 		 * 	error
 		 * 	size
-		 *
-		 * .rar    application/x-rar-compressed, application/octet-stream
-				.zip    application/zip, application/octet-stream
 		 */
+
+		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($filePath);
+		$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
+		$flareIndex->buildHierarchyFromWebsiteIndex();
+
+		$media_lookup = Array();
+		$html_post_lookup = Array();
+		$html_post_lookup = $this->importFromWebsiteIndex($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
+		$this->importFromWebsiteIndex($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
+	}
+
+	// TODO: candidate to be made into a factory
+	private function routeImportToCorrectImporter($filePath, html_import\admin\HtmlImportSettings $settings) {
+		$importType = $settings->getIndexType()->getValue();
+
+		if (strcmp('flare', $importType) == 0) {
+			$this->import_html_from_flare($filePath, $settings);
+		} else if (strcmp('xml', $importType) == 0) {
+			$this->import_html_from_xml_index($filePath, $settings);
+		} else {
+			// TODO: error
+		}
+	}
+
+	public function importHTMLFiles(html_import\admin\HtmlImportSettings $settings) {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
-		$mime_type = $zip_to_upload['type'];
-	if ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0)) {
-			echo 'mime-type: '.$mime_type;
-		// ==== this portion is to upload and unzip the zip file
-			$zip = new ZipArchive;
-			$zipOpenResult = $zip->open($zip_to_upload['tmp_name']);
-			if ($zipOpenResult === TRUE) {
-				$upload_dir = wp_upload_dir();
-				$path = $upload_dir['path'].'/import';
-				$path_modifier = 1;
-				while (file_exists($path.'-'.$path_modifier)) {
-					$path_modifier++;
+
+		// TODO: test flare+local and XML+zip.
+
+		// TODO: prefer to pass this value in rather than use global
+		$zip_to_upload = $_FILES['file-upload'];
+		if (strcmp('upload', $settings->getImportSource()->getValue()) == 0) {
+			$mime_type = $zip_to_upload['type'];
+			echo 'uploading file of mime-type '.$mime_type.' <br>';
+			if ( $this->isFileMimeTypeCompressed( $mime_type ) ) {
+				// echo 'mime-type: '.$mime_type;
+				$filePath = $this->decompressAndUploadFiletoSite( $zip_to_upload );
+				if (!is_null($filePath)) {
+					$this->routeImportToCorrectImporter($filePath, $settings);
+
+					html_import\FileHelper::delTree($filePath);
 				}
-				$extractSuccess = $zip->extractTo($path.'-'.$path_modifier);
-				$closeSuccess = $zip->close();
-		// ====
-		// ==== this portion is to get a tree of all the webpages to import
-
-				$localFileRetriever = new \droppedbars\files\LocalFileRetriever($path.'-'.$path_modifier);
-				$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
-				$flareIndex->buildHierarchyFromWebsiteIndex();
-
-				//Working from here....
-
-				// TODO: no way to track the order right now
-
-				$media_lookup = Array();
-				$html_post_lookup = Array();
-				$html_post_lookup = $this->importFromWebsiteIndex($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
-				$this->importFromWebsiteIndex($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
-
-				html_import\FileHelper::delTree($path.'-'.$path_modifier);
-			} else {
-				echo '<H4>Failed to read ZIP: failed, code :' . $zipOpenResult.'</H4>';
 			}
 		} else {
-			echo '<H4>File uploaded is not ZIP or RAR</H4>';
+			$this->routeImportToCorrectImporter($settings->getFileLocation()->getValue(), $settings);
 		}
+
 		echo '</ul>';
 	}
 }
