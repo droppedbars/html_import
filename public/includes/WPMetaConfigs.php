@@ -370,7 +370,6 @@ class WPMetaConfigs {
 
 	public function buildConfig( admin\HtmlImportSettings $globalSettings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
 
-		$overrideSettings = $webPage->getSettings();
 
 		if ( ! is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
@@ -390,7 +389,11 @@ class WPMetaConfigs {
 		$this->setCommentStatus( 'closed' );
 		$this->setPingStatus( 'closed' );
 
-		$categoryIDs = $overrideSettings->getCategoryIds();
+		$categoryIDs = null;
+		$overrideSettings = $webPage->getSettings();
+		if (!is_null($overrideSettings)) {
+			$categoryIDs = $overrideSettings->getCategoryIds();
+		}
 		// TODO: need to determine if index can override by providing no categories, and what that means
 		if ((is_null($overrideSettings)) || (is_null($categoryIDs)) || (sizeof($categoryIDs) <= 0)) {
 			$category    = $globalSettings->getCategories()->getValuesArray();
