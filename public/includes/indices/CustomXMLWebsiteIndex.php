@@ -14,6 +14,7 @@ require_once(dirname( __FILE__ ) . '/WebPage.php');
 require_once(dirname( __FILE__ ) . '/WebPageSettings.php');
 
 class CustomXMLWebsiteIndex extends WebsiteIndex {
+	const DEFAULT_INDEX_FILE_NAME = 'index.xml';
 	/**
 	 * Calling this function causes the website hierarchy to be built.  An index file to be used may be passed in by the caller or the function can be overridden and inherently know its own index file.
 	 *
@@ -26,8 +27,12 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 	 * @return null|void
 	 */
 	public function buildHierarchyFromWebsiteIndex( $indexFile = null ) {
-		if ( \html_import\XMLHelper::valid_xml_file( $this->retriever->getFullFilePath($indexFile) ) ) {
-			$indexContents = $this->retriever->retrieveFileContents($indexFile);
+		$indexFileToUse = self::DEFAULT_INDEX_FILE_NAME;
+		if (!is_null($indexFile)) {
+			$indexFileToUse = $indexFile;
+		}
+		if ( \html_import\XMLHelper::valid_xml_file( $this->retriever->getFullFilePath($indexFileToUse) ) ) {
+			$indexContents = $this->retriever->retrieveFileContents($indexFileToUse);
 
 			$doc = new \DOMDocument();
 			$doc->loadXML( $indexContents, LIBXML_NOBLANKS );
@@ -40,7 +45,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			}
 
 		} else {
-			echo 'Cannot find file '.$indexFile."<br>Current path is ".getcwd().'<br>';
+			echo 'Cannot find file '.$indexFileToUse."<br>Current path is ".getcwd().'<br>';
 		}
 	}
 

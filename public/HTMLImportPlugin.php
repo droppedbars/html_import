@@ -393,9 +393,18 @@ class HTMLImportPlugin {
 	}
 
 	public function import_html_from_xml_index( $filePath, html_import\admin\HtmlImportSettings $settings ) {
-		$localFileRetriever = new \droppedbars\files\LocalFileRetriever(dirname($filePath));
+		$directory = $filePath;
+		if (!is_dir($directory)) {
+			$directory = dirname($filePath);
+		}
+		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($directory);
 		$xmlIndex = new \html_import\indices\CustomXMLWebsiteIndex($localFileRetriever);
-		$xmlIndex->buildHierarchyFromWebsiteIndex(basename($filePath));
+
+		$indexFile = null;
+		if (!is_dir($filePath)) {
+			$indexFile = basename($filePath);
+		}
+		$xmlIndex->buildHierarchyFromWebsiteIndex($indexFile);
 
 		$media_lookup = Array();
 		$html_post_lookup = Array();
