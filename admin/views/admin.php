@@ -25,10 +25,8 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		// TODO: temp to simplify interface for now
 		if (strcmp($_POST['index-type'], 'xml') == 0) {
 			$_POST['file-type'] = 'index';
-			$_POST['import-source'] = 'location';
 		} else {
 			$_POST['file-type'] = 'zip';
-			$_POST['import-source'] = 'upload';
 		}
 
 		$settingsToProcess->loadFromPOST();
@@ -65,13 +63,9 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 
 		echo "<b>hide log messages</b>";
 
-		if ((strcmp('location', $settingsToProcess->getImportSource()->getValue()) == 0) && (strcmp('xml', $settingsToProcess->getIndexType()->getValue()) == 0) && (strcmp('index', $settingsToProcess->getFileType()->getValue()) == 0)) {
-			HTMLImportPlugin::get_instance()->import_html_from_xml_index( $settingsToProcess );
-		} else if ((strcmp('upload', $settingsToProcess->getImportSource()->getValue()) == 0) && (strcmp('flare', $settingsToProcess->getIndexType()->getValue()) == 0) && (strcmp('zip', $settingsToProcess->getFileType()->getValue()) == 0)) {
-			HTMLImportPlugin::get_instance()->import_html_from_flare( $_FILES['file-upload'], $settingsToProcess );
-		} else {
-			echo '<H1>Unsupported combination of location/upload</H1>';
-		}
+		HTMLImportPlugin::get_instance()->importHTMLFiles($settingsToProcess);
+
+
 		echo '</div>';
 	}
 }
@@ -88,8 +82,8 @@ $settings->loadFromDB();
 
 		<p id="index-type">
 			<h3>Select the type of import index</h3>
-			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>Confluence XML</label><br>
-			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" onclick="javascript: jQuery('#define-upload').show('fast'); jQuery('#define-location').hide('fast');" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
+			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>Confluence XML</label><br>
+			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
 			<!-- <label for="import-type-raw"><input type="radio" name="import-type" id="import-type-raw" value="raw" />No Index</label><br> -->
 		</p>
 		<div style="display:none;">
@@ -98,6 +92,8 @@ $settings->loadFromDB();
 			<label for="file-type-index"><input type="radio" name="file-type" id="file-type-index" value="index"  <?php checked(strcmp('index', $settings->getFileType()->getValue()),0,true); ?> />Index File</label><br>
 			<label for="file-type-zip"><input type="radio" name="file-type" id="file-type-zip" value="zip" <?php checked(strcmp('zip', $settings->getFileType()->getValue()),0,true); ?> />ZIP Archive (index must be at root)</label><br>
 		</p>
+			</div>
+		<div>
 		<p id="import-source">
 			<h3>Select the source of the import</h3>
 			<label for="import-source-location"><input type="radio" name="import-source" id="import-source-location" value="location" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('location', $settings->getImportSource()->getValue()),0,true); ?> />Location (local or remote)</label><br>
