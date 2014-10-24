@@ -7,7 +7,7 @@
  */
 
 namespace droppedbars\files;
-
+// TODO: rename this, it supports URLs now.
 require_once( dirname( __FILE__ ) . '/FileRetriever.php' );
 require_once( dirname( __FILE__ ) . '/../XMLHelper.php' );
 

@@ -31,14 +31,17 @@ class HTMLFullImporter extends Importer {
 	protected function doImport(WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null) {
 		$meta->setPostContent($meta->getPostContent());
 
-		$this->stageParse($webPage, $this->htmlImportStage, $meta, $nothing = null);
-		$this->stageParse($webPage, $this->GDNHeaderFooterStage, $meta, $nothing = null);
+		$nothing = null;
+
+		$this->stageParse($webPage, $this->htmlImportStage, $meta, $nothing);
+		$this->stageParse($webPage, $this->GDNHeaderFooterStage, $meta, $nothing);
 		$this->stageParse($webPage, $this->updateLinksImportStage, $meta, $html_post_lookup);
 		$this->stageParse($webPage, $this->mediaImportStage, $meta, $media_lookup);
 
 		$meta->updateWPPost();  // this happens automatically at the end, but needs to happen here to guarantee an ID for the template update
 
-		$this->stageParse($webPage, $this->setTemplateStage, $meta, $meta->getPostContent(), $nothing = null);
+		$postContent = $meta->getPostContent();
+		$this->stageParse($webPage, $this->setTemplateStage, $meta, $postContent, $nothing);
 
 		$updateResult = $meta->updateWPPost();
 		if ( is_wp_error($updateResult)) {
