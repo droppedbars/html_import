@@ -7,8 +7,9 @@
  */
 
 namespace droppedbars\files;
-
+// TODO: rename this, it supports URLs now.
 require_once( dirname( __FILE__ ) . '/FileRetriever.php' );
+require_once( dirname( __FILE__ ) . '/../XMLHelper.php' );
 
 class LocalFileRetriever extends FileRetriever {
 	private $localPath = '';
@@ -22,11 +23,20 @@ class LocalFileRetriever extends FileRetriever {
 	public function retrieveFileContents( $file, $relativePath = '' ) {
 		// TODO: checks for if it is in fact a valid relative Path... ie "/foo" is a root file or directory
 		$fullPath = $this->localPath.'/'.$relativePath.'/'.$file;
-		$realPath = realpath($fullPath);
-		if (file_exists($realPath)) {
-			return file_get_contents($realPath);
-		} else {
-			return null;
+		if (filter_var($fullPath, FILTER_VALIDATE_URL)) { // if URL
+			$realPath = $fullPath;
+			if (\html_import\XMLHelper::url_exists($realPath)) { // TODO: this feels a bit hacky how I'm handling it
+				return file_get_contents($realPath);
+			} else {
+				return null;
+			}
+		} else { // else if directory
+			$realPath = realpath($fullPath);
+			if (file_exists($realPath)) {
+				return file_get_contents($realPath);
+			} else {
+				return null;
+			}
 		}
 	}
 
@@ -36,11 +46,16 @@ class LocalFileRetriever extends FileRetriever {
 			return $relativeFile;
 		} else {
 			$fullPath = $this->localPath.'/'.$relativePath.'/'.$file;
-			$realPath = realpath($fullPath);
-			return $realPath;
+			if (filter_var($fullPath, FILTER_VALIDATE_URL)) { // if URL // TODO: this feels a bit hacky how I'm handling it
+				return $fullPath;
+			} else { // else if directory
+				$realPath = realpath( $fullPath );
+				return $realPath;
+			}
 		}
 	}
 
+	// TODO: realpath not compatible with URLs
 	public function findFile($filename, $relativePath = '') {
 		$allFiles = scandir(realpath($this->localPath.'/'.$relativePath));
 		foreach ($allFiles as $file) {
