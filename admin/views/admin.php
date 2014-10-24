@@ -90,13 +90,13 @@ $settings->loadFromDB();
 		<p id="file-type">
 			<h3>Select the source file type</h3>
 			<label for="file-type-index"><input type="radio" name="file-type" id="file-type-index" value="index"  <?php checked(strcmp('index', $settings->getFileType()->getValue()),0,true); ?> />Index File</label><br>
-			<label for="file-type-zip"><input type="radio" name="file-type" id="file-type-zip" value="zip" <?php checked(strcmp('zip', $settings->getFileType()->getValue()),0,true); ?> />ZIP Archive (index must be at root)</label><br>
+			<label for="file-type-zip"><input type="radio" name="file-type" id="file-type-zip" value="zip" <?php checked(strcmp('zip', $settings->getFileType()->getValue()),0,true); ?> />ZIP Archive</label><br>
 		</p>
 			</div>
 		<div>
 		<p id="import-source">
 			<h3>Select the source of the import</h3>
-			<label for="import-source-location"><input type="radio" name="import-source" id="import-source-location" value="location" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('location', $settings->getImportSource()->getValue()),0,true); ?> />Location (local or remote)</label><br>
+			<label for="import-source-location"><input type="radio" name="import-source" id="import-source-location" value="location" onclick="javascript: jQuery('#define-upload').hide('fast'); jQuery('#define-location').show('fast');" <?php checked(strcmp('location', $settings->getImportSource()->getValue()),0,true); ?> />Location (local, remote, or URL)</label><br>
 			<label for="import-source-upload"><input type="radio" name="import-source" id="import-source-upload" value="upload" onclick="javascript: jQuery('#define-upload').show('fast'); jQuery('#define-location').hide('fast');"<?php checked(strcmp('upload', $settings->getImportSource()->getValue()),0,true); ?> />Upload ZIP</label><br>
 		</p>
 		</div>

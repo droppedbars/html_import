@@ -297,7 +297,6 @@ class HTMLImportPlugin {
 
 	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $globalSettings, $parent_page_id, $html_post_lookup ) {
 
-		// TODO: category and order overrides
 		$title = $webPage->getTitle();
 
 		$pageMeta = new \html_import\WPMetaConfigs();
