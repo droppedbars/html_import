@@ -69,7 +69,7 @@ class XMLHelper {
 			foreach ( $all_links as $link ) {
 
 				foreach ( $link->attributes() as $attribute => $value ) {
-				$path = '' . $value;
+					$path = '' . $value;
 					if ( 0 == strcasecmp( 'href', $attribute ) ) {
 						$arrayOfURLs[] = $path;
 					}

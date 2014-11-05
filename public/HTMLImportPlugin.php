@@ -14,6 +14,7 @@ require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/CrawlWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/CustomXMLWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
@@ -459,7 +460,7 @@ class HTMLImportPlugin {
 		} else if (strcmp('xml', $importType) == 0) {
 			$this->import_html_from_xml_index($filePath, $settings);
 		} else {
-			// TODO: error
+			$this->import_html_from_crawl($filePath, $settings);
 		}
 	}
 
