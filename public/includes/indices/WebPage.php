@@ -15,6 +15,7 @@ require_once( dirname( __FILE__ ) . '/WebPageSettings.php' );
 
 use droppedbars\datastructure\LinkedTree;
 use droppedbars\files\FileRetriever;
+use html_import\XMLHelper;
 
 // TODO: should I extend or wrap?
 class WebPage extends LinkedTree{
@@ -65,6 +66,7 @@ class WebPage extends LinkedTree{
 	 * @param string $relativePath
 	 */
 	public function getFullPath($relativePath = null) {
+		// TODO: deal with errors from retriever
 		if (!is_null($relativePath)) {
 			return $this->retriever->getFullFilePath( $relativePath, dirname( $this->relativePath ) );
 		} else {
@@ -78,6 +80,7 @@ class WebPage extends LinkedTree{
 	 * @return mixed
 	 */
 	public function getLinkContents($relativePath) {
+		// TODO: deal with errors from retriever
 		return $this->retriever->retrieveFileContents($relativePath, dirname($this->relativePath));
 	}
 
@@ -111,6 +114,12 @@ class WebPage extends LinkedTree{
 
 	public function getSettings() {
 		return $this->settings;
+	}
+
+	public function getAllLinks() {
+		$content = $this->getContent();
+		$contentAsXML = XMLHelper::getXMLObjectFromString($content);
+		return XMLHelper::getAllHRefsFromHTML($contentAsXML);
 	}
 
 } 

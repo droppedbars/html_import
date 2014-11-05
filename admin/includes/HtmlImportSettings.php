@@ -144,8 +144,10 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		if (isset($_POST[$this->index_type->getName()])) {
 			if (strcmp($_POST[$this->index_type->getName()], 'xml') == 0) {
 				$index_type = 'xml';
-			} else {
+			} else if (strcmp($_POST[$this->index_type->getName()], 'flare') == 0) {
 				$index_type = 'flare';
+			} else {
+				$index_type = 'crawl';
 			}
 			$this->index_type->setSettingValue($index_type);
 		}

@@ -84,7 +84,9 @@ $settings->loadFromDB();
 			<h3>Select the type of import index</h3>
 			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>Confluence XML</label><br>
 			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
+		<label for="index-type-crawl"><input type="radio" name="index-type" id="index-type-crawl" value="crawl" <?php checked(strcmp('crawl',$settings->getIndexType()->getValue()),0,true); ?> />Website Crawl</label><br>
 			<!-- <label for="import-type-raw"><input type="radio" name="import-type" id="import-type-raw" value="raw" />No Index</label><br> -->
+
 		</p>
 		<div style="display:none;">
 		<p id="file-type">

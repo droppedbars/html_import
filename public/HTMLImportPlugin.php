@@ -14,6 +14,7 @@ require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
+require_once( dirname( __FILE__ ) . '/includes/indices/CrawlWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/CustomXMLWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
@@ -403,6 +404,7 @@ class HTMLImportPlugin {
 		if (!is_dir($filePath)) {
 			$indexFile = basename($filePath);
 		}
+		// TODO: note, the retriever is built with the directoy, and the index is passed in
 		$xmlIndex->buildHierarchyFromWebsiteIndex($indexFile);
 
 		$media_lookup = Array();
@@ -437,19 +439,23 @@ class HTMLImportPlugin {
 		}
 	}
 
-	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings) {
-		/*
-		 * $zip_to_upload is an array with elements:
-		 * 	name
-		 * 	type
-		 * 	tmp_name
-		 * 	error
-		 * 	size
-		 */
+	public function import_html_from_crawl( $filePath, html_import\admin\HtmlImportSettings $settings) {
+		// TODO: parse out the file, and just pass in the directory
+		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($filePath);
+		$crawlIndex = new \html_import\indices\CrawlWebsiteIndex($localFileRetriever);
+		$crawlIndex->buildHierarchyFromWebsiteIndex(); // TODO pass in the index file
 
+		$media_lookup = Array();
+		$html_post_lookup = Array();
+		$html_post_lookup = $this->importFromWebsiteIndex($crawlIndex, true, $html_post_lookup, $media_lookup, $settings);
+		$this->importFromWebsiteIndex($crawlIndex, false, $html_post_lookup, $media_lookup, $settings);
+	}
+
+	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings) {
 		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($filePath);
 		$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
 		$flareIndex->buildHierarchyFromWebsiteIndex();
+		// TODO: note, the retriever is built with the directory, and the index found afterwards
 
 		$media_lookup = Array();
 		$html_post_lookup = Array();
@@ -466,15 +472,13 @@ class HTMLImportPlugin {
 		} else if (strcmp('xml', $importType) == 0) {
 			$this->import_html_from_xml_index($filePath, $settings);
 		} else {
-			// TODO: error
+			$this->import_html_from_crawl($filePath, $settings);
 		}
 	}
 
 	public function importHTMLFiles(html_import\admin\HtmlImportSettings $settings) {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
-
-		// TODO: test flare+local and XML+zip.
 
 		// TODO: prefer to pass this value in rather than use global
 		$zip_to_upload = $_FILES['file-upload'];
