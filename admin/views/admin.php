@@ -21,14 +21,6 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		$settingsToProcess = new html_import\admin\HtmlImportSettings();
 		$settingsToProcess->loadFromDB(); //loads the defaults in case not all settings are passed in the POST
 
-
-		// TODO: temp to simplify interface for now
-		if (strcmp($_POST['index-type'], 'xml') == 0) {
-			$_POST['file-type'] = 'index';
-		} else {
-			$_POST['file-type'] = 'zip';
-		}
-
 		$settingsToProcess->loadFromPOST();
 		$settingsToProcess->saveToDB();
 		// TODO: improve support for combinations:

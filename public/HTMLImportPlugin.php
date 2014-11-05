@@ -14,7 +14,6 @@ require_once( dirname( __FILE__ ) . '/includes/FolderImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/HTMLStubImporter.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
-require_once( dirname( __FILE__ ) . '/includes/indices/CrawlWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/CustomXMLWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
@@ -351,8 +350,8 @@ class HTMLImportPlugin {
 
 		$parentWebPage = $webPage->getParent();
 		if (!is_null($parentWebPage)) {
-			if (array_key_exists( $parentWebPage->getRelativePath(), $html_post_lookup )) {
-				$parent_page_id = $html_post_lookup[$parentWebPage->getRelativePath()];
+			if (array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup )) {
+				$parent_page_id = $html_post_lookup[$parentWebPage->getFullPath()];
 			}
 		}
 
