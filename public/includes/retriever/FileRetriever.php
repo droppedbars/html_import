@@ -18,4 +18,6 @@ abstract class FileRetriever {
 
 	public abstract function getFullFilePath($file, $relativePath = '');
 
+	public abstract function fileExists($file, $relativePath = '');
+
 }

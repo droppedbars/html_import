@@ -21,14 +21,6 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		$settingsToProcess = new html_import\admin\HtmlImportSettings();
 		$settingsToProcess->loadFromDB(); //loads the defaults in case not all settings are passed in the POST
 
-
-		// TODO: temp to simplify interface for now
-		if (strcmp($_POST['index-type'], 'xml') == 0) {
-			$_POST['file-type'] = 'index';
-		} else {
-			$_POST['file-type'] = 'zip';
-		}
-
 		$settingsToProcess->loadFromPOST();
 		$settingsToProcess->saveToDB();
 		// TODO: improve support for combinations:
@@ -84,7 +76,6 @@ $settings->loadFromDB();
 			<h3>Select the type of import index</h3>
 			<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked(strcmp('xml', $settings->getIndexType()->getValue()),0,true); ?>/>Confluence XML</label><br>
 			<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked(strcmp('flare',$settings->getIndexType()->getValue()),0,true); ?> />MadCap Flare</label><br>
-			<!-- <label for="import-type-raw"><input type="radio" name="import-type" id="import-type-raw" value="raw" />No Index</label><br> -->
 		</p>
 		<div style="display:none;">
 		<p id="file-type">

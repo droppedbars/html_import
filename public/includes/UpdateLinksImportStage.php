@@ -28,7 +28,7 @@ class UpdateLinksImportStage extends ImportStage {
 
 			$link_table = Array();
 			$all_links  = $bodyXML->xpath( '//a[@href]' );
-			// TODO: encapsulate this in a function
+			// TODO: encapsulate this in a function use XMLHelper::getAllHRefsFromHTML as a start
 			if ( $all_links ) {
 				foreach ( $all_links as $link ) {
 
