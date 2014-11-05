@@ -11,6 +11,7 @@ namespace html_import;
 
 class XMLHelper {
 	public static function getXMLObjectFromString( $source_string) {
+		// TODO: need to handle empty $souce_string
 		$doc                      = new \DOMDocument();
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
@@ -59,6 +60,23 @@ class XMLHelper {
 		}
 
 		return false;
+	}
+
+	public static function getAllHRefsFromHTML ($contentAsXML) {
+		$all_links  = $contentAsXML->xpath( '//a[@href]' );
+		$arrayOfURLs = [];
+		if ( $all_links ) {
+			foreach ( $all_links as $link ) {
+
+				foreach ( $link->attributes() as $attribute => $value ) {
+				$path = '' . $value;
+					if ( 0 == strcasecmp( 'href', $attribute ) ) {
+						$arrayOfURLs[] = $path;
+					}
+				}
+			}
+		}
+		return $arrayOfURLs;
 	}
 
 	/**

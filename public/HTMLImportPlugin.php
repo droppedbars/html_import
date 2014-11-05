@@ -403,6 +403,7 @@ class HTMLImportPlugin {
 		if (!is_dir($filePath)) {
 			$indexFile = basename($filePath);
 		}
+		// TODO: note, the retriever is built with the directoy, and the index is passed in
 		$xmlIndex->buildHierarchyFromWebsiteIndex($indexFile);
 
 		$media_lookup = Array();
@@ -438,18 +439,10 @@ class HTMLImportPlugin {
 	}
 
 	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings) {
-		/*
-		 * $zip_to_upload is an array with elements:
-		 * 	name
-		 * 	type
-		 * 	tmp_name
-		 * 	error
-		 * 	size
-		 */
-
 		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($filePath);
 		$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
 		$flareIndex->buildHierarchyFromWebsiteIndex();
+		// TODO: note, the retriever is built with the directory, and the index found afterwards
 
 		$media_lookup = Array();
 		$html_post_lookup = Array();
@@ -473,8 +466,6 @@ class HTMLImportPlugin {
 	public function importHTMLFiles(html_import\admin\HtmlImportSettings $settings) {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
-
-		// TODO: test flare+local and XML+zip.
 
 		// TODO: prefer to pass this value in rather than use global
 		$zip_to_upload = $_FILES['file-upload'];
