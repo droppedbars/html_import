@@ -460,7 +460,7 @@ class HTMLImportPlugin {
 		} else if (strcmp('xml', $importType) == 0) {
 			$this->import_html_from_xml_index($filePath, $settings);
 		} else {
-			$this->import_html_from_crawl($filePath, $settings);
+			// TODO error
 		}
 	}
 
