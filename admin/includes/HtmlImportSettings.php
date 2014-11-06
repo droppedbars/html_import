@@ -14,6 +14,11 @@ require_once( dirname( __FILE__ ) . '/PluginSettingsInterface.php' );
 require_once( dirname( __FILE__ ) . '/StringSetting.php' );
 require_once( dirname( __FILE__ ) . '/ArraySetting.php' );
 
+/**
+ * Class HtmlImportSettings
+ * Represents all settings used by for the HTML importer.  Handles default values, prepping the database, saving, and loading from POST/
+ * @package html_import\admin
+ */
 class HtmlImportSettings implements PluginSettingsInterface {
 	const SETTINGS_NAME = 'htim_importer_options';
 
@@ -35,6 +40,9 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	const FILE_LOCATION_DEFAULT = '';
 	const OVERWRITE_FILES_DEFAULT = 'true';
 
+	/**
+	 * Instantiates all of the settings available for the plugin
+	 */
 	function __construct() {
 		$this->index_type = new StringSetting('index-type');
 		$this->file_type = new StringSetting('file-type');
@@ -46,6 +54,9 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->doesOverwriteFiles = new StringSetting('overwrite-files'); // TODO: should make a BoolSetting
 	}
 
+	/**
+	 * Populate all settings with default values.
+	 */
 	private function loadDefaults() {
 		$this->index_type->setSettingValue(self::INDEX_DEFAULT);
 		$this->file_type->setSettingValue(self::FILE_TYPE_DEFAULT);
@@ -58,6 +69,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	}
 
 	/**
+	 * Loads all of the plugin settings with values stored in the Wordpress database
 	 * @return bool|void
 	 */
 	public function loadFromDB() {
@@ -106,6 +118,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	}
 
 	/**
+	 * Saves all of the settings to the Wordpress database.
 	 * @return bool|void
 	 */
 	public function saveToDB() {
@@ -131,7 +144,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	}
 
 	/**
-	 *
+	 * Loads all of the plugin settings based on content in the POST.
 	 */
 	public function loadFromPOST() {
 		$this->loadDefaults();
@@ -183,7 +196,8 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		if (isset($_POST[$catName])) {
 			$catArray = $_POST[$catName];
 			foreach ($catArray as $cat) {
-				$this->category->addValue($cat);
+				$sanitized_cat = sanitize_text_field($cat);
+				$this->category->addValue($sanitized_cat);
 			}
 		}
 
@@ -206,27 +220,66 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		return delete_site_option(self::SETTINGS_NAME);
 	}
 
+	/**
+	 * Returns the setting: IndexType
+	 * @return StringSetting|null
+	 */
 	public function getIndexType() {
 		return $this->index_type;
 	}
+
+	/**
+	 * Return the setting: FileType
+	 * @return StringSetting|null
+	 */
 	public function getFileType() {
 		return $this->file_type;
 	}
+
+	/**
+	 * Return the setting: ImportSource
+	 * @return StringSetting|null
+	 */
 	public function getImportSource() {
 		return $this->import_source;
 	}
+
+	/**
+	 * Return the setting: ParentPage
+	 * @return StringSetting|null
+	 */
 	public function getParentPage() {
 		return $this->parent_page;
 	}
+
+	/**
+	 * Return the setting: Template
+	 * @return StringSetting|null
+	 */
 	public function getTemplate() {
 		return $this->template;
 	}
+
+	/**
+	 * Return the setting: FileLocation
+	 * @return StringSetting|null
+	 */
 	public function getFileLocation() {
 		return $this->file_location;
 	}
+
+	/**
+	 * Return the setting: Categories
+	 * @return ArraySetting|null
+	 */
 	public function getCategories() {
 		return $this->category;
 	}
+
+	/**
+	 * Return the setting: doesOverwriteFiles
+	 * @return StringSetting|null
+	 */
 	public function doesOverwriteFiles() {
 		return $this->doesOverwriteFiles;
 	}

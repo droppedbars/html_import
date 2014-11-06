@@ -16,7 +16,6 @@ require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
  * Class WebsiteIndex
  * Extended to support different index formats of websites.  During construction receives a FileRetriever object which describes how to retrieve files, and then retrieves the index file(s) necessary to describe the hierarchy of the website once readIndex is called.  After the hierarchy is built, getNextFile can be used to retrieve each HTML file in the hierarchy.
  *
- * TODO: enforce a format for the website information
  * TODO: improve a way to enforce how the class is extended with regards to building the LinkedTree structure
  *
  * @package html_import\indices
@@ -59,7 +58,6 @@ abstract class WebsiteIndex {
 	 * Recurses into the LinkedTree hierarchy to retrieve the next file.  This means iterating through siblings as well as children.  The recursion will always go down the children first before attempting to get the siblings.  So a node N's child will be N+1 and N's sibling would be N+2 in a simple 1 child case.
 	 * Returns the desired tree node or null otherwise.
 	 * @param \droppedbars\datastructure\LinkedTree $currentNode the current tree node being recursed
-	 * @param int                                   $limit  tree node's location to return
 	 * @param int                                   $counter keeps track of the tree node's file
 	 *
 	 * @return null|\droppedbars\datastructure\LinkedTree Tree node identified by @param $limit.
@@ -106,5 +104,4 @@ abstract class WebsiteIndex {
 		$this->nodeCounter++;
 		return $this->recurseTreeNodeForNext(null);
 	}
-// TODO: should I be getting the HTML file contents instead of just the title and path?
-} 
+}

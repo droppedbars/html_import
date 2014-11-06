@@ -8,7 +8,11 @@
 
 namespace html_import\indices;
 
-
+/**
+ * Class WebPageSettings
+ * Settings for an individual webpage.
+ * @package html_import\indices
+ */
 class WebPageSettings {
 	/* future
 private $tags;
@@ -20,6 +24,7 @@ private $postType;
 	private $overrideSettings;
 
 	/**
+	 * Returns the state of the overrideSettings setting.  This defines if the webpage is permitted to use its specific settings over those defined in the plugin interface.
 	 * @return bool
 	 */
 	public function getOverrideSettings() {
@@ -27,13 +32,18 @@ private $postType;
 	}
 
 	/**
+	 * Sets the value of overrideSettings.
 	 * @param bool $overrideSettings
 	 */
 	public function setOverrideSettings( $overrideSettings ) {
+		if (!is_bool($overrideSettings)) {
+			throw new \InvalidArgumentException("OverrideSettings must be a boolean value");
+		}
 		$this->overrideSettings = $overrideSettings;
 	}
 
 	/**
+	 * Returns all of the category ids in the settings.
 	 * @return Array
 	 */
 	public function getCategoryIds() {
@@ -41,16 +51,29 @@ private $postType;
 	}
 
 	/**
+	 * Sets all of the category ides.  Must be a valid array.
 	 * @param Array $categoryIds
 	 */
 	public function setCategories( Array $categoryIds ) {
+		// TODO: should test that the categories are in fact strings
 		$this->categoryIds = $categoryIds;
 	}
 
+	/**
+	 * Add a category ID to the end of the category ID list
+	 * @param $categoryId
+	 */
 	public function addCategory( $categoryId ) {
+		if (!is_integer($categoryId)) {
+			throw new \InvalidArgumentException("categoryId must be an integer value");
+		}
+
 		$this->categoryIds[] = $categoryId ;
 	}
 
+	/**
+	 * initialize all the settings
+	 */
 	public function __constructor() {
 		$this->categoryIds = null;
 		$this->overrideSettings = false;

@@ -23,13 +23,6 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 
 		$settingsToProcess->loadFromPOST();
 		$settingsToProcess->saveToDB();
-		// TODO: improve support for combinations:
-		/*
-		 *  location, xml
-		 *  location, flare
-		 *  upload, xml
-		 *  upload, flare
-		 */
 		?>
 
 			<script src="//code.jquery.com/jquery-1.10.2.js"></script>

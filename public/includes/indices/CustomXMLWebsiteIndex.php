@@ -13,12 +13,17 @@ require_once(dirname( __FILE__ ) . '/../retriever/FileRetriever.php');
 require_once(dirname( __FILE__ ) . '/WebPage.php');
 require_once(dirname( __FILE__ ) . '/WebPageSettings.php');
 
+/**
+ * Class CustomXMLWebsiteIndex
+ * Handles websites that are indexed used a standard XML based index.
+ * @package html_import\indices
+ */
 class CustomXMLWebsiteIndex extends WebsiteIndex {
 	const DEFAULT_INDEX_FILE_NAME = 'index.xml';
 	/**
 	 * Calling this function causes the website hierarchy to be built.  An index file to be used may be passed in by the caller or the function can be overridden and inherently know its own index file.
 	 *
-	 * The expectation is that the implementation will construct a LinkedTree hierarchy of the website from the index file(s).  That hierarchy will always have a null root that is defined upon object construction in @property $tree.  If this expectation is not fulfilled, the functionality will not operate.
+	 * The expectation is that the implementation will construct a LinkedTree hierarchy of the website from the index file(s).  The top level will always be an array of LinkedTrees, to handle the case where there is no central top node.
 	 *
 	 * TODO: decrease the coupling of the child class on the LinkedTree object.
 	 *
@@ -49,6 +54,11 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 		}
 	}
 
+	/**
+	 * Reads the child node along with the settings specified in the index the adds it to the tree.
+	 * @param \DOMNode $node
+	 * @param WebPage  $parentPage
+	 */
 	private function readInChildNode( \DOMNode $node, WebPage $parentPage = null ) {
 		$webPage = $parentPage;
 		$settings = new WebPageSettings();
@@ -61,7 +71,6 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			$order      = null;
 			$category   = Array();
 
-			// TODO: currently no mechanism to read settings in on a per file bases from the index
 			if ( isset( $attributes ) ) {
 				for ( $i = 0; $i < $attributes->length; $i ++ ) {
 					$attribute = $attributes->item( $i )->nodeName;

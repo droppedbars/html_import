@@ -49,7 +49,7 @@ class HTMLImportPluginAdmin {
 	private function __construct() {
 
 		/*
-		 * @TODO :
+		 *
 		 *
 		 * - Uncomment following lines if the admin class should only be available for super admins
 		 */
@@ -82,8 +82,8 @@ class HTMLImportPluginAdmin {
 		 * Read more about actions and filters:
 		 * http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
 		 */
-		//add_action( '@TODO', array( $this, 'action_method_name' ) );
-		//add_filter( '@TODO', array( $this, 'filter_method_name' ) );
+		//add_action( '', array( $this, 'action_method_name' ) );
+		//add_filter( '', array( $this, 'filter_method_name' ) );
 
 	}
 
@@ -97,7 +97,6 @@ class HTMLImportPluginAdmin {
 	public static function get_instance() {
 
 		/*
-		 * @TODO :
 		 *
 		 * - Uncomment following lines if the admin class should only be available for super admins
 		 */
@@ -216,9 +215,9 @@ class HTMLImportPluginAdmin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function action_method_name() {
-		// @TODO: Define your action hook callback here
-	}
+	/*public function action_method_name() {
+		// Define your action hook callback here
+	}*/
 
 	/**
 	 * NOTE:     Filters are points of execution in which WordPress modifies data
@@ -229,8 +228,8 @@ class HTMLImportPluginAdmin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function filter_method_name() {
-		// @TODO: Define your filter hook callback here
-	}
+	/*public function filter_method_name() {
+		// Define your filter hook callback here
+	}*/
 
 }

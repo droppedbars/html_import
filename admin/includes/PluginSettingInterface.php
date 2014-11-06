@@ -10,6 +10,7 @@ namespace html_import\admin;
 
 /**
  * Interface PluginSettingInterface
+ * Defines the required interfaces to be a setting for a Wordpress plugin.  Requires a matching of name and value and the ability to sanitize values before returning them.
  * @package html_import\admin
  */
 interface PluginSettingInterface {

@@ -11,7 +11,18 @@ namespace droppedbars\datastructure;
 require_once dirname( __FILE__ ) . "/DoubleLinkedList.php";
 
 
+/**
+ * Class LinkedTreeException
+ * Wrapper exception for anything that occurs within the LinkedTree that cannot be allowed.
+ * @package droppedbars\datastructure
+ */
 class LinkedTreeException extends \Exception {}
+
+/**
+ * Class ChildPayloadNotLinkedTreeException
+ * Represents exceptions where a child is supposed to be a LinkedTree but is not.
+ * @package droppedbars\datastructure
+ */
 class ChildPayloadNotLinkedTreeException extends LinkedTreeException {}
 
 /**
