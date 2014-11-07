@@ -21,27 +21,29 @@ class StringSetting implements PluginSettingInterface {
 
 	/**
 	 * Set the name of the setting and the value if applicable.  $settingValue must be null, a string or a number.  It cannot be an array, object or anything else.
-	 * @param string $settingName
-	 * @param string|null   $settingValue
+	 *
+	 * @param string      $settingName
+	 * @param string|null $settingValue
+	 *
 	 * @throws \InvalidArgumentException
 	 */
-	function __construct($settingName, $settingValue = null)
-	{
-		if (!$this->is_string($settingValue)) {
-			throw new \InvalidArgumentException('$settingValue must be a string, or number');
+	function __construct( $settingName, $settingValue = null ) {
+		if ( !$this->is_string( $settingValue ) ) {
+			throw new \InvalidArgumentException( '$settingValue must be a string, or number' );
 		}
-		$this->name = $settingName;
-		$this->value = $settingValue.''; // ensures it's cast to a string
+		$this->name  = $settingName;
+		$this->value = $settingValue . ''; // ensures it's cast to a string
 	}
 
 	/**
 	 * Returns true if the passed in value is either null, a string, or number.
+	 *
 	 * @param $settingValue
 	 *
 	 * @return bool
 	 */
-	private function is_string($settingValue) {
-		return is_null($settingValue) || is_string($settingValue) || is_integer($settingValue) || is_float($settingValue);
+	private function is_string( $settingValue ) {
+		return is_null( $settingValue ) || is_string( $settingValue ) || is_integer( $settingValue ) || is_float( $settingValue );
 	}
 
 	/**
@@ -49,7 +51,7 @@ class StringSetting implements PluginSettingInterface {
 	 * @return mixed
 	 */
 	public function getEscapedAttributeValue() {
-		return esc_attr($this->getValue());
+		return esc_attr( $this->getValue() );
 	}
 
 	/**
@@ -57,7 +59,7 @@ class StringSetting implements PluginSettingInterface {
 	 * @return mixed
 	 */
 	public function getEscapedHTMLValue() {
-		return esc_html($this->getValue());
+		return esc_html( $this->getValue() );
 	}
 
 	/**
@@ -85,8 +87,8 @@ class StringSetting implements PluginSettingInterface {
 	 * @throws \InvalidArgumentException
 	 */
 	public function setSettingValue( $value ) {
-		if (!$this->is_string($value)) {
-			throw new \InvalidArgumentException('$settingValue must be a string, or number');
+		if ( !$this->is_string( $value ) ) {
+			throw new \InvalidArgumentException( '$settingValue must be a string, or number' );
 		}
 		$this->value = $value;
 	}

@@ -6,20 +6,22 @@
  * Time: 8:45 PM
  */
 
-function processNode(SimpleXMLElement $node, $higher_counter) {
+function processNode( SimpleXMLElement $node, $higher_counter ) {
 	$i = 0;
-	foreach ($node->children() as $level0) {
-		if (strcmp('li', $level0->getName()) == 0) {
-			foreach ($level0->children() as $level1) {
-				if (strcmp('a', $level1->getName()) == 0) {
-					$href = $level1->xpath('@href');
-					echo "\n".'<document title="'.htmlspecialchars($level1).'" src="'.$href[0].'" category="'.htmlspecialchars('Documentation,How To Create A Report Services Plugin').'" tag="foo" order="'.$higher_counter.'">';
+	foreach ( $node->children() as $level0 ) {
+		if ( strcmp( 'li', $level0->getName() ) == 0 ) {
+			foreach ( $level0->children() as $level1 ) {
+				if ( strcmp( 'a', $level1->getName() ) == 0 ) {
+					$href = $level1->xpath( '@href' );
+					echo "\n" . '<document title="' . htmlspecialchars( $level1 ) . '" src="' . $href[0] . '" category="' . htmlspecialchars( 'Documentation,How To Create A Report Services Plugin' ) . '" tag="foo" order="' . $higher_counter . '">';
 					//echo $level1->xpath('@href')[0].' '.$level1."\n";
-					$i++;
-					$higher_counter++;
-				} else if (strcmp('ul', $level1->getName()) == 0) {
-					processNode($level1, $i);
-					$i++;
+					$i ++;
+					$higher_counter ++;
+				} else {
+					if ( strcmp( 'ul', $level1->getName() ) == 0 ) {
+						processNode( $level1, $i );
+						$i ++;
+					}
 				}
 			}
 			echo "\n</document>";
@@ -35,8 +37,8 @@ $doc->loadHTMLFile( './index.html' );
 libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 $file_as_xml_obj = simplexml_import_dom( $doc );
 
-$menu_div = $file_as_xml_obj->xpath( "//div[@class='pageSection']/ul");
+$menu_div = $file_as_xml_obj->xpath( "//div[@class='pageSection']/ul" );
 
-echo "\n".'<?xml version="1.0" encoding="utf-8"?> <knowledgebase version="1.0">';
-processNode($menu_div[0], 0);
-echo "\n".'</knowledgebase>';
+echo "\n" . '<?xml version="1.0" encoding="utf-8"?> <knowledgebase version="1.0">';
+processNode( $menu_div[0], 0 );
+echo "\n" . '</knowledgebase>';

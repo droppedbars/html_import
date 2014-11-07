@@ -33,11 +33,12 @@ private $postType;
 
 	/**
 	 * Sets the value of overrideSettings.
+	 *
 	 * @param bool $overrideSettings
 	 */
 	public function setOverrideSettings( $overrideSettings ) {
-		if (!is_bool($overrideSettings)) {
-			throw new \InvalidArgumentException("OverrideSettings must be a boolean value");
+		if ( !is_bool( $overrideSettings ) ) {
+			throw new \InvalidArgumentException( "OverrideSettings must be a boolean value" );
 		}
 		$this->overrideSettings = $overrideSettings;
 	}
@@ -52,6 +53,7 @@ private $postType;
 
 	/**
 	 * Sets all of the category ides.  Must be a valid array.
+	 *
 	 * @param Array $categoryIds
 	 */
 	public function setCategories( Array $categoryIds ) {
@@ -61,21 +63,22 @@ private $postType;
 
 	/**
 	 * Add a category ID to the end of the category ID list
+	 *
 	 * @param $categoryId
 	 */
 	public function addCategory( $categoryId ) {
-		if (!is_integer($categoryId)) {
-			throw new \InvalidArgumentException("categoryId must be an integer value");
+		if ( !is_integer( $categoryId ) ) {
+			throw new \InvalidArgumentException( "categoryId must be an integer value" );
 		}
 
-		$this->categoryIds[] = $categoryId ;
+		$this->categoryIds[] = $categoryId;
 	}
 
 	/**
 	 * initialize all the settings
 	 */
 	public function __constructor() {
-		$this->categoryIds = null;
+		$this->categoryIds      = null;
 		$this->overrideSettings = false;
 	}
 } 

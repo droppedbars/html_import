@@ -13,10 +13,10 @@ use html_import\indices\WebPage;
 require_once( dirname( __FILE__ ) . '/Importer.php' );
 require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
-class HTMLStubImporter extends Importer{
+class HTMLStubImporter extends Importer {
 
-	protected function doImport(WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null) {
-		$updateResult = $meta->updateWPPost();
+	protected function doImport( WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null ) {
+		$updateResult                              = $meta->updateWPPost();
 		$html_post_lookup[$webPage->getFullPath()] = $meta->getPostId();
 
 		if ( is_wp_error( $updateResult ) ) {

@@ -17,7 +17,7 @@ require_once( dirname( __FILE__ ) . '/includes/indices/FlareWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/CustomXMLWebsiteIndex.php' );
 require_once( dirname( __FILE__ ) . '/includes/indices/WebPage.php' );
 require_once( dirname( __FILE__ ) . '/includes/retriever/FileRetriever.php' );
-require_once( dirname( __FILE__ ) . '/includes/retriever/LocalFileRetriever.php' );
+require_once( dirname( __FILE__ ) . '/includes/retriever/LocalAndURLAndURLFileRetriever.php' );
 
 /**
  * Plugin Name.
@@ -247,7 +247,7 @@ class HTMLImportPlugin {
 	private static function single_activate() {
 
 		$settings = new \html_import\admin\HtmlImportSettings();
-		if ( ! get_option( $settings::SETTINGS_NAME ) ) {
+		if ( !get_option( $settings::SETTINGS_NAME ) ) {
 			$settings->saveToDB();
 		}
 
@@ -300,9 +300,9 @@ class HTMLImportPlugin {
 		$title = $webPage->getTitle();
 
 		$pageMeta = new \html_import\WPMetaConfigs();
-		$post_id = null;
+		$post_id  = null;
 
-		$post = get_page_by_title( htmlspecialchars( $title ));// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
+		$post = get_page_by_title( htmlspecialchars( $title ) );// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
 		if ( isset( $html_post_lookup ) ) {
 			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
 				$post_id = $html_post_lookup[$webPage->getRelativePath()];
@@ -313,28 +313,28 @@ class HTMLImportPlugin {
 				}
 			}
 		}
-		$pageMeta->buildConfig($globalSettings, $webPage, $post_id, $parent_page_id);
+		$pageMeta->buildConfig( $globalSettings, $webPage, $post_id, $parent_page_id );
 
-		if (!is_null($title)) {
-			$pageMeta->setPostTitle($title);
+		if ( !is_null( $title ) ) {
+			$pageMeta->setPostTitle( $title );
 		}
 
 		return $pageMeta;
 	}
 
 
-	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings) {
+	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 
-		$category   = $settings->getCategories()->getValuesArray();
-		$tag        = Array();
+		$category = $settings->getCategories()->getValuesArray();
+		$tag      = Array();
 
-		if ( ! is_null( $category ) && is_array( $category ) ) {
+		if ( !is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
 				$cat_id              = wp_create_category( trim( $cat ) );
 				$categoryIDs[$index] = intval( $cat_id );
 			}
 		}
-		if ( ! is_null( $tag ) && is_array( $tag ) ) {
+		if ( !is_null( $tag ) && is_array( $tag ) ) {
 			foreach ( $tag as $t ) {
 				//TODO: support tags
 			}
@@ -342,33 +342,33 @@ class HTMLImportPlugin {
 
 		$parent_page = new \html_import\WPMetaConfigs();
 		// TODO: simplify this, only need to check that the ID is in fact a valid post
-		$hasParent = $parent_page->loadFromPostID($settings->getParentPage()->getValue());
+		$hasParent      = $parent_page->loadFromPostID( $settings->getParentPage()->getValue() );
 		$parent_page_id = null;
-		if ($hasParent) {
+		if ( $hasParent ) {
 			$parent_page_id = $settings->getParentPage()->getValue();
 		}
 
 		$parentWebPage = $webPage->getParent();
-		if (!is_null($parentWebPage)) {
-			if (array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup )) {
+		if ( !is_null( $parentWebPage ) ) {
+			if ( array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup ) ) {
 				$parent_page_id = $html_post_lookup[$parentWebPage->getFullPath()];
 			}
 		}
 
 
-		$stages = new \html_import\HTMLImportStages();
+		$stages   = new \html_import\HTMLImportStages();
 		$postMeta = $this->importAnHTML( $webPage, $settings, $parent_page_id, $html_post_lookup );
 		if ( !$webPage->isFolder() ) {
 			if ( $stubs_only ) {
-				$stubImport = new html_import\HTMLStubImporter($settings, $stages);
-				$stubImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
+				$stubImport = new html_import\HTMLStubImporter( $settings, $stages );
+				$stubImport->import( $webPage, $postMeta, $html_post_lookup, $media_lookup );
 			} else {
-				$fullImport = new html_import\HTMLFullImporter($settings, $stages);
-				$fullImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
+				$fullImport = new html_import\HTMLFullImporter( $settings, $stages );
+				$fullImport->import( $webPage, $postMeta, $html_post_lookup, $media_lookup );
 			}
 		} else {
-			$folderImport = new html_import\FolderImporter($settings, $stages);
-			$folderImport->import($webPage, $postMeta, $html_post_lookup, $media_lookup);
+			$folderImport = new html_import\FolderImporter( $settings, $stages );
+			$folderImport->import( $webPage, $postMeta, $html_post_lookup, $media_lookup );
 		}
 
 		return $postMeta;
@@ -376,15 +376,15 @@ class HTMLImportPlugin {
 
 	private function importFromWebsiteIndex( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
-		set_time_limit(520);
-		if ( ! isset( $html_post_lookup ) ) {
+		set_time_limit( 520 );
+		if ( !isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
 		$siteIndex->setToFirstFile();
 		$fileNode = $siteIndex->getNextHTMLFile();
 		// TODO need to get the parent from the node, but the method of the top parent creates an issue!  need null
-		while (!is_null($fileNode)) {
-			$this->importFlareNode($fileNode, $stubs_only, $html_post_lookup, $media_lookup,$settings);
+		while ( !is_null( $fileNode ) ) {
+			$this->importFlareNode( $fileNode, $stubs_only, $html_post_lookup, $media_lookup, $settings );
 			$fileNode = $siteIndex->getNextHTMLFile();
 		}
 
@@ -393,35 +393,35 @@ class HTMLImportPlugin {
 
 	public function import_html_from_xml_index( $filePath, html_import\admin\HtmlImportSettings $settings ) {
 		$directory = $filePath;
-		if (!is_dir($directory)) {
-			$directory = dirname($filePath);
+		if ( !is_dir( $directory ) ) {
+			$directory = dirname( $filePath );
 		}
-		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($directory);
-		$xmlIndex = new \html_import\indices\CustomXMLWebsiteIndex($localFileRetriever);
+		$localFileRetriever = new \droppedbars\files\LocalAndURLFileRetriever( $directory );
+		$xmlIndex           = new \html_import\indices\CustomXMLWebsiteIndex( $localFileRetriever );
 
 		$indexFile = null;
-		if (!is_dir($filePath)) {
-			$indexFile = basename($filePath);
+		if ( !is_dir( $filePath ) ) {
+			$indexFile = basename( $filePath );
 		}
 		// TODO: note, the retriever is built with the directoy, and the index is passed in
-		$xmlIndex->buildHierarchyFromWebsiteIndex($indexFile);
+		$xmlIndex->buildHierarchyFromWebsiteIndex( $indexFile );
 
-		$media_lookup = Array();
+		$media_lookup     = Array();
 		$html_post_lookup = Array();
-		$html_post_lookup = $this->importFromWebsiteIndex($xmlIndex, true, $html_post_lookup, $media_lookup, $settings);
-		$this->importFromWebsiteIndex($xmlIndex, false, $html_post_lookup, $media_lookup, $settings);
+		$html_post_lookup = $this->importFromWebsiteIndex( $xmlIndex, true, $html_post_lookup, $media_lookup, $settings );
+		$this->importFromWebsiteIndex( $xmlIndex, false, $html_post_lookup, $media_lookup, $settings );
 	}
 
-	private function isFileMimeTypeCompressed($mime_type) {
+	private function isFileMimeTypeCompressed( $mime_type ) {
 		// TODO: better would be to actually check the zip rather than just assume the mime-type is correct
-		return ((strcmp('application/x-rar-compressed', $mime_type) == 0) || (strcmp('application/octet-stream', $mime_type) == 0) || (strcmp('application/zip', $mime_type) == 0) || (strcmp('application/x-zip-compressed', $mime_type) == 0));
+		return ( ( strcmp( 'application/x-rar-compressed', $mime_type ) == 0 ) || ( strcmp( 'application/octet-stream', $mime_type ) == 0 ) || ( strcmp( 'application/zip', $mime_type ) == 0 ) || ( strcmp( 'application/x-zip-compressed', $mime_type ) == 0 ) );
 	}
 
-	private function decompressAndUploadFiletoSite($zip_to_upload) {
+	private function decompressAndUploadFiletoSite( $zip_to_upload ) {
 		$zip = new ZipArchive;
 		// TODO: not handling failure to open the zip
-		$zipOpenResult = $zip->open($zip_to_upload['tmp_name']);
-		if ($zipOpenResult === TRUE) {
+		$zipOpenResult = $zip->open( $zip_to_upload['tmp_name'] );
+		if ( $zipOpenResult === TRUE ) {
 			$upload_dir    = wp_upload_dir();
 			$path          = $upload_dir['path'] . '/import';
 			$path_modifier = 1;
@@ -432,57 +432,60 @@ class HTMLImportPlugin {
 			// TODO: not handling extract and close errors.
 			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
 			$closeSuccess   = $zip->close();
+
 			return $resultingPath;
 		} else {
 			return null;
 		}
 	}
 
-	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings) {
-		$localFileRetriever = new \droppedbars\files\LocalFileRetriever($filePath);
-		$flareIndex = new \html_import\indices\FlareWebsiteIndex($localFileRetriever);
+	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings ) {
+		$localFileRetriever = new \droppedbars\files\LocalAndURLFileRetriever( $filePath );
+		$flareIndex         = new \html_import\indices\FlareWebsiteIndex( $localFileRetriever );
 		$flareIndex->buildHierarchyFromWebsiteIndex();
 		// TODO: note, the retriever is built with the directory, and the index found afterwards
 
-		$media_lookup = Array();
+		$media_lookup     = Array();
 		$html_post_lookup = Array();
-		$html_post_lookup = $this->importFromWebsiteIndex($flareIndex, true, $html_post_lookup, $media_lookup, $settings);
-		$this->importFromWebsiteIndex($flareIndex, false, $html_post_lookup, $media_lookup, $settings);
+		$html_post_lookup = $this->importFromWebsiteIndex( $flareIndex, true, $html_post_lookup, $media_lookup, $settings );
+		$this->importFromWebsiteIndex( $flareIndex, false, $html_post_lookup, $media_lookup, $settings );
 	}
 
 	// TODO: candidate to be made into a factory
-	private function routeImportToCorrectImporter($filePath, html_import\admin\HtmlImportSettings $settings) {
+	private function routeImportToCorrectImporter( $filePath, html_import\admin\HtmlImportSettings $settings ) {
 		$importType = $settings->getIndexType()->getValue();
 
-		if (strcmp('flare', $importType) == 0) {
-			$this->import_html_from_flare($filePath, $settings);
-		} else if (strcmp('xml', $importType) == 0) {
-			$this->import_html_from_xml_index($filePath, $settings);
+		if ( strcmp( 'flare', $importType ) == 0 ) {
+			$this->import_html_from_flare( $filePath, $settings );
 		} else {
-			// TODO error
+			if ( strcmp( 'xml', $importType ) == 0 ) {
+				$this->import_html_from_xml_index( $filePath, $settings );
+			} else {
+				// TODO error
+			}
 		}
 	}
 
-	public function importHTMLFiles(html_import\admin\HtmlImportSettings $settings) {
+	public function importHTMLFiles( html_import\admin\HtmlImportSettings $settings ) {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
 
 		// TODO: prefer to pass this value in rather than use global
 		$zip_to_upload = $_FILES['file-upload'];
-		if (strcmp('upload', $settings->getImportSource()->getValue()) == 0) {
+		if ( strcmp( 'upload', $settings->getImportSource()->getValue() ) == 0 ) {
 			$mime_type = $zip_to_upload['type'];
-			echo 'uploading file of mime-type '.$mime_type.' <br>';
+			echo 'uploading file of mime-type ' . $mime_type . ' <br>';
 			if ( $this->isFileMimeTypeCompressed( $mime_type ) ) {
 				// echo 'mime-type: '.$mime_type;
 				$filePath = $this->decompressAndUploadFiletoSite( $zip_to_upload );
-				if (!is_null($filePath)) {
-					$this->routeImportToCorrectImporter($filePath, $settings);
+				if ( !is_null( $filePath ) ) {
+					$this->routeImportToCorrectImporter( $filePath, $settings );
 
-					html_import\FileHelper::delTree($filePath);
+					html_import\FileHelper::delTree( $filePath );
 				}
 			}
 		} else {
-			$this->routeImportToCorrectImporter($settings->getFileLocation()->getValue(), $settings);
+			$this->routeImportToCorrectImporter( $settings->getFileLocation()->getValue(), $settings );
 		}
 
 		echo '</ul>';

@@ -22,16 +22,16 @@ require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
  */
 abstract class WebsiteIndex {
 	protected $retriever = null;
-	private $nodeCounter = -1;
+	private $nodeCounter = - 1;
 	protected $trees = null; // This is an Array to store trees
 
 
 	/**
 	 * @param \droppedbars\files\FileRetriever $fileRetriever describes the source location of the index file(s)
 	 */
-	public function __construct(\droppedbars\files\FileRetriever $fileRetriever) {
+	public function __construct( \droppedbars\files\FileRetriever $fileRetriever ) {
 		$this->retriever = $fileRetriever;
-		$this->trees = Array();
+		$this->trees     = Array();
 	}
 
 	/**
@@ -45,38 +45,40 @@ abstract class WebsiteIndex {
 	 *
 	 * @return null|void
 	 */
-	abstract public function buildHierarchyFromWebsiteIndex($indexFile = null);
+	abstract public function buildHierarchyFromWebsiteIndex( $indexFile = null );
 
 	/**
 	 * Reset the file list so that a call to @function nextFile will return the first HTML file.
 	 */
 	public function setToFirstFile() {
-		$this->nodeCounter = -1;
+		$this->nodeCounter = - 1;
 	}
 
 	/**
 	 * Recurses into the LinkedTree hierarchy to retrieve the next file.  This means iterating through siblings as well as children.  The recursion will always go down the children first before attempting to get the siblings.  So a node N's child will be N+1 and N's sibling would be N+2 in a simple 1 child case.
 	 * Returns the desired tree node or null otherwise.
+	 *
 	 * @param \droppedbars\datastructure\LinkedTree $currentNode the current tree node being recursed
-	 * @param int                                   $counter keeps track of the tree node's file
+	 * @param int                                   $counter     keeps track of the tree node's file
 	 *
 	 * @return null|\droppedbars\datastructure\LinkedTree Tree node identified by @param $limit.
 	 * @throws \droppedbars\datastructure\ChildPayloadNotLinkedTreeException
 	 */
-	private function recurseTreeNodeForNext(\droppedbars\datastructure\LinkedTree $currentNode = null, &$counter = 0) {
-		if (is_null($currentNode)) {
+	private function recurseTreeNodeForNext( \droppedbars\datastructure\LinkedTree $currentNode = null, &$counter = 0 ) {
+		if ( is_null( $currentNode ) ) {
 			$child = null;
 
-			foreach ($this->trees as $tree) {
-				if ($counter >= $this->nodeCounter) {
+			foreach ( $this->trees as $tree ) {
+				if ( $counter >= $this->nodeCounter ) {
 					return $tree;
 				}
-				$counter++;
-				$child = $this->recurseTreeNodeForNext($tree, $counter);
-				if ((!is_null($child)) &&($counter >= $this->nodeCounter)) {
+				$counter ++;
+				$child = $this->recurseTreeNodeForNext( $tree, $counter );
+				if ( ( !is_null( $child ) ) && ( $counter >= $this->nodeCounter ) ) {
 					return $child;
 				}
 			}
+
 			return $child;
 		} else {
 			$child = $currentNode->headChild();
@@ -101,7 +103,8 @@ abstract class WebsiteIndex {
 	 * @return \html_import\indices\WebPage|null the next HTML file
 	 */
 	public function getNextHTMLFile() {
-		$this->nodeCounter++;
-		return $this->recurseTreeNodeForNext(null);
+		$this->nodeCounter ++;
+
+		return $this->recurseTreeNodeForNext( null );
 	}
 }

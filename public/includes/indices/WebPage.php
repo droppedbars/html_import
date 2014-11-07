@@ -36,30 +36,33 @@ class WebPage extends LinkedTree {
 	 * @param string          $relativePath
 	 * @param null            $content
 	 * @param WebPageSettings $settings
+	 *
 	 * @exception InvalidArgumentException
 	 */
-	public function __construct(FileRetriever $retriever, $title, $relativePath, $content = null, WebPageSettings $settings = null) {
-		if (!is_string($title)) {
-			throw new \InvalidArgumentException("Webpage title must be a string");
+	public function __construct( FileRetriever $retriever, $title, $relativePath, $content = null, WebPageSettings $settings = null ) {
+		if ( !is_string( $title ) ) {
+			throw new \InvalidArgumentException( "Webpage title must be a string" );
 		}
-		if (!is_string($relativePath) && !is_null($relativePath)) {
-			throw new \InvalidArgumentException("Relative path of webpage must be null or a string");
+		if ( !is_string( $relativePath ) && !is_null( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be null or a string" );
 		}
-		$this->title = $title;
-		$this->content = $content;
+		$this->title        = $title;
+		$this->content      = $content;
 		$this->relativePath = $relativePath;
-		$this->retriever = $retriever;
-		$this->settings = $settings;
+		$this->retriever    = $retriever;
+		$this->settings     = $settings;
 	}
 
 	/**
 	 * Sets the absolute position or order of the webpage.  This is used in Wordpress for how pages are ordered in menus.
+	 *
 	 * @param int $order
+	 *
 	 * @exception InvalidArgumentException
 	 */
-	public function setOrderPosition($order) {
-		if (!is_integer($order) && (!is_numeric($order))) {
-			throw new \InvalidArgumentException("Webpage order must be an integer");
+	public function setOrderPosition( $order ) {
+		if ( !is_integer( $order ) && ( !is_numeric( $order ) ) ) {
+			throw new \InvalidArgumentException( "Webpage order must be an integer" );
 		}
 		$this->order = (int) $order;
 	}
@@ -90,14 +93,15 @@ class WebPage extends LinkedTree {
 
 	/**
 	 * Builds up and returns the full path of the webpage, using the retriever as the foundation
+	 *
 	 * @param string $relativePath
 	 */
-	public function getFullPath($relativePath = null) {
-		if (!is_string($relativePath) && !is_null($relativePath)) {
-			throw new \InvalidArgumentException("Relative path of webpage must be null or a string");
+	public function getFullPath( $relativePath = null ) {
+		if ( !is_string( $relativePath ) && !is_null( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be null or a string" );
 		}
 		// TODO: deal with errors from retriever
-		if (!is_null($relativePath)) {
+		if ( !is_null( $relativePath ) ) {
 			return $this->retriever->getFullFilePath( $relativePath, dirname( $this->relativePath ) );
 		} else {
 			return $this->retriever->getFullFilePath( $this->relativePath );
@@ -109,13 +113,13 @@ class WebPage extends LinkedTree {
 	 *
 	 * @return mixed
 	 */
-	public function getLinkContents($relativePath = '') {
-		if (!is_string($relativePath)) {
-			throw new \InvalidArgumentException("Relative path of webpage must be a string (may be empty)");
+	public function getLinkContents( $relativePath = '' ) {
+		if ( !is_string( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be a string (may be empty)" );
 		}
 		// TODO: deal with errors from retriever
 		// TODO: everywhere else relativePath can be null... this is odd
-		return $this->retriever->retrieveFileContents($relativePath, dirname($this->relativePath));
+		return $this->retriever->retrieveFileContents( $relativePath, dirname( $this->relativePath ) );
 	}
 
 	/**
@@ -123,7 +127,7 @@ class WebPage extends LinkedTree {
 	 * @return string
 	 */
 	public function getTitle() {
-		$title = json_decode('"'.$this->title.'"'); // converts unicode chars
+		$title = json_decode( '"' . $this->title . '"' ); // converts unicode chars
 		return $title;
 	}
 
@@ -133,8 +137,8 @@ class WebPage extends LinkedTree {
 	 */
 	public function getContent() {
 		// TODO: deal with errors from the retriever
-		if (is_null($this->content)) {
-			return $this->retriever->retrieveFileContents($this->getRelativePath());
+		if ( is_null( $this->content ) ) {
+			return $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		} else {
 			return $this->content;
 		}
@@ -147,10 +151,11 @@ class WebPage extends LinkedTree {
 	 */
 	public function isFolder() {
 		$content = $this->content;
-		if (is_null($content)) {
-			$content = $this->retriever->retrieveFileContents($this->getRelativePath());
+		if ( is_null( $content ) ) {
+			$content = $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		}
-		return is_null($content);
+
+		return is_null( $content );
 	}
 
 	/**
@@ -166,9 +171,10 @@ class WebPage extends LinkedTree {
 	 * @return array
 	 */
 	public function getAllLinks() {
-		$content = $this->getContent();
-		$contentAsXML = XMLHelper::getXMLObjectFromString($content);
-		return XMLHelper::getAllHRefsFromHTML($contentAsXML);
+		$content      = $this->getContent();
+		$contentAsXML = XMLHelper::getXMLObjectFromString( $content );
+
+		return XMLHelper::getAllHRefsFromHTML( $contentAsXML );
 	}
 
 } 

@@ -17,17 +17,17 @@ require_once( dirname( __FILE__ ) . '/XMLHelper.php' );
 require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
 class ImportHTMLStage extends ImportStage {
-	protected function isValid(HTMLImportStages $stagesSettings) {
+	protected function isValid( HTMLImportStages $stagesSettings ) {
 		return $stagesSettings->doesImportHtml();
 	}
 
-	protected function performStage(WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null) {
-		$meta->setPostContent($this->replaceBodyWithDivs($meta->getPostContent()));
+	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null ) {
+		$meta->setPostContent( $this->replaceBodyWithDivs( $meta->getPostContent() ) );
 	}
 
 
-	private function replaceBodyWithDivs($body) {
-		$divBody = XMLHelper::renameTags($body, 'body', 'div');
+	private function replaceBodyWithDivs( $body ) {
+		$divBody = XMLHelper::renameTags( $body, 'body', 'div' );
 
 		return $divBody;
 	}

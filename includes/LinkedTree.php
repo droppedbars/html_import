@@ -16,14 +16,16 @@ require_once dirname( __FILE__ ) . "/DoubleLinkedList.php";
  * Wrapper exception for anything that occurs within the LinkedTree that cannot be allowed.
  * @package droppedbars\datastructure
  */
-class LinkedTreeException extends \Exception {}
+class LinkedTreeException extends \Exception {
+}
 
 /**
  * Class ChildPayloadNotLinkedTreeException
  * Represents exceptions where a child is supposed to be a LinkedTree but is not.
  * @package droppedbars\datastructure
  */
-class ChildPayloadNotLinkedTreeException extends LinkedTreeException {}
+class ChildPayloadNotLinkedTreeException extends LinkedTreeException {
+}
 
 /**
  * Class LinkedTree
@@ -39,10 +41,10 @@ class LinkedTree {
 	/**
 	 * @param $payload object to be stored within the node
 	 */
-	public function __construct($payload) {
-		$this->parent = null;
+	public function __construct( $payload ) {
+		$this->parent   = null;
 		$this->children = null;
-		$this->payload = $payload;
+		$this->payload  = $payload;
 	}
 
 	/**
@@ -52,26 +54,29 @@ class LinkedTree {
 	 */
 	public function getParent() {
 		$parent = $this->parent;
-		if (!is_null($parent)) {
-			if (!$parent instanceof LinkedTree) {
+		if ( !is_null( $parent ) ) {
+			if ( !$parent instanceof LinkedTree ) {
 				throw new ChildPayloadNotLinkedTreeException();
 			}
+
 			return $this->parent;
-			}
+		}
+
 		return null;
 	}
 
 	/**
 	 * Appends a node to the end of the children attached to this node.
+	 *
 	 * @param LinkedTree $newChild
 	 */
-	public function addChild(LinkedTree $newChild) {
+	public function addChild( LinkedTree $newChild ) {
 		$newChild->parent = $this;
-		if (is_null($this->children)) {
-			$this->children = new DoubleLinkedList($newChild);
+		if ( is_null( $this->children ) ) {
+			$this->children      = new DoubleLinkedList( $newChild );
 			$this->childIterator = $this->children;
 		} else {
-			$this->children->tail()->insertAfter($newChild);
+			$this->children->tail()->insertAfter( $newChild );
 		}
 	}
 
@@ -81,13 +86,13 @@ class LinkedTree {
 	 * @throws ChildPayloadNotLinkedTreeException Child being returned is not a LinkedTree object
 	 */
 	public function headChild() {
-		if (is_null($this->children)) {
+		if ( is_null( $this->children ) ) {
 			return null;
 		} else {
 			$this->childIterator = $this->children->head();
-			$payload = $this->childIterator->payload();
-			if (!is_null($payload)) {
-				if (!$payload instanceof LinkedTree) {
+			$payload             = $this->childIterator->payload();
+			if ( !is_null( $payload ) ) {
+				if ( !$payload instanceof LinkedTree ) {
 					throw new ChildPayloadNotLinkedTreeException();
 				}
 			}
@@ -102,13 +107,13 @@ class LinkedTree {
 	 * @throws ChildPayloadNotLinkedTreeException Child being returned is not a LinkedTree object
 	 */
 	public function tailChild() {
-		if (is_null($this->children)) {
+		if ( is_null( $this->children ) ) {
 			return null;
 		} else {
 			$this->childIterator = $this->children->tail();
-			$payload = $this->childIterator->payload();
-			if (!is_null($payload)) {
-				if (!$payload instanceof LinkedTree) {
+			$payload             = $this->childIterator->payload();
+			if ( !is_null( $payload ) ) {
+				if ( !$payload instanceof LinkedTree ) {
 					throw new ChildPayloadNotLinkedTreeException();
 				}
 			}
@@ -123,19 +128,19 @@ class LinkedTree {
 	 * @throws ChildPayloadNotLinkedTreeException Child being returned is not a LinkedTree object
 	 */
 	public function nextChild() {
-		if (is_null($this->children)) {
+		if ( is_null( $this->children ) ) {
 			return null;
 		} else {
-			if (is_null($this->childIterator)) {
+			if ( is_null( $this->childIterator ) ) {
 				return null;
 			}
 			$this->childIterator = $this->childIterator->next();
-			if (is_null($this->childIterator)) {
+			if ( is_null( $this->childIterator ) ) {
 				return null;
 			} else {
 				$payload = $this->childIterator->payload();
-				if (!is_null($payload)) {
-					if (!$payload instanceof LinkedTree) {
+				if ( !is_null( $payload ) ) {
+					if ( !$payload instanceof LinkedTree ) {
 						throw new ChildPayloadNotLinkedTreeException();
 					}
 				}
@@ -151,19 +156,19 @@ class LinkedTree {
 	 * @throws ChildPayloadNotLinkedTreeException Child being returned is not a LinkedTree object
 	 */
 	public function previousChild() {
-		if (is_null($this->children)) {
+		if ( is_null( $this->children ) ) {
 			return null;
 		} else {
-			if (is_null($this->childIterator)) {
+			if ( is_null( $this->childIterator ) ) {
 				return null;
 			}
 			$this->childIterator = $this->childIterator->previous();
-			if (is_null($this->childIterator)) {
+			if ( is_null( $this->childIterator ) ) {
 				return null;
 			} else {
 				$payload = $this->childIterator->payload();
-				if (!is_null($payload)) {
-					if (!$payload instanceof LinkedTree) {
+				if ( !is_null( $payload ) ) {
+					if ( !$payload instanceof LinkedTree ) {
 						throw new ChildPayloadNotLinkedTreeException();
 					}
 				}
@@ -177,21 +182,23 @@ class LinkedTree {
 	 * Removes the child that is current retrievable via getChild().  It ensures the child does not have a reference to this node, and this node maintains no reference to chat child.  If it was the only child then getChild() will now return null.  If it was the first child, getChild() will return what was the second child (or null).  Otherwise getChild() will no return the child that came before the one being removed.
 	 */
 	public function removeChild() {
-		if (!is_null($this->childIterator)) {
-			if ($this->childIterator === $this->children) {
+		if ( !is_null( $this->childIterator ) ) {
+			if ( $this->childIterator === $this->children ) {
 				$this->children = $this->childIterator->next();
 			}
-			if (!is_null($this->childIterator->previous())) {
+			if ( !is_null( $this->childIterator->previous() ) ) {
 				$this->childIterator->payload()->parent = null;
-				$this->childIterator = $this->childIterator->previous();
+				$this->childIterator                    = $this->childIterator->previous();
 				$this->childIterator->removeNext();
-			} else if (!is_null($this->childIterator->next())) {
-				$this->childIterator->payload()->parent = null;
-				$this->childIterator = $this->childIterator->next();
-				$this->childIterator->removePrevious();
-			} else { // it was an only child
-				$this->childIterator = null;
-				$this->children = null;
+			} else {
+				if ( !is_null( $this->childIterator->next() ) ) {
+					$this->childIterator->payload()->parent = null;
+					$this->childIterator                    = $this->childIterator->next();
+					$this->childIterator->removePrevious();
+				} else { // it was an only child
+					$this->childIterator = null;
+					$this->children      = null;
+				}
 			}
 		}
 	}
@@ -202,11 +209,11 @@ class LinkedTree {
 	 * @throws ChildPayloadNotLinkedTreeException Child being returned is not a LinkedTree object
 	 */
 	public function getChild() {
-		if (!is_null($this->childIterator)) {
+		if ( !is_null( $this->childIterator ) ) {
 			$payload = $this->childIterator->payload();
 
-			if (!is_null($payload)) {
-				if (!$payload instanceof LinkedTree) {
+			if ( !is_null( $payload ) ) {
+				if ( !$payload instanceof LinkedTree ) {
 					throw new ChildPayloadNotLinkedTreeException();
 				}
 			}

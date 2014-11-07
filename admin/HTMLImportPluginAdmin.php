@@ -122,7 +122,7 @@ class HTMLImportPluginAdmin {
 	 */
 	public function enqueue_admin_styles() {
 
-		if ( ! isset( $this->plugin_screen_hook_suffix ) ) {
+		if ( !isset( $this->plugin_screen_hook_suffix ) ) {
 			return;
 		}
 
@@ -143,7 +143,7 @@ class HTMLImportPluginAdmin {
 	 */
 	public function enqueue_admin_scripts() {
 
-		if ( ! isset( $this->plugin_screen_hook_suffix ) ) {
+		if ( !isset( $this->plugin_screen_hook_suffix ) ) {
 			return;
 		}
 

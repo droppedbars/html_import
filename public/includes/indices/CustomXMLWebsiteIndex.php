@@ -9,9 +9,9 @@
 namespace html_import\indices;
 
 require_once( dirname( __FILE__ ) . '/WebsiteIndex.php' );
-require_once(dirname( __FILE__ ) . '/../retriever/FileRetriever.php');
-require_once(dirname( __FILE__ ) . '/WebPage.php');
-require_once(dirname( __FILE__ ) . '/WebPageSettings.php');
+require_once( dirname( __FILE__ ) . '/../retriever/FileRetriever.php' );
+require_once( dirname( __FILE__ ) . '/WebPage.php' );
+require_once( dirname( __FILE__ ) . '/WebPageSettings.php' );
 
 /**
  * Class CustomXMLWebsiteIndex
@@ -20,6 +20,7 @@ require_once(dirname( __FILE__ ) . '/WebPageSettings.php');
  */
 class CustomXMLWebsiteIndex extends WebsiteIndex {
 	const DEFAULT_INDEX_FILE_NAME = 'index.xml';
+
 	/**
 	 * Calling this function causes the website hierarchy to be built.  An index file to be used may be passed in by the caller or the function can be overridden and inherently know its own index file.
 	 *
@@ -33,11 +34,11 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 	 */
 	public function buildHierarchyFromWebsiteIndex( $indexFile = null ) {
 		$indexFileToUse = self::DEFAULT_INDEX_FILE_NAME;
-		if (!is_null($indexFile)) {
+		if ( !is_null( $indexFile ) ) {
 			$indexFileToUse = $indexFile;
 		}
-		if ( \html_import\XMLHelper::valid_xml_file( $this->retriever->getFullFilePath($indexFileToUse) ) ) {
-			$indexContents = $this->retriever->retrieveFileContents($indexFileToUse);
+		if ( \html_import\XMLHelper::valid_xml_file( $this->retriever->getFullFilePath( $indexFileToUse ) ) ) {
+			$indexContents = $this->retriever->retrieveFileContents( $indexFileToUse );
 
 			$doc = new \DOMDocument();
 			$doc->loadXML( $indexContents, LIBXML_NOBLANKS );
@@ -50,17 +51,18 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 			}
 
 		} else {
-			echo 'Cannot find file '.$indexFileToUse."<br>Current path is ".getcwd().'<br>';
+			echo 'Cannot find file ' . $indexFileToUse . "<br>Current path is " . getcwd() . '<br>';
 		}
 	}
 
 	/**
 	 * Reads the child node along with the settings specified in the index the adds it to the tree.
+	 *
 	 * @param \DOMNode $node
 	 * @param WebPage  $parentPage
 	 */
 	private function readInChildNode( \DOMNode $node, WebPage $parentPage = null ) {
-		$webPage = $parentPage;
+		$webPage  = $parentPage;
 		$settings = new WebPageSettings();
 
 		if ( strcmp( $node->nodeName, 'document' ) == 0 ) {
@@ -81,7 +83,7 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 						case 'src':
 							$src = $attributes->item( $i )->nodeValue;
 							if ( $src[0] != '/' ) {
-								$src = basename( $this->retriever->getFullFilePath($src) );
+								$src = basename( $this->retriever->getFullFilePath( $src ) );
 							}
 							break;
 						case 'category': // if category is set in XML, then overrides the web settings
@@ -106,22 +108,22 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 
 			if ( !is_null( $category ) && is_array( $category ) ) {
 				foreach ( $category as $index => $cat ) {
-					$cat_id              = wp_create_category( trim( $cat ) );
-					$settings->addCategory(intval( $cat_id ));
+					$cat_id = wp_create_category( trim( $cat ) );
+					$settings->addCategory( intval( $cat_id ) );
 				}
 			}
-		/*	if ( !is_null( $tag ) && is_array( $tag ) ) {
-				foreach ( $tag as $t ) {
-					//TODO: support tags
-				}
-			}*/
+			/*	if ( !is_null( $tag ) && is_array( $tag ) ) {
+					foreach ( $tag as $t ) {
+						//TODO: support tags
+					}
+				}*/
 
-			$webPage = new WebPage($this->retriever, $title, $src, null, $settings);
-			$webPage->setOrderPosition($order);
-			if (is_null($parentPage)) {
+			$webPage = new WebPage( $this->retriever, $title, $src, null, $settings );
+			$webPage->setOrderPosition( $order );
+			if ( is_null( $parentPage ) ) {
 				$this->trees[] = $webPage;
 			} else {
-				$parentPage->addChild($webPage);
+				$parentPage->addChild( $webPage );
 			}
 
 		}

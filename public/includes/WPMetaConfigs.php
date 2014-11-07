@@ -162,10 +162,11 @@ class WPMetaConfigs {
 	public function updateWPPost() {
 		// TODO: handle WP_Error object if set to true.
 		$postArray = $this->getPostArray();
-		$result = wp_insert_post( $postArray, true );
-		if (!is_wp_error($result)) {
-			$this->setPostId($result);
+		$result    = wp_insert_post( $postArray, true );
+		if ( !is_wp_error( $result ) ) {
+			$this->setPostId( $result );
 		}
+
 		return $result;
 	}
 
@@ -371,7 +372,7 @@ class WPMetaConfigs {
 	public function buildConfig( admin\HtmlImportSettings $globalSettings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
 
 
-		if ( ! is_null( $post_id ) ) {
+		if ( !is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
 		}
 
@@ -379,7 +380,7 @@ class WPMetaConfigs {
 			$file_as_xml_obj = null;
 		} else {
 			$file_as_xml_obj = XMLHelper::getXMLObjectFromString( $webPage->getContent() );
-			$this->setPostContent($file_as_xml_obj->body->asXML());
+			$this->setPostContent( $file_as_xml_obj->body->asXML() );
 			$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
 		}
 
@@ -389,16 +390,16 @@ class WPMetaConfigs {
 		$this->setCommentStatus( 'closed' );
 		$this->setPingStatus( 'closed' );
 
-		$categoryIDs = null;
+		$categoryIDs      = null;
 		$overrideSettings = $webPage->getSettings();
-		if (!is_null($overrideSettings)) {
+		if ( !is_null( $overrideSettings ) ) {
 			$categoryIDs = $overrideSettings->getCategoryIds();
 		}
 		// TODO: need to determine if index can override by providing no categories, and what that means
-		if ((is_null($overrideSettings)) || (is_null($categoryIDs)) || (sizeof($categoryIDs) <= 0)) {
+		if ( ( is_null( $overrideSettings ) ) || ( is_null( $categoryIDs ) ) || ( sizeof( $categoryIDs ) <= 0 ) ) {
 			$category    = $globalSettings->getCategories()->getValuesArray();
 			$categoryIDs = null;
-			if ( ! is_null( $category ) && is_array( $category ) ) {
+			if ( !is_null( $category ) && is_array( $category ) ) {
 				foreach ( $category as $index => $cat ) {
 					$cat_id              = wp_create_category( trim( $cat ) );
 					$categoryIDs[$index] = intval( $cat_id );
@@ -413,9 +414,9 @@ class WPMetaConfigs {
 		//if ( ! is_null($source_file)) {
 		//	$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
 		//} else {
-			$this->setPostDate( date( 'Y-m-d H:i:s' ));
+		$this->setPostDate( date( 'Y-m-d H:i:s' ) );
 		//}
-		if ( ! is_null( $parent_page_id ) ) {
+		if ( !is_null( $parent_page_id ) ) {
 			$this->setPostParent( $parent_page_id );
 		}
 
@@ -424,7 +425,7 @@ class WPMetaConfigs {
 			$this->setMenuOrder( $order );
 		}
 		$this->setPostAuthor( wp_get_current_user()->ID ); // TODO: should be in the settings object
-		$this->setPageTemplate($globalSettings->getTemplate()->getValue());
+		$this->setPageTemplate( $globalSettings->getTemplate()->getValue() );
 
 
 	}

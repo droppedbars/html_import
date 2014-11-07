@@ -14,7 +14,7 @@
  * @wordpress-plugin
  * Plugin Name:       HTML Importer
  * Plugin URI:        @TODO
- * Description:				Imports a set of HTML pages based off of a specially formatted XML index file.  Imports associated media and updates relative links between HTML and HTML and Media.
+ * Description:        Imports a set of HTML pages based off of a specially formatted XML index file.  Imports associated media and updates relative links between HTML and HTML and Media.
  * Version:           1.4.1
  * Author:            Patrick Mauro
  * Author URI:        http://patrick.mauro.ca
@@ -26,7 +26,7 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
+if ( !defined( 'WPINC' ) ) {
 	die;
 }
 
@@ -65,7 +65,7 @@ add_action( 'plugins_loaded', array( 'HTMLImportPlugin', 'get_instance' ) );
  *
  * The code below is intended to to give the lightest footprint possible.
  */
-if ( is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) ) {
+if ( is_admin() && ( !defined( 'DOING_AJAX' ) || !DOING_AJAX ) ) {
 
 	require_once( plugin_dir_path( __FILE__ ) . 'admin/HTMLImportPluginAdmin.php' );
 	add_action( 'plugins_loaded', array( 'HTMLImportPluginAdmin', 'get_instance' ) );
