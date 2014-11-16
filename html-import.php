@@ -12,10 +12,9 @@
  * @copyright 2014 Patrick Mauro
  *
  * @wordpress-plugin
- * Plugin Name:       HTML Importer
- * Plugin URI:        @TODO
- * Description:        Imports a set of HTML pages based off of a specially formatted XML index file.  Imports associated media and updates relative links between HTML and HTML and Media.
- * Version:           1.4.1
+ * Plugin Name:       Website Importer
+ * Description:       Imports a full website provided an index file from either a Flare export, or a specialized XML index.
+ * Version:           1.0.0
  * Author:            Patrick Mauro
  * Author URI:        http://patrick.mauro.ca
  * Text Domain:       plugin-name-locale
