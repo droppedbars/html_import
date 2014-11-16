@@ -9,7 +9,18 @@
 namespace html_import;
 
 
+/**
+ * Class XMLHelper
+ * Assorted helper functions for handling XML files.
+ * @package html_import
+ */
 class XMLHelper {
+	/**
+	 * Returns a SimpleXMLElement object given an XML contained in a string.
+	 * @param $source_string
+	 *
+	 * @return \SimpleXMLElement
+	 */
 	public static function getXMLObjectFromString( $source_string ) {
 		// TODO: need to handle empty $souce_string
 		$doc                      = new \DOMDocument();
@@ -22,6 +33,12 @@ class XMLHelper {
 		return $file_as_xml_obj;
 	}
 
+	/**
+	 * Returns a SimpleXMLElement object given a path to an XML file.
+	 * @param $source_file
+	 *
+	 * @return \SimpleXMLElement
+	 */
 	public static function getXMLObjectFromFile( $source_file ) {
 		$doc                      = new \DOMDocument();
 		$doc->strictErrorChecking = false;
@@ -34,7 +51,13 @@ class XMLHelper {
 	}
 
 	// TODO: find an appropriate place for this
-	// lifted from: http://php.net/manual/en/function.file-exists.php
+	/**
+	 * Check to determine if the provided URL resolves to a real file.  Returns true if so, false otherwise.
+	 * source from: http://php.net/manual/en/function.file-exists.php
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
 	public static function url_exists( $url ) {
 		// Version 4.x supported
 		$handle = curl_init( $url );
@@ -53,6 +76,12 @@ class XMLHelper {
 	}
 
 	// TODO: this should be beefed up to actually validate that it's an XML
+	/**
+	 * Verifies that a file exists at the path provided, whether it's a URL or a local file.
+	 * @param $xml_path
+	 *
+	 * @return bool|mixed
+	 */
 	public static function valid_xml_file( $xml_path ) {
 		if ( filter_var( $xml_path, FILTER_VALIDATE_URL ) ) { // if URL
 			return self::url_exists( $xml_path );
@@ -65,6 +94,12 @@ class XMLHelper {
 		return false;
 	}
 
+	/**
+	 * Given an HTML file in a string, returns an array listing all of the URLs from the <a href>s.
+	 * @param $contentAsXML
+	 *
+	 * @return array
+	 */
 	public static function getAllHRefsFromHTML( $contentAsXML ) {
 		$all_links   = $contentAsXML->xpath( '//a[@href]' );
 		$arrayOfURLs = [ ];
@@ -84,6 +119,7 @@ class XMLHelper {
 	}
 
 	/**
+	 * Given a string containing an XML file, it will replace all $old tags with $new tags.
 	 * source from: http://stackoverflow.com/questions/8163298/how-do-i-change-xml-tag-names-with-php
 	 *
 	 * @param $xml

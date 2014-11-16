@@ -295,6 +295,15 @@ class HTMLImportPlugin {
 		wp_enqueue_script( $this->plugin_slug . '-plugin-script', plugins_url( 'assets/js/public.js', __FILE__ ), array( 'jquery' ), self::VERSION );
 	}
 
+	/**
+	 * Imports a WebPage object into Wordpress, using the provided HtMLImportSettings, and assigning it to be a child of the post with the id defined in $parent_page_id.  $html_post_lookup is used to determine if the page had already been created by this session's import.
+	 * @param \html_import\indices\WebPage          $webPage
+	 * @param \html_import\admin\HtmlImportSettings $globalSettings
+	 * @param                                       $parent_page_id
+	 * @param                                       $html_post_lookup
+	 *
+	 * @return \html_import\WPMetaConfigs
+	 */
 	private function importAnHTML( \html_import\indices\WebPage $webPage, html_import\admin\HtmlImportSettings $globalSettings, $parent_page_id, $html_post_lookup ) {
 
 		$title = $webPage->getTitle();
@@ -323,7 +332,17 @@ class HTMLImportPlugin {
 	}
 
 
-	private function importFlareNode( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
+	/**
+	 * Ensures the provided WebPage is imported into WordPress.  $stubs_only will force the import to create a stub (only creates the page with a title, no content) or do a full import.  A record of the page being imported is stored in $html_post_lookup which is returned updated.  $media_lookup maintains a list of all local media files that have been imported, and it is updated during the course of this import and returned.  The HtmlImportSettings defines various settings to apply to the imported page.
+	 * @param \html_import\indices\WebPage          $webPage
+	 * @param bool                                  $stubs_only
+	 * @param                                       $html_post_lookup
+	 * @param                                       $media_lookup
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 *
+	 * @return \html_import\WPMetaConfigs
+	 */
+	private function importAndRecordWebPage( \html_import\indices\WebPage $webPage, $stubs_only = true, &$html_post_lookup, &$media_lookup, html_import\admin\HtmlImportSettings $settings ) {
 
 		$category = $settings->getCategories()->getValuesArray();
 		$tag      = Array();
@@ -374,6 +393,16 @@ class HTMLImportPlugin {
 		return $postMeta;
 	}
 
+	/**
+	 * Iterates through the contents of a website index and imports the WebPages contained.  This function should be run twice, once to create a stub ($stubs_only = true) and once to create the full page. The reason for this is that local links cannot be updated unless a page has already been imported and has a Wordpress page_id.  All imported media files are returned in $media_lookup, and $html_post_lookup maintains a list of all pages that have been imported and their page_ids.
+	 * @param \html_import\indices\WebsiteIndex     $siteIndex
+	 * @param bool                                  $stubs_only
+	 * @param null                                  $html_post_lookup
+	 * @param null                                  $media_lookup
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 *
+	 * @return array|null
+	 */
 	private function importFromWebsiteIndex( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
 		set_time_limit( 520 );
@@ -382,16 +411,21 @@ class HTMLImportPlugin {
 		}
 		$siteIndex->setToFirstFile();
 		$fileNode = $siteIndex->getNextHTMLFile();
-		// TODO need to get the parent from the node, but the method of the top parent creates an issue!  need null
+
 		while ( !is_null( $fileNode ) ) {
-			$this->importFlareNode( $fileNode, $stubs_only, $html_post_lookup, $media_lookup, $settings );
+			$this->importAndRecordWebPage( $fileNode, $stubs_only, $html_post_lookup, $media_lookup, $settings );
 			$fileNode = $siteIndex->getNextHTMLFile();
 		}
 
 		return $html_post_lookup;
 	}
 
-	public function import_html_from_xml_index( $filePath, html_import\admin\HtmlImportSettings $settings ) {
+	/**
+	 * Begins the process of importing a website that is defined through an XML index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * @param                                       $filePath
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 */
+	private function import_html_from_xml_index( $filePath, html_import\admin\HtmlImportSettings $settings ) {
 		$directory = $filePath;
 		if ( !is_dir( $directory ) ) {
 			$directory = dirname( $filePath );
@@ -412,11 +446,23 @@ class HTMLImportPlugin {
 		$this->importFromWebsiteIndex( $xmlIndex, false, $html_post_lookup, $media_lookup, $settings );
 	}
 
+	/**
+	 * Tests the provided Mime type to determine if it s a compressed file, such as RAR or ZIP.  Returns true if it is.
+	 * @param $mime_type
+	 *
+	 * @return bool
+	 */
 	private function isFileMimeTypeCompressed( $mime_type ) {
 		// TODO: better would be to actually check the zip rather than just assume the mime-type is correct
 		return ( ( strcmp( 'application/x-rar-compressed', $mime_type ) == 0 ) || ( strcmp( 'application/octet-stream', $mime_type ) == 0 ) || ( strcmp( 'application/zip', $mime_type ) == 0 ) || ( strcmp( 'application/x-zip-compressed', $mime_type ) == 0 ) );
 	}
 
+	/**
+	 * Takes the path to a zip file, decompresses it and drops it into the Uploads directory of the Wordpress installation.  The sub path will be /import-# where # is a sequential number, incremented if there is another /import-# directory in the uplaods directory.  A string is returned containing the path to the contents of the zip.
+	 * @param $zip_to_upload
+	 *
+	 * @return null|string
+	 */
 	private function decompressAndUploadFiletoSite( $zip_to_upload ) {
 		$zip = new ZipArchive;
 		// TODO: not handling failure to open the zip
@@ -439,7 +485,12 @@ class HTMLImportPlugin {
 		}
 	}
 
-	public function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings ) {
+	/**
+	 * Begins the process of importing a website that is defined through a flare index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * @param                                       $filePath
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 */
+	private function import_html_from_flare( $filePath, html_import\admin\HtmlImportSettings $settings ) {
 		$localFileRetriever = new \droppedbars\files\LocalAndURLFileRetriever( $filePath );
 		$flareIndex         = new \html_import\indices\FlareWebsiteIndex( $localFileRetriever );
 		$flareIndex->buildHierarchyFromWebsiteIndex();
@@ -452,6 +503,11 @@ class HTMLImportPlugin {
 	}
 
 	// TODO: candidate to be made into a factory
+	/**
+	 * Determines if the import is an XML or flare index and ensures it is imported accordingly.
+	 * @param                                       $filePath
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 */
 	private function routeImportToCorrectImporter( $filePath, html_import\admin\HtmlImportSettings $settings ) {
 		$importType = $settings->getIndexType()->getValue();
 
@@ -466,6 +522,10 @@ class HTMLImportPlugin {
 		}
 	}
 
+	/**
+	 * Base function to import a website into Wordpress.  Takes $settings that have been set in the plugin's settings page, and uses $_FILES to access uploaded files (if required).  In the end all pages and media should be imported into Wordpress with internal links updated.
+	 * @param \html_import\admin\HtmlImportSettings $settings
+	 */
 	public function importHTMLFiles( html_import\admin\HtmlImportSettings $settings ) {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';

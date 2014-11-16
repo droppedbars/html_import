@@ -15,11 +15,23 @@ require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
 require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
+/**
+ * Class MediaImportStage
+ * Stage that is responsible for scraping media files from a WebPage, uploading them into Wordpress and resetting the links in the webpage to point to the new location.
+ * @package html_import
+ */
 class MediaImportStage extends ImportStage {
 	protected function isValid( HTMLImportStages $stagesSettings ) {
 		return $stagesSettings->doesImportMedia();
 	}
 
+	/**
+	 * Performs the stage action of uploading media files and updating the WebPage accordingly.
+	 * @param WebPage          $webPage
+	 * @param HTMLImportStages $stagesSettings
+	 * @param WPMetaConfigs    $meta
+	 * @param null             $media_lookup
+	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$media_lookup = null ) {
 
 		$post_id = $meta->getPostId();

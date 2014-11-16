@@ -18,7 +18,7 @@ class HTMLImportStages {
 	private $importMedia = true;
 	private $updateLinks = true;
 	private $configureTemplate = true;
-	private $addGDNHeaderAndFooter = true;
+	private $addGDNHeaderAndFooter = false;
 
 	/**
 	 * @param boolean $setTemplate

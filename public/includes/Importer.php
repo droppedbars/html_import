@@ -46,7 +46,7 @@ abstract class Importer {
 	}
 
 	/**
-	 *
+	 * Performs the actual import of the webpage.
 	 * @param WebPage       $webPage
 	 * @param WPMetaConfigs $meta
 	 * @param Array|null          $html_post_lookup
@@ -57,7 +57,7 @@ abstract class Importer {
 	abstract protected function doImport( WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null );
 
 	/**
-	 *
+	 * Responsible for executing each individual stage as they are passed in.
 	 * @param WebPage       $webPage
 	 * @param ImportStage   $stage
 	 * @param WPMetaConfigs $meta

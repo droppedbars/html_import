@@ -15,11 +15,23 @@ require_once( dirname( __FILE__ ) . '/HTMLImportStages.php' );
 require_once( dirname( __FILE__ ) . '/WPMetaConfigs.php' );
 require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
 
+/**
+ * Class UpdateLinksImportStage
+ * Stage that will update all the local links in a webpage to reference the appropriate page in Wordpres.
+ * @package html_import
+ */
 class UpdateLinksImportStage extends ImportStage {
 	protected function isValid( HTMLImportStages $stagesSettings ) {
 		return $stagesSettings->doesUpdateLinks();
 	}
 
+	/**
+	 * Function that performs the action of updating the local links on the webpage.
+	 * @param WebPage          $webPage
+	 * @param HTMLImportStages $stagesSettings
+	 * @param WPMetaConfigs    $meta
+	 * @param null             $html_post_lookup
+	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$html_post_lookup = null ) {
 		$body = $meta->getPostContent();
 		if ( !is_null( $html_post_lookup ) ) {

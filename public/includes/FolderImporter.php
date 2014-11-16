@@ -26,6 +26,7 @@ class FolderImporter extends Importer {
 	 * @param WPMetaConfigs $meta
 	 * @param Array|null          $html_post_lookup
 	 * @param Array|null          $media_lookup
+	 * @return null
 	 */
 	protected function doImport( WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null ) {
 		$updateResult                                  = $meta->updateWPPost();
