@@ -49,7 +49,7 @@ class HTMLImportPluginAdmin {
 	private function __construct() {
 
 		/*
-		 * @TODO :
+		 *
 		 *
 		 * - Uncomment following lines if the admin class should only be available for super admins
 		 */
@@ -82,8 +82,8 @@ class HTMLImportPluginAdmin {
 		 * Read more about actions and filters:
 		 * http://codex.wordpress.org/Plugin_API#Hooks.2C_Actions_and_Filters
 		 */
-		//add_action( '@TODO', array( $this, 'action_method_name' ) );
-		//add_filter( '@TODO', array( $this, 'filter_method_name' ) );
+		//add_action( '', array( $this, 'action_method_name' ) );
+		//add_filter( '', array( $this, 'filter_method_name' ) );
 
 	}
 
@@ -97,7 +97,6 @@ class HTMLImportPluginAdmin {
 	public static function get_instance() {
 
 		/*
-		 * @TODO :
 		 *
 		 * - Uncomment following lines if the admin class should only be available for super admins
 		 */
@@ -123,7 +122,7 @@ class HTMLImportPluginAdmin {
 	 */
 	public function enqueue_admin_styles() {
 
-		if ( ! isset( $this->plugin_screen_hook_suffix ) ) {
+		if ( !isset( $this->plugin_screen_hook_suffix ) ) {
 			return;
 		}
 
@@ -144,7 +143,7 @@ class HTMLImportPluginAdmin {
 	 */
 	public function enqueue_admin_scripts() {
 
-		if ( ! isset( $this->plugin_screen_hook_suffix ) ) {
+		if ( !isset( $this->plugin_screen_hook_suffix ) ) {
 			return;
 		}
 
@@ -173,8 +172,8 @@ class HTMLImportPluginAdmin {
 		 *   For reference: http://codex.wordpress.org/Roles_and_Capabilities
 		 */
 		$this->plugin_screen_hook_suffix = add_options_page(
-				__( 'HTML Importer', $this->plugin_slug ),
-				__( 'HTML Importer', $this->plugin_slug ),
+				__( 'Website Importer', $this->plugin_slug ),
+				__( 'Website Importer', $this->plugin_slug ),
 				'edit_pages',
 				$this->plugin_slug,
 				array( $this, 'display_plugin_admin_page' )
@@ -216,9 +215,9 @@ class HTMLImportPluginAdmin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function action_method_name() {
-		// @TODO: Define your action hook callback here
-	}
+	/*public function action_method_name() {
+		// Define your action hook callback here
+	}*/
 
 	/**
 	 * NOTE:     Filters are points of execution in which WordPress modifies data
@@ -229,8 +228,8 @@ class HTMLImportPluginAdmin {
 	 *
 	 * @since    1.0.0
 	 */
-	public function filter_method_name() {
-		// @TODO: Define your filter hook callback here
-	}
+	/*public function filter_method_name() {
+		// Define your filter hook callback here
+	}*/
 
 }

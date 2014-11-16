@@ -8,12 +8,17 @@
 
 namespace html_import;
 
-
+/**
+ * Class HTMLImportStages
+ * Defines which import stages are available to be used.
+ * @package html_import
+ */
 class HTMLImportStages {
 	private $importHtml = true;
 	private $importMedia = true;
 	private $updateLinks = true;
 	private $configureTemplate = true;
+	private $addGDNHeaderAndFooter = false;
 
 	/**
 	 * @param boolean $setTemplate
@@ -28,7 +33,6 @@ class HTMLImportStages {
 	public function doesConfigureTemplate() {
 		return $this->configureTemplate;
 	}
-	private $addGDNHeaderAndFooter = true;
 
 	/**
 	 * @param boolean $addGDNHeaderAndFooter
@@ -86,8 +90,10 @@ class HTMLImportStages {
 		return $this->updateLinks;
 	}
 
+	/**
+	 * 
+	 */
 	function __construct() {
 	}
-
 
 } 

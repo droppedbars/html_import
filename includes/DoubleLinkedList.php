@@ -33,10 +33,10 @@ class DoubleLinkedList {
 	protected $next;
 	protected $payload;
 
-	public function __construct($payload) {
+	public function __construct( $payload ) {
 		$this->previous = null;
-		$this->next = null;
-		$this->payload = $payload;
+		$this->next     = null;
+		$this->payload  = $payload;
 	}
 
 	/**
@@ -50,39 +50,44 @@ class DoubleLinkedList {
 	/**
 	 * Create a node with the provided payload and insert it into the linked list before the current node.
 	 * Returns the new node.
+	 *
 	 * @param $newPayload
+	 *
 	 * @return DoubleLinkedList
 	 */
-	public function insertBefore($newPayload) {
-		$node = new DoubleLinkedList($newPayload);
+	public function insertBefore( $newPayload ) {
+		$node        = new DoubleLinkedList( $newPayload );
 		$oldPrevious = $this->previous;
 
-		$node->next = $this;
+		$node->next     = $this;
 		$this->previous = $node;
 
-		if (!is_null($oldPrevious)) {
+		if ( !is_null( $oldPrevious ) ) {
 			$oldPrevious->next = $node;
-			$node->previous = $oldPrevious;
+			$node->previous    = $oldPrevious;
 		}
+
 		return $node;
 	}
 
 	/**
 	 * Create a node with the provided payload and insert it into the linked list after the current node.
 	 * Returns the new node.
+	 *
 	 * @param $newPayload
+	 *
 	 * @return DoubleLinkedList
 	 */
-	public function insertAfter($newPayload) {
-		$node = new DoubleLinkedList($newPayload);
+	public function insertAfter( $newPayload ) {
+		$node    = new DoubleLinkedList( $newPayload );
 		$oldNext = $this->next;
 
-		$this->next = $node;
+		$this->next     = $node;
 		$node->previous = $this;
 
-		if (!is_null($oldNext)) {
+		if ( !is_null( $oldNext ) ) {
 			$oldNext->previous = $node;
-			$node->next = $oldNext;
+			$node->next        = $oldNext;
 		}
 
 		return $node;
@@ -94,14 +99,14 @@ class DoubleLinkedList {
 	 */
 	public function removeNext() {
 		$next = $this->next;
-		if (!is_null($next)) {
-			$nextNext = $next->next;
+		if ( !is_null( $next ) ) {
+			$nextNext   = $next->next;
 			$this->next = $nextNext;
-			if (!is_null($nextNext)) {
+			if ( !is_null( $nextNext ) ) {
 				$nextNext->previous = $this;
 			}
 			$next->previous = null;
-			$next->next = null;
+			$next->next     = null;
 		}
 	}
 
@@ -111,14 +116,14 @@ class DoubleLinkedList {
 	 */
 	public function removePrevious() {
 		$previous = $this->previous;
-		if (!is_null($previous)) {
+		if ( !is_null( $previous ) ) {
 			$previousPrevious = $previous->previous;
-			$this->previous = $previousPrevious;
-			if (!is_null($previousPrevious)) {
+			$this->previous   = $previousPrevious;
+			if ( !is_null( $previousPrevious ) ) {
 				$previousPrevious->next = $this;
 			}
 			$previous->previous = null;
-			$previous->next = null;
+			$previous->next     = null;
 		}
 	}
 
@@ -129,9 +134,10 @@ class DoubleLinkedList {
 	 */
 	public function head() {
 		$previous = $this;
-		while (!is_null($previous->previous)) {
+		while ( !is_null( $previous->previous ) ) {
 			$previous = $previous->previous;
 		}
+
 		return $previous;
 	}
 
@@ -142,9 +148,10 @@ class DoubleLinkedList {
 	 */
 	public function tail() {
 		$next = $this;
-		while (!is_null($next->next)) {
+		while ( !is_null( $next->next ) ) {
 			$next = $next->next;
 		}
+
 		return $next;
 	}
 
@@ -153,12 +160,13 @@ class DoubleLinkedList {
 	 * @return int
 	 */
 	public function count() {
-		$node = $this->head();
+		$node    = $this->head();
 		$counter = 1;
-		while (!is_null($node->next)) {
-			$counter++;
+		while ( !is_null( $node->next ) ) {
+			$counter ++;
 			$node = $node->next;
 		}
+
 		return $counter;
 	}
 

@@ -17,8 +17,12 @@ use droppedbars\datastructure\LinkedTree;
 use droppedbars\files\FileRetriever;
 use html_import\XMLHelper;
 
-// TODO: should I extend or wrap?
-class WebPage extends LinkedTree{
+/**
+ * Class WebPage
+ * Represents a webpage and its hierarchical relationships, and maintains how and where to retrieve it from.  Also tracks any settings that were defined for the page.
+ * @package html_import\indices
+ */
+class WebPage extends LinkedTree {
 	private $title = null;
 	private $content = null;
 	private $relativePath = null;
@@ -26,22 +30,45 @@ class WebPage extends LinkedTree{
 	private $order = null;
 	private $settings = null;
 
-	public function __construct(FileRetriever $retriever, $title, $relativePath, $content = null, WebPageSettings $settings = null) {
-		$this->title = $title;
-		$this->content = $content;
-		$this->relativePath = $relativePath;
-		$this->retriever = $retriever;
-		$this->settings = $settings;
-	}
-
 	/**
-	 * @param int $order
+	 * @param FileRetriever   $retriever
+	 * @param string          $title
+	 * @param string          $relativePath
+	 * @param null            $content
+	 * @param WebPageSettings $settings
+	 *
+	 * @exception InvalidArgumentException
 	 */
-	public function setOrderPosition($order) {
-		$this->order = $order;
+	public function __construct( FileRetriever $retriever, $title, $relativePath, $content = null, WebPageSettings $settings = null ) {
+		if ( !is_string( $title ) ) {
+			throw new \InvalidArgumentException( "Webpage title must be a string" );
+		}
+		if ( !is_string( $relativePath ) && !is_null( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be null or a string" );
+		}
+		$this->title        = $title;
+		$this->content      = $content;
+		$this->relativePath = $relativePath;
+		$this->retriever    = $retriever;
+		$this->settings     = $settings;
 	}
 
 	/**
+	 * Sets the absolute position or order of the webpage.  This is used in Wordpress for how pages are ordered in menus.
+	 *
+	 * @param int $order
+	 *
+	 * @exception InvalidArgumentException
+	 */
+	public function setOrderPosition( $order ) {
+		if ( !is_integer( $order ) && ( !is_numeric( $order ) ) ) {
+			throw new \InvalidArgumentException( "Webpage order must be an integer" );
+		}
+		$this->order = (int) $order;
+	}
+
+	/**
+	 * Returns the absolute order of the webpage.
 	 * @return null|int
 	 */
 	public function getOrderPosition() {
@@ -49,13 +76,15 @@ class WebPage extends LinkedTree{
 	}
 
 	/**
-	 * @return WebPage|LinkedTree|null
+	 * Returns the parent of the current page. Null if there is no parent.
+	 * @return WebPage|null
 	 */
 	public function getParent() {
 		return parent::getParent();
 	}
 
 	/**
+	 * Returns the relative path of this webpage as it relates to the file retriever.
 	 * @return string
 	 */
 	public function getRelativePath() {
@@ -63,11 +92,16 @@ class WebPage extends LinkedTree{
 	}
 
 	/**
+	 * Builds up and returns the full path of the webpage, using the retriever as the foundation
+	 *
 	 * @param string $relativePath
 	 */
-	public function getFullPath($relativePath = null) {
+	public function getFullPath( $relativePath = null ) {
+		if ( !is_string( $relativePath ) && !is_null( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be null or a string" );
+		}
 		// TODO: deal with errors from retriever
-		if (!is_null($relativePath)) {
+		if ( !is_null( $relativePath ) ) {
 			return $this->retriever->getFullFilePath( $relativePath, dirname( $this->relativePath ) );
 		} else {
 			return $this->retriever->getFullFilePath( $this->relativePath );
@@ -79,47 +113,68 @@ class WebPage extends LinkedTree{
 	 *
 	 * @return mixed
 	 */
-	public function getLinkContents($relativePath) {
+	public function getLinkContents( $relativePath = '' ) {
+		if ( !is_string( $relativePath ) ) {
+			throw new \InvalidArgumentException( "Relative path of webpage must be a string (may be empty)" );
+		}
 		// TODO: deal with errors from retriever
-		return $this->retriever->retrieveFileContents($relativePath, dirname($this->relativePath));
+		// TODO: everywhere else relativePath can be null... this is odd
+		return $this->retriever->retrieveFileContents( $relativePath, dirname( $this->relativePath ) );
 	}
 
 	/**
+	 * Returns the title of the webpage
 	 * @return string
 	 */
 	public function getTitle() {
-		$title = json_decode('"'.$this->title.'"'); // converts unicode chars
+		$title = json_decode( '"' . $this->title . '"' ); // converts unicode chars
 		return $title;
 	}
 
 	/**
+	 * Returns the content of the webpage as a string.  If needed it will retrieve the content from the real page itself
 	 * @return string
 	 */
 	public function getContent() {
 		// TODO: deal with errors from the retriever
-		if (is_null($this->content)) {
-			return $this->retriever->retrieveFileContents($this->getRelativePath());
+		if ( is_null( $this->content ) ) {
+			return $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		} else {
 			return $this->content;
 		}
 	}
 
+	/**
+	 * Tests to see if the webpage object is in fact a folder.
+	 * This is used in some document management systems.
+	 * @return bool
+	 */
 	public function isFolder() {
 		$content = $this->content;
-		if (is_null($content)) {
-			$content = $this->retriever->retrieveFileContents($this->getRelativePath());
+		if ( is_null( $content ) ) {
+			$content = $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		}
-		return is_null($content);
+
+		return is_null( $content );
 	}
 
+	/**
+	 * Returns the settings of the webpage.
+	 * @return WebPageSettings|null
+	 */
 	public function getSettings() {
 		return $this->settings;
 	}
 
+	/**
+	 * Returns an array of all links destinations contained in the content of the webpage.
+	 * @return array
+	 */
 	public function getAllLinks() {
-		$content = $this->getContent();
-		$contentAsXML = XMLHelper::getXMLObjectFromString($content);
-		return XMLHelper::getAllHRefsFromHTML($contentAsXML);
+		$content      = $this->getContent();
+		$contentAsXML = XMLHelper::getXMLObjectFromString( $content );
+
+		return XMLHelper::getAllHRefsFromHTML( $contentAsXML );
 	}
 
 } 

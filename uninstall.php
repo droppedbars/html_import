@@ -12,7 +12,7 @@ require_once( dirname( __FILE__ ) . '/admin/includes/HtmlImportSettings.php' );
  */
 
 // If uninstall not called from WordPress, then exit
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+if ( !defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 

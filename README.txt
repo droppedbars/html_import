@@ -1,137 +1,83 @@
-=== HTML Importer ===
+=== Website Importer ===
 Contributors: droppedbars
-Donate link:
-Tags: import,HTML
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=D7J2RY6828E7N
+Tags: import,HTML,website,webpage,flare,xml
 Requires at least: 3.8.1
 Tested up to: 4.0
-Stable tag: 1.4.1
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Import HTML files and attached media into Wordpress. Updates relative links.
+Given an index file, uploads entire websites into Wordpress.
 
 == Description ==
 
-This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
+Website Importer can import entire websites into Wordpress provided they contain a specialized index file.  The index file can either be an index output by Flare Madcap, or an XML file that is specifically defined for this importer.
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
-
-A few notes about the sections above:
-
-*   "Contributors" is a comma separated list of wp.org/wp-plugins.org usernames
-*   "Tags" is a comma separated list of tags that apply to the plugin
-*   "Requires at least" is the lowest version that the plugin will work on
-*   "Tested up to" is the highest version that you've *successfully used to test the plugin*. Note that it might work on
-higher versions... this is just the highest one you've verified.
-*   Stable tag should indicate the Subversion "tag" of the latest stable version, or "trunk," if you use `/trunk/` for
-stable.
-
-    Note that the `readme.txt` of the stable tag is the one that is considered the defining one for the plugin, so
-if the `/trunk/readme.txt` file says that the stable tag is `4.3`, then it is `/tags/4.3/readme.txt` that'll be used
-for displaying information about the plugin.  In this situation, the only thing considered from the trunk `readme.txt`
-is the stable tag pointer.  Thus, if you develop in trunk, you can update the trunk `readme.txt` to reflect changes in
-your in-development version, without having that information incorrectly disclosed about the current stable version
-that lacks those changes -- as long as the trunk's `readme.txt` points to the correct stable tag.
-
-    If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
-you put the stable version, in order to eliminate any doubt.
+The Website Importer will relink internal links, upload and relink media files, and apply templates and categories to the page.  The import can be from either a website that is local to the Wordpress installation, or uploaded as a zip file.  If it is uploaded as a zip file and is a Flare Madcap import, the importer will find the relevant Flare Madcap index.  If it is uploaded as a zip file and the is using an XML index, the importer requires that the index file be named index.xml and located at the root of the zip file.
 
 == Installation ==
 
-This section describes how to install the plugin and get it working.
+* Minimum tested/supported WordPress version: 3.8.1
+* Minimum tested PHP version: 5.4.25
+* Other requirements: Javascript required for Settings Page
 
-e.g.
+= Through your WordPress Installation =
 
-= Using The WordPress Dashboard =
+1. Click 'Plugins > Add New'
+1. Search for 'Website Importer'
+1. Activate Website Importer from your Plugins page
+1. Click 'Settings > Website Importer'
+1. Enter in your brands that require trademark symbols, select the trademark symbol and click 'Save Changes'
 
-1. Navigate to the 'Add New' in the plugins dashboard
-2. Search for 'plugin-name'
-3. Click 'Install Now'
-4. Activate the plugin on the Plugin dashboard
+= Through WordPress.org =
 
-= Uploading in WordPress Dashboard =
-
-1. Navigate to the 'Add New' in the plugins dashboard
-2. Navigate to the 'Upload' area
-3. Select `plugin-name.zip` from your computer
-4. Click 'Install Now'
-5. Activate the plugin in the Plugin dashboard
-
-= Using FTP =
-
-1. Download `plugin-name.zip`
-2. Extract the `plugin-name` directory to your computer
-3. Upload the `plugin-name` directory to the `/wp-content/plugins/` directory
-4. Activate the plugin in the Plugin dashboard
-
+1. Download Website Importer
+1. Upload or copy the 'Website Importer' directory to your '/wp-content/plugins/' directory using your preferred method
+1. Activate Website Importer from your Plugins page
+1. Click 'Settings > Website Importer'
+1. Enter in your brands that require trademark symbols, select the trademark symbol and click 'Save Changes'
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= What do I do if my import doesn't work? =
 
-An answer to that question.
+If possible, provide the entire import attempted (index and html files) and the errors that occurred.
 
-= What about foo bar? =
+= How do I use categories for pages? =
 
-Answer to foo bar dilemma.
+In order to create and manage categories for pages, another plugin is required.  "Post Tags and Categories for Pages" has been used in testing in conjunction with this plugin.
+
+= Where does the index file have to be? =
+
+When importing a local located website the index file can be referenced directly.  If uploading a zip file containing the website, then for an XML import the index.xml file must be in the root of the zip file and named index.xml.  For an uploaded zip of a Flare website, the TOCs can be anywhere and will be found automatically.
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+1. The settings screen of the plugin while importing using an XML index.
 
 == Changelog ==
 
-= 1.0 =
-* A change since the previous version.
-* Another change.
+= 1.0.0 =
+* First release, supports a custom XML index and basic Flare imports.
 
-= 0.5 =
-* List versions from most recent at top to oldest at bottom.
+== XML Index Format ==
 
-== Upgrade Notice ==
+`<?xml version="1.0" encoding="utf-8"?>
+<knowledgebase version="1.0">
+  <document title="File Title" src="index.html" category="cat1" order="0">
+    <document title="File Title 2" src="secondFile.html" category="cat1,cat2" order="0">
+    </document>
+  </document>
+</knowledgebase>
+</xml>`
 
-= 1.0 =
-Upgrade notices describe the reason a user should upgrade.  No more than 300 characters.
+* documents can be nested to define a parent child relationship.
+* order defines menu listing orders if multiple pages exist under one parent.
+* category can be applied to pages but may require an additional plugin to be usable.  Multiple categories are deliminted by a comma.
+* src is the path to the html file and relative to the index.xml.
 
-= 0.5 =
-This version fixes a security related bug.  Upgrade immediately.
+Settings defined in the XML file will override settings contained in the plugin settings page.
 
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above.  This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation."  Arbitrary sections will be shown below the built-in sections outlined above.
-
-== Updates ==
-
-This plugin supports the [GitHub Updater](https://github.com/afragen/github-updater) plugin, so if you install that, this plugin becomes automatically updateable direct from GitHub. Any submission to WP.org repo will make this redundant.
-
-== A brief Markdown Example ==
-
-Ordered list:
-
-1. Some feature
-1. Another feature
-1. Something else about the plugin
-
-Unordered list:
-
-* something
-* something else
-* third thing
-
-Here's a link to [WordPress](http://wordpress.org/ "Your favorite software") and one to [Markdown's Syntax Documentation][markdown syntax].
-Titles are optional, naturally.
-
-[markdown syntax]: http://daringfireball.net/projects/markdown/syntax
-            "Markdown is what the parser uses to process much of the readme file"
-
-Markdown uses email style notation for blockquotes and I've been told:
-> Asterisks for *emphasis*. Double it up  for **strong**.
-
-`<?php code(); // goes in backticks ?>`
+== Known Issues ==
+* Madcap Flare imports only support one chunk file, and the TOCs must be named Toc.js and TocChunk0.js

@@ -8,7 +8,7 @@
 
 function readxml( $xml ) {
 	foreach ( $xml->children() as $child ) {
-		echo ''.$child->getName().' ';
+		echo '' . $child->getName() . ' ';
 		print_r( $child );
 		readxml( $child );
 	}

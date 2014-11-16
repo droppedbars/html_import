@@ -12,6 +12,11 @@ require_once( dirname( __FILE__ ) . '/indices/WebPageSettings.php' );
 
 use html_import\indices\WebPage;
 
+/**
+ * Class WPMetaConfigs
+ * Represents all of the meta configs for a Wordpress post/page.  It also handles saving to the Wordpress database, loading from the WordPress database and building up from the plugin settings and a WebPage.
+ * @package html_import
+ */
 class WPMetaConfigs {
 	private $post_title = '';
 	private $post_name = '';
@@ -74,13 +79,7 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * TODO: create constructors for the load functions
-	 */
-	function __construct() {
-
-	}
-
-	/**
+	 * Loads all of the meta data for a post given the post's ID.  Returns false of there is no post with that ID.
 	 * @param $post_id
 	 *
 	 * @return bool
@@ -95,6 +94,7 @@ class WPMetaConfigs {
 	}
 
 	/**
+	 * Loads all of the meta data give an WP_Post object.  If there is no object, returns null.
 	 * @param \WP_Post $post
 	 *
 	 * @return bool
@@ -127,6 +127,7 @@ class WPMetaConfigs {
 	}
 
 	/**
+	 * Returns the meta data as a standard Wordpress Post Array.
 	 * @return array
 	 */
 	public function getPostArray() {
@@ -159,13 +160,18 @@ class WPMetaConfigs {
 		return $post_array;
 	}
 
+	/**
+	 * Inserts the post into Wordpress and returns the resulting post ID.
+	 * @return int|\WP_Error
+	 */
 	public function updateWPPost() {
 		// TODO: handle WP_Error object if set to true.
 		$postArray = $this->getPostArray();
-		$result = wp_insert_post( $postArray, true );
-		if (!is_wp_error($result)) {
-			$this->setPostId($result);
+		$result    = wp_insert_post( $postArray, true );
+		if ( !is_wp_error( $result ) ) {
+			$this->setPostId( $result );
 		}
+
 		return $result;
 	}
 
@@ -287,6 +293,7 @@ class WPMetaConfigs {
 	}
 
 	/**
+	 * Given a name for the post, sets it to the meta data but sanitized with dashes instead of spaces.
 	 * @param mixed $post_name
 	 */
 	public function setPostName( $post_name ) {
@@ -359,6 +366,12 @@ class WPMetaConfigs {
 		return $this->post_type;
 	}
 
+	/**
+	 * Given a SimpleXMLElement, extracts the <TITLE> element and sets the title from that.
+	 * @param \SimpleXMLElement $html_file
+	 *
+	 * @return string
+	 */
 	private function getTitleFromTag( \SimpleXMLElement $html_file ) {
 		$title = '';
 		foreach ( $html_file->head->title as $titleElement ) {
@@ -368,10 +381,17 @@ class WPMetaConfigs {
 		return $title;
 	}
 
+	/**
+	 * Builds meta data based on a loaded WebPage, and HtmlImportSettings from the plugin.
+	 * @param admin\HtmlImportSettings $globalSettings
+	 * @param WebPage                  $webPage
+	 * @param null                     $post_id
+	 * @param null                     $parent_page_id
+	 */
 	public function buildConfig( admin\HtmlImportSettings $globalSettings, WebPage $webPage, $post_id = null, $parent_page_id = null ) {
 
 
-		if ( ! is_null( $post_id ) ) {
+		if ( !is_null( $post_id ) ) {
 			$this->loadFromPostID( $post_id );
 		}
 
@@ -379,7 +399,7 @@ class WPMetaConfigs {
 			$file_as_xml_obj = null;
 		} else {
 			$file_as_xml_obj = XMLHelper::getXMLObjectFromString( $webPage->getContent() );
-			$this->setPostContent($file_as_xml_obj->body->asXML());
+			$this->setPostContent( $file_as_xml_obj->body->asXML() );
 			$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
 		}
 
@@ -389,16 +409,16 @@ class WPMetaConfigs {
 		$this->setCommentStatus( 'closed' );
 		$this->setPingStatus( 'closed' );
 
-		$categoryIDs = null;
+		$categoryIDs      = null;
 		$overrideSettings = $webPage->getSettings();
-		if (!is_null($overrideSettings)) {
+		if ( !is_null( $overrideSettings ) ) {
 			$categoryIDs = $overrideSettings->getCategoryIds();
 		}
 		// TODO: need to determine if index can override by providing no categories, and what that means
-		if ((is_null($overrideSettings)) || (is_null($categoryIDs)) || (sizeof($categoryIDs) <= 0)) {
+		if ( ( is_null( $overrideSettings ) ) || ( is_null( $categoryIDs ) ) || ( sizeof( $categoryIDs ) <= 0 ) ) {
 			$category    = $globalSettings->getCategories()->getValuesArray();
 			$categoryIDs = null;
-			if ( ! is_null( $category ) && is_array( $category ) ) {
+			if ( !is_null( $category ) && is_array( $category ) ) {
 				foreach ( $category as $index => $cat ) {
 					$cat_id              = wp_create_category( trim( $cat ) );
 					$categoryIDs[$index] = intval( $cat_id );
@@ -413,9 +433,9 @@ class WPMetaConfigs {
 		//if ( ! is_null($source_file)) {
 		//	$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
 		//} else {
-			$this->setPostDate( date( 'Y-m-d H:i:s' ));
+		$this->setPostDate( date( 'Y-m-d H:i:s' ) );
 		//}
-		if ( ! is_null( $parent_page_id ) ) {
+		if ( !is_null( $parent_page_id ) ) {
 			$this->setPostParent( $parent_page_id );
 		}
 
@@ -424,7 +444,7 @@ class WPMetaConfigs {
 			$this->setMenuOrder( $order );
 		}
 		$this->setPostAuthor( wp_get_current_user()->ID ); // TODO: should be in the settings object
-		$this->setPageTemplate($globalSettings->getTemplate()->getValue());
+		$this->setPageTemplate( $globalSettings->getTemplate()->getValue() );
 
 
 	}
