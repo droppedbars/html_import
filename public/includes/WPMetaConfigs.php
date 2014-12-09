@@ -399,8 +399,10 @@ class WPMetaConfigs {
 			$file_as_xml_obj = null;
 		} else {
 			$file_as_xml_obj = XMLHelper::getXMLObjectFromString( $webPage->getContent() );
-			$this->setPostContent( $file_as_xml_obj->body->asXML() );
-			$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
+			if (!is_null($file_as_xml_obj)) {
+				$this->setPostContent( $file_as_xml_obj->body->asXML() );
+				$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
+			}
 		}
 
 		$this->setPostName( $this->getPostTitle() );

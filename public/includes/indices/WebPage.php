@@ -155,7 +155,7 @@ class WebPage extends LinkedTree {
 			$content = $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		}
 
-		return is_null( $content );
+		return is_null( $content ) || strlen($content) <= 0;
 	}
 
 	/**
