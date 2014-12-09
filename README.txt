@@ -84,4 +84,4 @@ When importing a local located website the index file can be referenced directly
 Settings defined in the XML file will override settings contained in the plugin settings page.
 
 == Known Issues ==
-* Madcap Flare imports only support one chunk file, and the TOCs must be named Toc.js and TocChunk0.js
+* Madcap Flare imports only support one chunk file, and the TOC must be named Toc.js and only the first chunk file will be loaded (using name [TOC_CHUNK_NAME]0.js.
