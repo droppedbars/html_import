@@ -405,7 +405,7 @@ class HTMLImportPlugin {
 	 */
 	private function importFromWebsiteIndex( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
-		set_time_limit( 520 );
+		set_time_limit( 520 ); // timeout of 520 seconds
 		if ( !isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}

@@ -138,7 +138,16 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	 */
 	public function findFile( $filename, $relativePath = '' ) {
 		// TODO: realpath not compatible with URLs
-		$allFiles = scandir( realpath( $this->localPath . '/' . $relativePath ) );
+		$fullPath = realpath( $this->localPath . '/' . $relativePath );
+		if (!$fullPath) {
+			echo 'Error trying to determine the realpath of '. $this->localPath.'/'.$relativePath.'<br>';
+			return null;
+		}
+		$allFiles = @scandir( $fullPath );
+		if ($allFiles === false) {
+			echo 'Error trying to scan the directory: '. $fullPath.'.<br>';
+			return null;
+		}
 		foreach ( $allFiles as $file ) {
 			if ( ( strcmp( $file, '.' ) == 0 ) || ( strcmp( $file, '..' ) ) == 0 ) {
 				continue;

@@ -32,28 +32,46 @@ class FlareWebsiteIndex extends WebsiteIndex {
 	 * @return null|void
 	 */
 	public function buildHierarchyFromWebsiteIndex( $indexFile = null ) {
-		$tocJS = $this->retriever->findFile( 'Toc.js' ); // this file defines the hierarchy
+		$indexFileToUse = 'Toc.js';
+
+		$tocJS = $this->retriever->findFile( $indexFileToUse ); // this file defines the hierarchy
 
 		$tocContents = $this->retriever->retrieveFileContents( $tocJS );
 
 		preg_match( '/numchunks:([0-9]*?),/', $tocContents, $numChunksMatch );
-		$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
-		preg_match( "/prefix:'(.*?)',/", $tocContents, $tocMatches );
-		$chunkName = $tocMatches[1]; // TODO: handle alternate chunk file names
-		preg_match( '/^define\((.*)\);$/', $tocContents, $matches );
-		$returnValue = preg_replace( '/(\\w*):/U', '"$1":', $matches[1], - 1, $count );
-		$jsonString  = str_replace( "'", "\"", $returnValue );
-		$jsonArray   = json_decode( $jsonString, true );
+		if ( sizeof( $numChunksMatch ) > 1 ) { // assumes that no tocChunks means empty or invalid file
+			$numChunks = $numChunksMatch[1]; // TODO: deal with multiple chunks
+			preg_match( "/prefix:'(.*?)',/", $tocContents, $tocMatches );
+			$chunkName = $tocMatches[1];
+			if ( sizeof( $tocMatches ) > 1 ) {  // assumes no chunk file names could be found
+				preg_match( '/^define\((.*)\);$/', $tocContents, $matches );
+				$returnValue = preg_replace( '/(\\w*):/U', '"$1":', $matches[1], - 1, $count );
+				$jsonString  = str_replace( "'", "\"", $returnValue );
+				$jsonArray   = json_decode( $jsonString, true );
 
-		// now to read the actual TOC based on the chunk name
-		$chunkFile     = $this->retriever->findFile( 'Toc_Chunk0.js' ); // this file defines what each file's details are
-		$chunkContents = $this->retriever->retrieveFileContents( $chunkFile );
+				// TODO: deal with multiple chunk files
+				$fullChunkFileName = $chunkName . '0.js';
+				$chunkFile         = $this->retriever->findFile( $fullChunkFileName ); // this file defines what each file's details are
+				$chunkContents     = $this->retriever->retrieveFileContents( $chunkFile );
+				if ( !is_null( $chunkContents ) ) {
+					// TODO: deal with no files
+					$fileTree = $this->getFlareFileList( $chunkContents );
+					if ( sizeof( $fileTree ) > 0 ) {
+						$fileOrder = $jsonArray['tree']['n'];
 
-		// TODO: deal with no files
-		$fileTree  = $this->getFlareFileList( $chunkContents );
-		$fileOrder = $jsonArray['tree']['n'];
-
-		$this->buildTree( $fileOrder, $fileTree, null );
+						$this->buildTree( $fileOrder, $fileTree, null );
+					} else {
+						echo 'The TOC Chunk file ' . $fullChunkFileName . ' has no valid definitions inside.<br>';
+					}
+				} else {
+					echo 'Unable to find the TOC Chunk file ' . $fullChunkFileName . ' or file was empty.<br>';
+				}
+			} else {
+				echo 'Unable to find TOC Chunk files defined in ' . $indexFileToUse . '.<br>';
+			}
+		} else {
+			echo $indexFileToUse . ' was either empty of data, invalid, or not present.<br>';
+		}
 	}
 
 	/**

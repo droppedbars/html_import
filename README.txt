@@ -16,11 +16,15 @@ Website Importer can import entire websites into Wordpress provided they contain
 
 The Website Importer will relink internal links, upload and relink media files, and apply templates and categories to the page.  The import can be from either a website that is local to the Wordpress installation, or uploaded as a zip file.  If it is uploaded as a zip file and is a Flare Madcap import, the importer will find the relevant Flare Madcap index.  If it is uploaded as a zip file and the is using an XML index, the importer requires that the index file be named index.xml and located at the root of the zip file.
 
+Initial plugin development funded by Gliderline Solutions (http://www.gliderline.com/).
+
 == Installation ==
 
 * Minimum tested/supported WordPress version: 3.8.1
 * Minimum tested PHP version: 5.4.25
-* Other requirements: Javascript required for Settings Page
+* Other requirements:
+** Javascript required for Settings Page
+** PHP must not be running in safe mode
 
 = Through your WordPress Installation =
 
