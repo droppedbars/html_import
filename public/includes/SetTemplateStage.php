@@ -31,6 +31,7 @@ class SetTemplateStage extends ImportStage {
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $other
+	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null ) {
 		update_post_meta( $meta->getPostId(), '_wp_page_template', $meta->getPageTemplate() );

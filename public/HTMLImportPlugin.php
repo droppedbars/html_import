@@ -437,7 +437,7 @@ class HTMLImportPlugin {
 		if ( !is_dir( $filePath ) ) {
 			$indexFile = basename( $filePath );
 		}
-		// TODO: note, the retriever is built with the directoy, and the index is passed in
+
 		$xmlIndex->buildHierarchyFromWebsiteIndex( $indexFile );
 
 		$media_lookup     = Array();
@@ -465,7 +465,6 @@ class HTMLImportPlugin {
 	 */
 	private function decompressAndUploadFiletoSite( $zip_to_upload ) {
 		$zip = new ZipArchive;
-		// TODO: not handling failure to open the zip
 		$zipOpenResult = $zip->open( $zip_to_upload['tmp_name'] );
 		if ( $zipOpenResult === TRUE ) {
 			$upload_dir    = wp_upload_dir();
@@ -475,18 +474,27 @@ class HTMLImportPlugin {
 				$path_modifier ++;
 			}
 			$resultingPath = $path . '-' . $path_modifier;
-			// TODO: not handling extract and close errors.
-			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
-			$closeSuccess   = $zip->close();
 
-			return $resultingPath;
-		} else {
+			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
+			if ($extractSuccess !== FALSE) {
+				$closeSuccess = $zip->close();
+				if ( $closeSuccess === FALSE ) {
+					echo '*** Could not close the zip archive.';
+				}
+
+				return $resultingPath;
+			} else {
+				echo '*** Could not extract the zip archive.';
+				return null;
+			}
+	} else {
+			echo '*** Could not close the zip file. Error: '.$zipOpenResult;
 			return null;
 		}
 	}
 
 	/**
-	 * Begins the process of importing a website that is defined through a flare index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * Begins the process of importing a website that is defined through a flare index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defined by the $settings.
 	 * @param                                       $filePath
 	 * @param \html_import\admin\HtmlImportSettings $settings
 	 */

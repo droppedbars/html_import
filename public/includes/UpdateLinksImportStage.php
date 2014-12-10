@@ -31,6 +31,7 @@ class UpdateLinksImportStage extends ImportStage {
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $html_post_lookup
+	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$html_post_lookup = null ) {
 		$body = $meta->getPostContent();

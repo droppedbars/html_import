@@ -52,12 +52,16 @@ private $postType;
 	}
 
 	/**
-	 * Sets all of the category ides.  Must be a valid array.
+	 * Sets all of the category ides.  Must be a valid array of all strings.
 	 *
 	 * @param Array $categoryIds
 	 */
 	public function setCategories( Array $categoryIds ) {
-		// TODO: should test that the categories are in fact strings
+		for ($i = 0; $i < sizeof($categoryIds); $i++ ) {
+			if (!is_string($categoryIds[$i])) {
+				throw new \InvalidArgumentException('Array $categoryIds must be all strings.');
+			}
+		}
 		$this->categoryIds = $categoryIds;
 	}
 

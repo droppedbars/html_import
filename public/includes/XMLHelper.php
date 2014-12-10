@@ -25,7 +25,7 @@ class XMLHelper {
 		$doc                      = new \DOMDocument();
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$xmlValid = @$doc->loadHTML( $source_string/*, LIBXML_HTML_NOIMPLIED */ ); // TODO server uses 5.3.28, this is added in 5.4
+		$xmlValid = @$doc->loadHTML( $source_string/*, LIBXML_HTML_NOIMPLIED */ ); // server uses 5.3.28, this is added in 5.4
 		if ($xmlValid) {
 			libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 			$file_as_xml_obj = simplexml_import_dom( $doc );
@@ -47,7 +47,7 @@ class XMLHelper {
 		$doc                      = new \DOMDocument();
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
-		$doc->loadHTMLFile( $source_file/*, LIBXML_HTML_NOIMPLIED */ );// TODO server uses 5.3.28, this is added in 5.4
+		$doc->loadHTMLFile( $source_file/*, LIBXML_HTML_NOIMPLIED */ );// server uses 5.3.28, this is added in 5.4
 		libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 		$simple_xml = simplexml_import_dom( $doc );
 
