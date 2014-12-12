@@ -30,7 +30,7 @@ class FolderImporter extends Importer {
 	 */
 	protected function doImport( WebPage $webPage, WPMetaConfigs $meta, &$html_post_lookup = null, &$media_lookup = null ) {
 		$updateResult                                  = $meta->updateWPPost();
-		$html_post_lookup[$webPage->getRelativePath()] = $meta->getPostId();
+		$html_post_lookup[$webPage->getFullPath()] = $meta->getPostId();
 
 		if ( is_wp_error( $updateResult ) ) {
 			echo '<li>***Unable to create folder ' . $meta->getPostTitle() . ' from ' . $meta->getSourcePath() . '</li>';

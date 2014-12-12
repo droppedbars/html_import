@@ -207,7 +207,12 @@ class WPMetaConfigs {
 	 * @param mixed $ping_status
 	 */
 	public function setPingStatus( $ping_status ) {
-		// TODO: 'closed', 'open'
+		if (!is_string($ping_status)) {
+			throw new \InvalidArgumentException("Post status must be a string");
+		}
+		if (($ping_status != 'closed') &&($ping_status != 'open')) {
+			throw new \InvalidArgumentException("Post status must be one of: closed, open");
+		}
 		$this->ping_status = $ping_status;
 	}
 
@@ -222,7 +227,9 @@ class WPMetaConfigs {
 	 * @param mixed $post_author
 	 */
 	public function setPostAuthor( $post_author ) {
-		//TODO: author ID
+		if (!is_integer($post_author) && (!is_null($post_author))) {
+			throw new \InvalidArgumentException("Post author ID must be an integer or null.");
+		}
 		$this->post_author = $post_author;
 	}
 
@@ -234,10 +241,13 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param mixed $post_category
+	 * @param Array $post_category
 	 */
-	public function setPostCategory( $post_category ) {
-		// TODO: array
+	public function setPostCategory( Array $post_category ) {
+		if (!is_array($post_category) && (!is_null($post_category))) {
+			throw new \InvalidArgumentException("Post category must be an array or null.");
+		}
+
 		$this->post_category = $post_category;
 	}
 
@@ -249,11 +259,20 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param mixed $post_date
+	 * Sets the date and time in the appropriate format for Wordpress.  If null is passed in, then the current datetime as calculated by time() will be used.
+	 * @param integer $post_date
 	 */
 	public function setPostDate( $post_date ) {
-		// TODO: [ Y-m-d H:i:s ]
-		$this->post_date = $post_date;
+		if (!is_integer($post_date) && (!is_null($post_date))) {
+			throw new \InvalidArgumentException("Post date must be an integer or null.");
+		}
+		if (is_null($post_date)) {
+			$datetime = time();
+		} else {
+			$datetime = $post_date;
+		}
+
+		$this->post_date = date( 'Y-m-d H:i:s', $datetime );
 	}
 
 	/**
@@ -281,7 +300,9 @@ class WPMetaConfigs {
 	 * @param mixed $post_id
 	 */
 	public function setPostId( $post_id ) {
-		// TODO: ID or null
+		if (!is_integer($post_id) && (!is_null($post_id))) {
+			throw new \InvalidArgumentException("Post ID must be an integer or null.");
+		}
 		$this->post_id = $post_id;
 	}
 
@@ -311,7 +332,9 @@ class WPMetaConfigs {
 	 * @param mixed $post_parent
 	 */
 	public function setPostParent( $post_parent ) {
-		// TODO: post ID
+		if (!is_integer($post_parent) && (!is_null($post_parent))) {
+			throw new \InvalidArgumentException("Post parent ID must be an integer or null.");
+		}
 		$this->post_parent = $post_parent;
 	}
 
@@ -326,7 +349,13 @@ class WPMetaConfigs {
 	 * @param mixed $post_status
 	 */
 	public function setPostStatus( $post_status ) {
-		// TODO: draft, publish, pending, future, private, customer registered
+		if (!is_string($post_status) && !is_null($post_status)) {
+			throw new \InvalidArgumentException("Post status must be a string or null.");
+		}
+		if (($post_status != 'publish') &&($post_status != 'pending')&&($post_status != 'draft')&&($post_status != 'auto-draft')&&($post_status != 'future')&&($post_status != 'inherit')&&($post_status != 'trash')) {
+			throw new \InvalidArgumentException("Post status must be one of: publish, pending, draft, auto-draft, future, inherit, trash");
+		}
+
 		$this->post_status = $post_status;
 	}
 
@@ -341,6 +370,9 @@ class WPMetaConfigs {
 	 * @param mixed $post_title
 	 */
 	public function setPostTitle( $post_title ) {
+		if (!is_string($post_title) && !is_null($post_title)) {
+			throw new \InvalidArgumentException("Post title must be a string or null.");
+		}
 		$this->post_title = htmlspecialchars( $post_title );
 	}
 
@@ -355,7 +387,10 @@ class WPMetaConfigs {
 	 * @param mixed $post_type
 	 */
 	public function setPostType( $post_type ) {
-		// TODO: 'post' | 'page' | 'link' | 'nav_menu_item' | custom post type
+		if (!is_string($post_type) && !is_null($post_type)) {
+			throw new \InvalidArgumentException("Post type must be a string or null.");
+		}
+		// typical values 'post' | 'page' | 'link' | 'nav_menu_item' | custom post type
 		$this->post_type = $post_type;
 	}
 
@@ -435,7 +470,7 @@ class WPMetaConfigs {
 		//if ( ! is_null($source_file)) {
 		//	$this->setPostDate( date( 'Y-m-d H:i:s', filemtime( $source_file ) ) );
 		//} else {
-		$this->setPostDate( date( 'Y-m-d H:i:s' ) );
+		$this->setPostDate( null );
 		//}
 		if ( !is_null( $parent_page_id ) ) {
 			$this->setPostParent( $parent_page_id );

@@ -313,8 +313,8 @@ class HTMLImportPlugin {
 
 		$post = get_page_by_title( htmlspecialchars( $title ) );// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
 		if ( isset( $html_post_lookup ) ) {
-			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
-				$post_id = $html_post_lookup[$webPage->getRelativePath()];
+			if ( array_key_exists( $webPage->getFullPath(), $html_post_lookup ) ) { // stub was created during this cycle
+				$post_id = $html_post_lookup[$webPage->getFullPath()];
 			} else {
 				if ( !is_null( $post ) ) { // post was previously created
 					$post_id = $post->ID;
@@ -360,13 +360,14 @@ class HTMLImportPlugin {
 		}
 
 		$parent_page = new \html_import\WPMetaConfigs();
-		// TODO: simplify this, only need to check that the ID is in fact a valid post
+		// get the id of the parent selected in the settings page
 		$hasParent      = $parent_page->loadFromPostID( $settings->getParentPage()->getValue() );
 		$parent_page_id = null;
 		if ( $hasParent ) {
 			$parent_page_id = $settings->getParentPage()->getValue();
 		}
 
+		// determine if the page itself was loaded from the index with a parent page, then override the id if so
 		$parentWebPage = $webPage->getParent();
 		if ( !is_null( $parentWebPage ) ) {
 			if ( array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup ) ) {
@@ -525,7 +526,7 @@ class HTMLImportPlugin {
 			if ( strcmp( 'xml', $importType ) == 0 ) {
 				$this->import_html_from_xml_index( $filePath, $settings );
 			} else {
-				// TODO error
+				echo '*** Unsupported import type: '. $importType .'<br>';
 			}
 		}
 	}
