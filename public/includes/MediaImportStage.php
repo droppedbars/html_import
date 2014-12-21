@@ -31,6 +31,7 @@ class MediaImportStage extends ImportStage {
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $media_lookup
+	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$media_lookup = null ) {
 
@@ -57,11 +58,6 @@ class MediaImportStage extends ImportStage {
 						if ( !preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // if it's local
 							if ( ( !is_null( $media_lookup ) && ( !array_key_exists( $path, $media_table ) ) ) ) {
 
-								/*if ( $path[0] != '/' ) {
-									$fullpath = realpath( dirname( $meta->getSourcePath() ) . '/' . $path );
-								} else {
-									$fullpath = $path;
-								}*/
 								$fullpath = $webPage->getFullPath( $path );
 								if ( array_key_exists( $fullpath, $media_lookup ) ) {
 									$attach_id = $media_lookup[$fullpath];

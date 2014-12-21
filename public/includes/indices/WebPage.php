@@ -29,6 +29,7 @@ class WebPage extends LinkedTree {
 	private $retriever = null;
 	private $order = null;
 	private $settings = null;
+	private $wp_id = null;
 
 	/**
 	 * @param FileRetriever   $retriever
@@ -51,6 +52,22 @@ class WebPage extends LinkedTree {
 		$this->relativePath = $relativePath;
 		$this->retriever    = $retriever;
 		$this->settings     = $settings;
+	}
+
+	/**
+	 *
+	 * @param integer $wp_id
+	 */
+	public function setWPID($wp_id) {
+		$this->wp_id = $wp_id;
+	}
+
+	/**
+	 * Returns the WordPress ID of the web page, or null
+	 * @return null|integer
+	 */
+	public function getWPID() {
+		return $this->wp_id;
 	}
 
 	/**
@@ -95,12 +112,12 @@ class WebPage extends LinkedTree {
 	 * Builds up and returns the full path of the webpage, using the retriever as the foundation
 	 *
 	 * @param string $relativePath
+	 * @return string
 	 */
 	public function getFullPath( $relativePath = null ) {
 		if ( !is_string( $relativePath ) && !is_null( $relativePath ) ) {
 			throw new \InvalidArgumentException( "Relative path of webpage must be null or a string" );
 		}
-		// TODO: deal with errors from retriever
 		if ( !is_null( $relativePath ) ) {
 			return $this->retriever->getFullFilePath( $relativePath, dirname( $this->relativePath ) );
 		} else {
@@ -117,8 +134,6 @@ class WebPage extends LinkedTree {
 		if ( !is_string( $relativePath ) ) {
 			throw new \InvalidArgumentException( "Relative path of webpage must be a string (may be empty)" );
 		}
-		// TODO: deal with errors from retriever
-		// TODO: everywhere else relativePath can be null... this is odd
 		return $this->retriever->retrieveFileContents( $relativePath, dirname( $this->relativePath ) );
 	}
 
@@ -136,7 +151,6 @@ class WebPage extends LinkedTree {
 	 * @return string
 	 */
 	public function getContent() {
-		// TODO: deal with errors from the retriever
 		if ( is_null( $this->content ) ) {
 			return $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		} else {
@@ -155,7 +169,7 @@ class WebPage extends LinkedTree {
 			$content = $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		}
 
-		return is_null( $content );
+		return is_null( $content ) || strlen($content) <= 0;
 	}
 
 	/**

@@ -53,6 +53,8 @@ class LocalAndURLFileRetriever extends FileRetriever {
 		return $fullPath;
 	}
 
+
+
 	/**
 	 * Test to see if file exists, looking in the relativePath.  Return true if the file is there, false otherwise.
 	 *
@@ -63,10 +65,15 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	 */
 	public function fileExists( $file, $relativePath = '' ) {
 		$fullPath = $this->buildFullPath( $file, $relativePath );
-		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL TODO: check ensure it is proper http or https
-			$realPath = $fullPath;
+		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
+			if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
+				$realPath = $fullPath;
 
-			return \html_import\XMLHelper::url_exists( $realPath ); // TODO: this feels a bit hacky how I'm handling it
+				return \html_import\XMLHelper::url_exists( $realPath );
+			} else {
+				echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
+				return null;
+			}
 		} else { // else if local directory
 			$realPath = realpath( $fullPath );
 
@@ -85,19 +92,36 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	 * @return string
 	 */
 	public function retrieveFileContents( $file, $relativePath = '' ) {
-		// TODO: checks for if it is in fact a valid relative Path... ie "/foo" is a root file or directory
 		$fullPath = $this->buildFullPath( $file, $relativePath );
 		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
-			$realPath = $fullPath;
-			if ( \html_import\XMLHelper::url_exists( $realPath ) ) { // TODO: this feels a bit hacky how I'm handling it
-				return file_get_contents( $realPath );
+			if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
+				$realPath = $fullPath;
+				if ( \html_import\XMLHelper::url_exists( $realPath ) ) {
+					$file_get_success = file_get_contents( $realPath );
+					if ( $file_get_success === false ) {
+						echo '*** ' . $relativePath . ' could not be read, may be non-existent or 0 length.';
+
+						return null;
+					} else {
+						return $file_get_success;
+					}
+				} else {
+					return null;
+				}
 			} else {
+				echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
 				return null;
 			}
 		} else { // else if local directory
 			$realPath = realpath( $fullPath );
-			if ( file_exists( $realPath ) ) {
-				return file_get_contents( $realPath );
+			if ( $realPath !== false ) {
+				$file_get_success = file_get_contents( $realPath );
+				if ($file_get_success === false) {
+					echo '*** '. $relativePath.' could not be read, may be non-existent or 0 length.';
+					return null;
+				} else {
+					return $file_get_success;
+				}
 			} else {
 				return null;
 			}
@@ -118,8 +142,13 @@ class LocalAndURLFileRetriever extends FileRetriever {
 			return $relativeFile;
 		} else {
 			$fullPath = $this->buildFullPath( $file, $relativePath );
-			if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL // TODO: this feels a bit hacky how I'm handling it
-				return $fullPath;
+			if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
+				if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
+					return $fullPath;
+				} else {
+					echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
+					return null;
+				}
 			} else { // else if directory
 				$realPath = realpath( $fullPath );
 
@@ -130,6 +159,7 @@ class LocalAndURLFileRetriever extends FileRetriever {
 
 	/**
 	 * Searches for filename from the relativePath.
+	 * TODO: This function is limited to local directories only today, and cannot handle URLs.
 	 *
 	 * @param string $filename
 	 * @param string $relativePath
@@ -137,8 +167,16 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	 * @return string
 	 */
 	public function findFile( $filename, $relativePath = '' ) {
-		// TODO: realpath not compatible with URLs
-		$allFiles = scandir( realpath( $this->localPath . '/' . $relativePath ) );
+		$fullPath = realpath( $this->localPath . '/' . $relativePath );
+		if (!$fullPath) {
+			echo 'Error trying to determine the realpath of '. $this->localPath.'/'.$relativePath.'<br>';
+			return null;
+		}
+		$allFiles = @scandir( $fullPath );
+		if ($allFiles === false) {
+			echo 'Error trying to scan the directory: '. $fullPath.'.<br>';
+			return null;
+		}
 		foreach ( $allFiles as $file ) {
 			if ( ( strcmp( $file, '.' ) == 0 ) || ( strcmp( $file, '..' ) ) == 0 ) {
 				continue;

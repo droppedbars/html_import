@@ -313,8 +313,8 @@ class HTMLImportPlugin {
 
 		$post = get_page_by_title( htmlspecialchars( $title ) );// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
 		if ( isset( $html_post_lookup ) ) {
-			if ( array_key_exists( $webPage->getRelativePath(), $html_post_lookup ) ) { // stub was created during this cycle
-				$post_id = $html_post_lookup[$webPage->getRelativePath()];
+			if ( array_key_exists( $webPage->getFullPath(), $html_post_lookup ) ) { // stub was created during this cycle
+				$post_id = $html_post_lookup[$webPage->getFullPath()];
 			} else {
 				if ( !is_null( $post ) ) { // post was previously created
 					$post_id = $post->ID;
@@ -360,17 +360,18 @@ class HTMLImportPlugin {
 		}
 
 		$parent_page = new \html_import\WPMetaConfigs();
-		// TODO: simplify this, only need to check that the ID is in fact a valid post
+		// get the id of the parent selected in the settings page
 		$hasParent      = $parent_page->loadFromPostID( $settings->getParentPage()->getValue() );
 		$parent_page_id = null;
 		if ( $hasParent ) {
 			$parent_page_id = $settings->getParentPage()->getValue();
 		}
 
+		// determine if the page itself was loaded from the index with a parent page, then override the id if so
 		$parentWebPage = $webPage->getParent();
 		if ( !is_null( $parentWebPage ) ) {
-			if ( array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup ) ) {
-				$parent_page_id = $html_post_lookup[$parentWebPage->getFullPath()];
+			if ( !is_null( $wp_id = $parentWebPage->getWPID() ) ) {
+				$parent_page_id = $wp_id;
 			}
 		}
 
@@ -405,7 +406,7 @@ class HTMLImportPlugin {
 	 */
 	private function importFromWebsiteIndex( \html_import\indices\WebsiteIndex $siteIndex, $stubs_only = true, &$html_post_lookup = null, &$media_lookup = null, html_import\admin\HtmlImportSettings $settings ) {
 
-		set_time_limit( 520 );
+		set_time_limit( 520 ); // timeout of 520 seconds
 		if ( !isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
@@ -421,7 +422,7 @@ class HTMLImportPlugin {
 	}
 
 	/**
-	 * Begins the process of importing a website that is defined through an XML index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * Begins the process of importing a website that is defined through an XML index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into Wordpress and have their parent, and categories defined by the $settings.
 	 * @param                                       $filePath
 	 * @param \html_import\admin\HtmlImportSettings $settings
 	 */
@@ -437,7 +438,7 @@ class HTMLImportPlugin {
 		if ( !is_dir( $filePath ) ) {
 			$indexFile = basename( $filePath );
 		}
-		// TODO: note, the retriever is built with the directoy, and the index is passed in
+
 		$xmlIndex->buildHierarchyFromWebsiteIndex( $indexFile );
 
 		$media_lookup     = Array();
@@ -465,7 +466,6 @@ class HTMLImportPlugin {
 	 */
 	private function decompressAndUploadFiletoSite( $zip_to_upload ) {
 		$zip = new ZipArchive;
-		// TODO: not handling failure to open the zip
 		$zipOpenResult = $zip->open( $zip_to_upload['tmp_name'] );
 		if ( $zipOpenResult === TRUE ) {
 			$upload_dir    = wp_upload_dir();
@@ -475,18 +475,27 @@ class HTMLImportPlugin {
 				$path_modifier ++;
 			}
 			$resultingPath = $path . '-' . $path_modifier;
-			// TODO: not handling extract and close errors.
-			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
-			$closeSuccess   = $zip->close();
 
-			return $resultingPath;
-		} else {
+			$extractSuccess = $zip->extractTo( $path . '-' . $path_modifier );
+			if ($extractSuccess !== FALSE) {
+				$closeSuccess = $zip->close();
+				if ( $closeSuccess === FALSE ) {
+					echo '*** Could not close the zip archive.';
+				}
+
+				return $resultingPath;
+			} else {
+				echo '*** Could not extract the zip archive.';
+				return null;
+			}
+	} else {
+			echo '*** Could not close the zip file. Error: '.$zipOpenResult;
 			return null;
 		}
 	}
 
 	/**
-	 * Begins the process of importing a website that is defined through a flare index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * Begins the process of importing a website that is defined through a flare index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defined by the $settings.
 	 * @param                                       $filePath
 	 * @param \html_import\admin\HtmlImportSettings $settings
 	 */
@@ -517,7 +526,7 @@ class HTMLImportPlugin {
 			if ( strcmp( 'xml', $importType ) == 0 ) {
 				$this->import_html_from_xml_index( $filePath, $settings );
 			} else {
-				// TODO error
+				echo '*** Unsupported import type: '. $importType .'<br>';
 			}
 		}
 	}

@@ -34,9 +34,10 @@ class HTMLStubImporter extends Importer {
 		$html_post_lookup[$webPage->getFullPath()] = $meta->getPostId();
 
 		if ( is_wp_error( $updateResult ) ) {
-			echo '<li>***Unable to create content ' . $meta->getPostTitle() . ' from ' . $meta->getSourcePath() . '</li>';
+			echo '<li>***Unable to create content ' . $meta->getPostTitle() . ' from ' . $webPage->getFullPath() . '</li>';
 		} else {
-			echo '<li>Stub post created from ' . $meta->getSourcePath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
+			$webPage->setWPID($updateResult);
+			echo '<li>Stub post created from ' . $webPage->getFullPath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
 		}
 
 	}

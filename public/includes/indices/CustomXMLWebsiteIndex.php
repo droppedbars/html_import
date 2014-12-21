@@ -40,14 +40,18 @@ class CustomXMLWebsiteIndex extends WebsiteIndex {
 		if ( \html_import\XMLHelper::valid_xml_file( $this->retriever->getFullFilePath( $indexFileToUse ) ) ) {
 			$indexContents = $this->retriever->retrieveFileContents( $indexFileToUse );
 
-			$doc = new \DOMDocument();
-			$doc->loadXML( $indexContents, LIBXML_NOBLANKS );
+			$doc      = new \DOMDocument();
+			$xmlValid = @$doc->loadXML( $indexContents, LIBXML_NOBLANKS ); // suppresses errors and handles in if/else
+			if ( $xmlValid ) {
 
-			$nodelist = $doc->childNodes;
-			for ( $i = 0; $i < $nodelist->length; $i ++ ) {
+				$nodelist = $doc->childNodes;
+				for ( $i = 0; $i < $nodelist->length; $i ++ ) {
 
-				$this->readInChildNode( $nodelist->item( $i ) );
+					$this->readInChildNode( $nodelist->item( $i ) );
 
+				}
+			} else {
+				echo $indexFileToUse . " was not a valid XML file, error trying to load it.<br>";
 			}
 
 		} else {
