@@ -370,8 +370,8 @@ class HTMLImportPlugin {
 		// determine if the page itself was loaded from the index with a parent page, then override the id if so
 		$parentWebPage = $webPage->getParent();
 		if ( !is_null( $parentWebPage ) ) {
-			if ( array_key_exists( $parentWebPage->getFullPath(), $html_post_lookup ) ) {
-				$parent_page_id = $html_post_lookup[$parentWebPage->getFullPath()];
+			if ( !is_null( $wp_id = $parentWebPage->getWPID() ) ) {
+				$parent_page_id = $wp_id;
 			}
 		}
 
@@ -422,7 +422,7 @@ class HTMLImportPlugin {
 	}
 
 	/**
-	 * Begins the process of importing a website that is defined through an XML index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into wordpress and have their parent, and categories defiend by the $settings.
+	 * Begins the process of importing a website that is defined through an XML index file.  $filePath points to the index file, and $settings contains all of the settings to be applied to imported pages.  At the end of the import all of the pages listed in the index file will be imported into Wordpress and have their parent, and categories defined by the $settings.
 	 * @param                                       $filePath
 	 * @param \html_import\admin\HtmlImportSettings $settings
 	 */

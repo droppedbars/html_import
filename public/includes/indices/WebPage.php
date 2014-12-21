@@ -29,6 +29,7 @@ class WebPage extends LinkedTree {
 	private $retriever = null;
 	private $order = null;
 	private $settings = null;
+	private $wp_id = null;
 
 	/**
 	 * @param FileRetriever   $retriever
@@ -51,6 +52,22 @@ class WebPage extends LinkedTree {
 		$this->relativePath = $relativePath;
 		$this->retriever    = $retriever;
 		$this->settings     = $settings;
+	}
+
+	/**
+	 *
+	 * @param integer $wp_id
+	 */
+	public function setWPID($wp_id) {
+		$this->wp_id = $wp_id;
+	}
+
+	/**
+	 * Returns the WordPress ID of the web page, or null
+	 * @return null|integer
+	 */
+	public function getWPID() {
+		return $this->wp_id;
 	}
 
 	/**
