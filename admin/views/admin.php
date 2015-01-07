@@ -167,7 +167,7 @@ $settings->loadFromDB();
 
 		<h3>Select the Categories for the imported files</h3>
 		<?php
-			if (!class_exists("PTCFP")) {
+			if (!class_exists("PTCFP")) { // check for the Post Tags and Categories for Pages plugin
 				?>
 				<h4>* <a href="https://wordpress.org/plugins/post-tags-and-categories-for-pages/">Post Tags and Categories for Pages</a> is a required plugin in order to use categories.
 				</h4>
@@ -175,21 +175,14 @@ $settings->loadFromDB();
 			}
 		?>
 		<div id="settings-categories">
-			<!--	<ul>
-		<?php /*
-		$selected_cats = array();
-		$cats = $settings->getCategories()->getValuesArray();
-		foreach ($cats as $cat) {
-			array_push($selected_cats, get_cat_ID($cat));
-		}
-
-		wp_category_checklist( 0, 0, $selected_cats );
-*/
-			?>
-				</ul> -->
 			<select id="select-categories" multiple name="category[]" size="8">
 				<?php
 
+				/**
+				 * Given a category ID return all of the categories, by hierarchy with indenting as OPTIONS for a SELECT.
+				 * @param $category_id
+				 * @param $settings
+				 */
 				function outputChildCategories( $category_id, $settings ) {
 					$search_args = array( 'type'         => 'post',
 																'child_of'     => 0,
