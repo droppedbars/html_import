@@ -311,12 +311,15 @@ class HTMLImportPlugin {
 		$pageMeta = new \html_import\WPMetaConfigs();
 		$post_id  = null;
 
+		// determine if the page has already been imported, search by post title
 		$post = get_page_by_title( htmlspecialchars( $title ) );// TODO: bad form, its saved with htmlspecialchars so need to search using that.  Need to find a way to not require this knowledge
 		if ( isset( $html_post_lookup ) ) {
-			if ( array_key_exists( $webPage->getFullPath(), $html_post_lookup ) ) { // stub was created during this cycle
+			// check to see if there's been an import of this page already, if so get its ID from the lookup
+			if ( array_key_exists( $webPage->getFullPath(), $html_post_lookup ) ) {
 				$post_id = $html_post_lookup[$webPage->getFullPath()];
 			} else {
-				if ( !is_null( $post ) ) { // post was previously created
+				// the post wasn't imported during this import, but a post already exists with its title.  Use it.
+				if ( !is_null( $post ) ) {
 					$post_id = $post->ID;
 					echo '<li>Page with title ' . $title . ' and ID ' . $post_id . ' already exists, now tagged to be overwritten.</li>';
 				}
@@ -347,12 +350,14 @@ class HTMLImportPlugin {
 		$category = $settings->getCategories()->getValuesArray();
 		$tag      = Array();
 
+		// build up the categories from the settings;
 		if ( !is_null( $category ) && is_array( $category ) ) {
 			foreach ( $category as $index => $cat ) {
 				$cat_id              = wp_create_category( trim( $cat ) );
 				$categoryIDs[$index] = intval( $cat_id );
 			}
 		}
+		// placeholder, in the future build up the tags
 		if ( !is_null( $tag ) && is_array( $tag ) ) {
 			foreach ( $tag as $t ) {
 				//TODO: support tags
@@ -375,7 +380,8 @@ class HTMLImportPlugin {
 			}
 		}
 
-
+		// create the appropriate importer and perform the import
+		// TODO: this creation is a candidate to be replaced with a factory
 		$stages   = new \html_import\HTMLImportStages();
 		$postMeta = $this->importAnHTML( $webPage, $settings, $parent_page_id, $html_post_lookup );
 		if ( !$webPage->isFolder() ) {
@@ -410,6 +416,8 @@ class HTMLImportPlugin {
 		if ( !isset( $html_post_lookup ) ) {
 			$html_post_lookup = Array();
 		}
+
+		// go through all the files in the hierarchy and import them.  Start at the base and keep going until all files are read in.
 		$siteIndex->setToFirstFile();
 		$fileNode = $siteIndex->getNextHTMLFile();
 
@@ -434,6 +442,7 @@ class HTMLImportPlugin {
 		$localFileRetriever = new \droppedbars\files\LocalAndURLFileRetriever( $directory );
 		$xmlIndex           = new \html_import\indices\CustomXMLWebsiteIndex( $localFileRetriever );
 
+		// the importer will use a default index name of index.xml unless otherwise is provided.  This checks the provided path, if it is a file, it assumes that that file is the index file.
 		$indexFile = null;
 		if ( !is_dir( $filePath ) ) {
 			$indexFile = basename( $filePath );
@@ -443,6 +452,7 @@ class HTMLImportPlugin {
 
 		$media_lookup     = Array();
 		$html_post_lookup = Array();
+		// perform the import twice, once to create stub files, and once to put in the contents and update links between files.
 		$html_post_lookup = $this->importFromWebsiteIndex( $xmlIndex, true, $html_post_lookup, $media_lookup, $settings );
 		$this->importFromWebsiteIndex( $xmlIndex, false, $html_post_lookup, $media_lookup, $settings );
 	}
@@ -459,7 +469,7 @@ class HTMLImportPlugin {
 	}
 
 	/**
-	 * Takes the path to a zip file, decompresses it and drops it into the Uploads directory of the Wordpress installation.  The sub path will be /import-# where # is a sequential number, incremented if there is another /import-# directory in the uplaods directory.  A string is returned containing the path to the contents of the zip.
+	 * Takes the path to a zip file, decompresses it and drops it into the Uploads directory of the Wordpress installation.  The sub path will be /import-# where # is a sequential number, incremented if there is another /import-# directory in the uploads directory.  A string is returned containing the path to the contents of the zip.
 	 * @param $zip_to_upload
 	 *
 	 * @return null|string
@@ -507,6 +517,7 @@ class HTMLImportPlugin {
 
 		$media_lookup     = Array();
 		$html_post_lookup = Array();
+		// perform the import twice, once to create stub files, and once to put in the contents and update links between files.
 		$html_post_lookup = $this->importFromWebsiteIndex( $flareIndex, true, $html_post_lookup, $media_lookup, $settings );
 		$this->importFromWebsiteIndex( $flareIndex, false, $html_post_lookup, $media_lookup, $settings );
 	}
@@ -549,7 +560,7 @@ class HTMLImportPlugin {
 				$filePath = $this->decompressAndUploadFiletoSite( $zip_to_upload );
 				if ( !is_null( $filePath ) ) {
 					$this->routeImportToCorrectImporter( $filePath, $settings );
-
+					// clean up the files that were unzipped
 					html_import\FileHelper::delTree( $filePath );
 				}
 			}
