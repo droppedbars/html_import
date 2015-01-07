@@ -40,17 +40,19 @@ class UpdateLinksImportStage extends ImportStage {
 			$filepath = dirname( $meta->getSourcePath() );
 
 			$link_table = Array();
+			// get a list of all the links in the page and iterate through them
 			$all_links  = $bodyXML->xpath( '//a[@href]' );
 			// TODO: encapsulate this in a function use XMLHelper::getAllHRefsFromHTML as a start
 			if ( $all_links ) {
 				foreach ( $all_links as $link ) {
-
+					// iterate the link's attributes to find the HREF value
 					foreach ( $link->attributes() as $attribute => $value ) {
 						$path = '' . $value;
 						if ( 0 == strcasecmp( 'href', $attribute ) ) { // TODO: handle foo.html#rar
 							if ( !preg_match( '/^[a-zA-Z].*:.*/', $path ) ) { // TODO: need to handle foo.html without handling http://...
-								if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) { // if html or htm
-
+								// only handle files that end in .html or .htm
+								if ( preg_match( '/\.([hH][tT][mM][lL]?)$/', $path ) ) {
+									// if the file the path links to has been imported already, then it will exist in the lookup and we can update the link, otherwise leave the link alone
 									$fullpath = $webPage->getFullPath( $path );
 									if ( $fullpath ) {
 										if ( array_key_exists( $fullpath, $html_post_lookup ) ) {
@@ -66,6 +68,7 @@ class UpdateLinksImportStage extends ImportStage {
 				}
 			}
 
+			// after building a list of all the links to update and what to update them to, we can do a change in the html file as a whole to catch all references
 			foreach ( $link_table as $link => $full_link ) {
 				$post_id   = $html_post_lookup[$full_link];
 				$post_link = get_permalink( $post_id );

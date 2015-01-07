@@ -114,6 +114,10 @@ class FlareWebsiteIndex extends WebsiteIndex {
 
 	/**
 	 * Converts the contents of a Toc_Chunk file into an array
+	 * The file using the values:
+	 *  path
+	 * 	i - id
+	 * 	t - title
 	 *
 	 * @param string $tocChunkContents
 	 *

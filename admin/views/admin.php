@@ -44,7 +44,7 @@ if ( ( isset( $_POST['action'] ) ) && ( 'save' == $_POST['action'] ) ) {
 		echo '<div id="noLogMessages" style="display:none;">';
 		echo "<b>show log messages</b>";
 		echo '</div>';
-		echo '<div id="logMessages" style="display:visible;">';
+		echo '<div id="logMessages" style="display:inline;">';
 
 		echo "<b>hide log messages</b>";
 
@@ -69,6 +69,19 @@ $settings->loadFromDB();
 
 		<h3>Select the type of import index</h3>
 		<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked( strcmp( 'xml', $settings->getIndexType()->getValue() ), 0, true ); ?>/>Confluence XML</label><br>
+		<a href="#" target="_none" id="showXML" onclick="javascript: jQuery('#showXML').hide('fast');  jQuery('#hideXML').show('fast'); jQuery('#SampleXML').show('fast');">Show XML Example</a>
+		<a href="#" target="_none" id="hideXML" style="display:none;" onclick="javascript: jQuery('#showXML').show('fast');  jQuery('#hideXML').hide('fast'); jQuery('#SampleXML').hide('fast');">Hide XML Example</a>
+			<div id="SampleXML" style="display:none;">
+				<pre>&lt;knowledgebase version="1.0"&gt;
+  &lt;document title="First File" src="first.html" category="category1" order="1"&gt;
+  &lt;/document&gt;
+  &lt;document title="Second File" src="second.html" category="category2" order="0"&gt;
+    &lt;document title="Nested File" src="third.html" category="category2,category3" order="3"&gt;
+    &lt;/document&gt;
+  &lt;/document&gt;
+&lt;/knowledgebase&gt;</pre>
+			</div>
+		<br>
 		<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked( strcmp( 'flare', $settings->getIndexType()->getValue() ), 0, true ); ?> />MadCap Flare</label><br>
 		</p>
 		<div style="display:none;">
@@ -153,7 +166,14 @@ $settings->loadFromDB();
 		<p id="categories">
 
 		<h3>Select the Categories for the imported files</h3>
-
+		<?php
+			if (!class_exists("PTCFP")) {
+				?>
+				<h4>* <a href="https://wordpress.org/plugins/post-tags-and-categories-for-pages/">Post Tags and Categories for Pages</a> is a required plugin in order to use categories.
+				</h4>
+			<?php
+			}
+		?>
 		<div id="settings-categories">
 			<!--	<ul>
 		<?php /*
