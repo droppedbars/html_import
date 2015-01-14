@@ -27,10 +27,12 @@ class MediaImportStage extends ImportStage {
 
 	/**
 	 * Performs the stage action of uploading media files and updating the WebPage accordingly.
+	 *
 	 * @param WebPage          $webPage
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $media_lookup
+	 *
 	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$media_lookup = null ) {

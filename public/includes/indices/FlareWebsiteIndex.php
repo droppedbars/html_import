@@ -74,6 +74,46 @@ class FlareWebsiteIndex extends WebsiteIndex {
 	}
 
 	/**
+	 * Converts the contents of a Toc_Chunk file into an array
+	 * The file using the values:
+	 *  path
+	 *  i - id
+	 *  t - title
+	 *
+	 * @param string $tocChunkContents
+	 *
+	 * @return array
+	 */
+	private function getFlareFileList( $tocChunkContents ) {
+		$count   = null;
+		$matches = null;
+		preg_match( '/^define\((.*)\);$/', $tocChunkContents, $matches );
+
+		$returnValue = preg_replace( '/(\\w):([\{\[])/', '"$1":$2', $matches[1], - 1, $count );
+
+		$jsonString = str_replace( "'", "\"", $returnValue );
+
+		$jsonArray = json_decode( $jsonString, true );
+
+		$fileList = Array();
+		foreach ( $jsonArray as $path => $chunk ) {
+			$id    = $chunk['i'];
+			$title = $chunk['t'];
+			if ( sizeof( $id ) > 1 ) {
+				foreach ( $id as $key => $value ) {
+					$fileList[$value]['path']  = null;
+					$fileList[$value]['title'] = $title[$key];
+				}
+			} else {
+				$fileList[$id[0]]['path']  = $path;
+				$fileList[$id[0]]['title'] = $title[0];
+			}
+		}
+
+		return $fileList;
+	}
+
+	/**
 	 * Build a LinkedTree tree from the file ordering and the file listing derived from the Flare index files.
 	 * The HTML file information is stored in the payload of the LinkedTree with WebPage object representing the file.
 	 *
@@ -109,47 +149,6 @@ class FlareWebsiteIndex extends WebsiteIndex {
 		}
 
 		return $firstNode;
-	}
-
-
-	/**
-	 * Converts the contents of a Toc_Chunk file into an array
-	 * The file using the values:
-	 *  path
-	 * 	i - id
-	 * 	t - title
-	 *
-	 * @param string $tocChunkContents
-	 *
-	 * @return array
-	 */
-	private function getFlareFileList( $tocChunkContents ) {
-		$count   = null;
-		$matches = null;
-		preg_match( '/^define\((.*)\);$/', $tocChunkContents, $matches );
-
-		$returnValue = preg_replace( '/(\\w):([\{\[])/', '"$1":$2', $matches[1], - 1, $count );
-
-		$jsonString = str_replace( "'", "\"", $returnValue );
-
-		$jsonArray = json_decode( $jsonString, true );
-
-		$fileList = Array();
-		foreach ( $jsonArray as $path => $chunk ) {
-			$id    = $chunk['i'];
-			$title = $chunk['t'];
-			if ( sizeof( $id ) > 1 ) {
-				foreach ( $id as $key => $value ) {
-					$fileList[$value]['path']  = null;
-					$fileList[$value]['title'] = $title[$key];
-				}
-			} else {
-				$fileList[$id[0]]['path']  = $path;
-				$fileList[$id[0]]['title'] = $title[0];
-			}
-		}
-
-		return $fileList;
 	}
 
 }

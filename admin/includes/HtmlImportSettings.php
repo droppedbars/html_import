@@ -8,8 +8,6 @@
 
 namespace html_import\admin;
 
-use html_import\indices\WebPageSettings;
-
 require_once( dirname( __FILE__ ) . '/PluginSettingsInterface.php' );
 require_once( dirname( __FILE__ ) . '/StringSetting.php' );
 require_once( dirname( __FILE__ ) . '/ArraySetting.php' );
@@ -23,6 +21,13 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	const SETTINGS_NAME = 'htim_importer_options';
 
 	// TODO: radio/checkbox type options should have set enum types available to them
+	const INDEX_DEFAULT = 'flare';
+	const FILE_TYPE_DEFAULT = 'zip';
+	const IMPORT_SRC_DEFAULT = 'upload';
+	const PARENT_PAGE_DEFAULT = 0;
+	const TEMPLATE_DEFAULT = 0;
+	const FILE_LOCATION_DEFAULT = '';
+	const OVERWRITE_FILES_DEFAULT = 'true';
 	private $index_type = null;
 	private $file_type = null;
 	private $import_source = null;
@@ -31,14 +36,6 @@ class HtmlImportSettings implements PluginSettingsInterface {
 	private $template = null;
 	private $category = null;
 	private $doesOverwriteFiles = null;
-
-	const INDEX_DEFAULT = 'flare';
-	const FILE_TYPE_DEFAULT = 'zip';
-	const IMPORT_SRC_DEFAULT = 'upload';
-	const PARENT_PAGE_DEFAULT = 0;
-	const TEMPLATE_DEFAULT = 0;
-	const FILE_LOCATION_DEFAULT = '';
-	const OVERWRITE_FILES_DEFAULT = 'true';
 
 	/**
 	 * Instantiates all of the settings available for the plugin
@@ -52,20 +49,6 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->template           = new StringSetting( 'template' );
 		$this->category           = new ArraySetting( 'category' );
 		$this->doesOverwriteFiles = new StringSetting( 'overwrite-files' ); // TODO: should make a BoolSetting
-	}
-
-	/**
-	 * Populate all settings with default values.
-	 */
-	private function loadDefaults() {
-		$this->index_type->setSettingValue( self::INDEX_DEFAULT );
-		$this->file_type->setSettingValue( self::FILE_TYPE_DEFAULT );
-		$this->import_source->setSettingValue( self::IMPORT_SRC_DEFAULT );
-		$this->parent_page->setSettingValue( self::PARENT_PAGE_DEFAULT );
-		$this->template->setSettingValue( self::TEMPLATE_DEFAULT );
-		$this->file_location->setSettingValue( self::FILE_LOCATION_DEFAULT );
-		$this->category->setSettingValue( 0, 0 ); // TODO: 0 as default "none", could be better
-		$this->doesOverwriteFiles->setSettingValue( self::OVERWRITE_FILES_DEFAULT );
 	}
 
 	/**
@@ -115,6 +98,20 @@ class HtmlImportSettings implements PluginSettingsInterface {
 				break;
 			}
 		} while ( 1 == 1 );
+	}
+
+	/**
+	 * Populate all settings with default values.
+	 */
+	private function loadDefaults() {
+		$this->index_type->setSettingValue( self::INDEX_DEFAULT );
+		$this->file_type->setSettingValue( self::FILE_TYPE_DEFAULT );
+		$this->import_source->setSettingValue( self::IMPORT_SRC_DEFAULT );
+		$this->parent_page->setSettingValue( self::PARENT_PAGE_DEFAULT );
+		$this->template->setSettingValue( self::TEMPLATE_DEFAULT );
+		$this->file_location->setSettingValue( self::FILE_LOCATION_DEFAULT );
+		$this->category->setSettingValue( 0, 0 ); // TODO: 0 as default "none", could be better
+		$this->doesOverwriteFiles->setSettingValue( self::OVERWRITE_FILES_DEFAULT );
 	}
 
 	/**

@@ -57,9 +57,9 @@ private $postType;
 	 * @param Array $categoryIds
 	 */
 	public function setCategories( Array $categoryIds ) {
-		for ($i = 0; $i < sizeof($categoryIds); $i++ ) {
-			if (!is_string($categoryIds[$i])) {
-				throw new \InvalidArgumentException('Array $categoryIds must be all strings.');
+		for ( $i = 0; $i < sizeof( $categoryIds ); $i ++ ) {
+			if ( !is_string( $categoryIds[$i] ) ) {
+				throw new \InvalidArgumentException( 'Array $categoryIds must be all strings.' );
 			}
 		}
 		$this->categoryIds = $categoryIds;

@@ -27,10 +27,12 @@ class UpdateLinksImportStage extends ImportStage {
 
 	/**
 	 * Function that performs the action of updating the local links on the webpage.
+	 *
 	 * @param WebPage          $webPage
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $html_post_lookup
+	 *
 	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$html_post_lookup = null ) {
@@ -41,7 +43,7 @@ class UpdateLinksImportStage extends ImportStage {
 
 			$link_table = Array();
 			// get a list of all the links in the page and iterate through them
-			$all_links  = $bodyXML->xpath( '//a[@href]' );
+			$all_links = $bodyXML->xpath( '//a[@href]' );
 			// TODO: encapsulate this in a function use XMLHelper::getAllHRefsFromHTML as a start
 			if ( $all_links ) {
 				foreach ( $all_links as $link ) {

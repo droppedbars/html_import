@@ -34,6 +34,33 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	}
 
 	/**
+	 * Test to see if file exists, looking in the relativePath.  Return true if the file is there, false otherwise.
+	 *
+	 * @param string $file
+	 * @param string $relativePath
+	 *
+	 * @return bool
+	 */
+	public function fileExists( $file, $relativePath = '' ) {
+		$fullPath = $this->buildFullPath( $file, $relativePath );
+		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
+			if ( ( strpos( $fullPath, 'http://' ) == 0 ) || ( strpos( $fullPath, 'https://' ) == 0 ) ) {
+				$realPath = $fullPath;
+
+				return \html_import\XMLHelper::url_exists( $realPath );
+			} else {
+				echo '*** ' . $fullPath . ' is not an HTTP or HTTP URL.';
+
+				return null;
+			}
+		} else { // else if local directory
+			$realPath = realpath( $fullPath );
+
+			return file_exists( $realPath );
+		}
+	}
+
+	/**
 	 * Build up the full file path based on the file and relative path.
 	 *
 	 * @param $file
@@ -53,34 +80,6 @@ class LocalAndURLFileRetriever extends FileRetriever {
 		return $fullPath;
 	}
 
-
-
-	/**
-	 * Test to see if file exists, looking in the relativePath.  Return true if the file is there, false otherwise.
-	 *
-	 * @param string $file
-	 * @param string $relativePath
-	 *
-	 * @return bool
-	 */
-	public function fileExists( $file, $relativePath = '' ) {
-		$fullPath = $this->buildFullPath( $file, $relativePath );
-		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
-			if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
-				$realPath = $fullPath;
-
-				return \html_import\XMLHelper::url_exists( $realPath );
-			} else {
-				echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
-				return null;
-			}
-		} else { // else if local directory
-			$realPath = realpath( $fullPath );
-
-			return file_exists( $realPath );
-		}
-	}
-
 	/**
 	 * Retrieve the contents file, if provided using the relativePath to the base path used for the class.
 	 * Returns the contents as as string.
@@ -94,7 +93,7 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	public function retrieveFileContents( $file, $relativePath = '' ) {
 		$fullPath = $this->buildFullPath( $file, $relativePath );
 		if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
-			if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
+			if ( ( strpos( $fullPath, 'http://' ) == 0 ) || ( strpos( $fullPath, 'https://' ) == 0 ) ) {
 				$realPath = $fullPath;
 				if ( \html_import\XMLHelper::url_exists( $realPath ) ) {
 					$file_get_success = file_get_contents( $realPath );
@@ -109,15 +108,17 @@ class LocalAndURLFileRetriever extends FileRetriever {
 					return null;
 				}
 			} else {
-				echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
+				echo '*** ' . $fullPath . ' is not an HTTP or HTTP URL.';
+
 				return null;
 			}
 		} else { // else if local directory
 			$realPath = realpath( $fullPath );
 			if ( $realPath !== false ) {
 				$file_get_success = file_get_contents( $realPath );
-				if ($file_get_success === false) {
-					echo '*** '. $relativePath.' could not be read, may be non-existent or 0 length.';
+				if ( $file_get_success === false ) {
+					echo '*** ' . $relativePath . ' could not be read, may be non-existent or 0 length.';
+
 					return null;
 				} else {
 					return $file_get_success;
@@ -143,10 +144,11 @@ class LocalAndURLFileRetriever extends FileRetriever {
 		} else {
 			$fullPath = $this->buildFullPath( $file, $relativePath );
 			if ( filter_var( $fullPath, FILTER_VALIDATE_URL ) ) { // if URL
-				if ((strpos($fullPath, 'http://') == 0) || (strpos($fullPath, 'https://') == 0)) {
+				if ( ( strpos( $fullPath, 'http://' ) == 0 ) || ( strpos( $fullPath, 'https://' ) == 0 ) ) {
 					return $fullPath;
 				} else {
-					echo '*** '. $fullPath .' is not an HTTP or HTTP URL.';
+					echo '*** ' . $fullPath . ' is not an HTTP or HTTP URL.';
+
 					return null;
 				}
 			} else { // else if directory
@@ -168,13 +170,15 @@ class LocalAndURLFileRetriever extends FileRetriever {
 	 */
 	public function findFile( $filename, $relativePath = '' ) {
 		$fullPath = realpath( $this->localPath . '/' . $relativePath );
-		if (!$fullPath) {
-			echo 'Error trying to determine the realpath of '. $this->localPath.'/'.$relativePath.'<br>';
+		if ( !$fullPath ) {
+			echo 'Error trying to determine the realpath of ' . $this->localPath . '/' . $relativePath . '<br>';
+
 			return null;
 		}
 		$allFiles = @scandir( $fullPath );
-		if ($allFiles === false) {
-			echo 'Error trying to scan the directory: '. $fullPath.'.<br>';
+		if ( $allFiles === false ) {
+			echo 'Error trying to scan the directory: ' . $fullPath . '.<br>';
+
 			return null;
 		}
 		foreach ( $allFiles as $file ) {

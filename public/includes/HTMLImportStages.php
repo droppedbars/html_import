@@ -21,6 +21,12 @@ class HTMLImportStages {
 	private $addGDNHeaderAndFooter = false;
 
 	/**
+	 *
+	 */
+	function __construct() {
+	}
+
+	/**
 	 * @param boolean $setTemplate
 	 */
 	public function setConfigureTemplate( $setTemplate ) {
@@ -88,12 +94,6 @@ class HTMLImportStages {
 	 */
 	public function doesUpdateLinks() {
 		return $this->updateLinks;
-	}
-
-	/**
-	 * 
-	 */
-	function __construct() {
 	}
 
 } 

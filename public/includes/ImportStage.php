@@ -18,21 +18,9 @@ require_once( dirname( __FILE__ ) . '/indices/WebPage.php' );
  * @package html_import
  */
 abstract class ImportStage {
-	abstract protected function isValid( HTMLImportStages $stagesSettings );
-
-	/**
-	 * Function responsible for actually performing the action of the import class.
-	 * @param WebPage          $webPage
-	 * @param HTMLImportStages $stagesSettings
-	 * @param WPMetaConfigs    $meta
-	 * @param null             $other
-	 *
-	 * @return mixed
-	 */
-	abstract protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null );
-
 	/**
 	 * Public function that is called to get the import stage to be activated.
+	 *
 	 * @param WebPage          $webPage
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
@@ -43,4 +31,18 @@ abstract class ImportStage {
 			$this->performStage( $webPage, $stagesSettings, $meta, $other );
 		}
 	}
+
+	abstract protected function isValid( HTMLImportStages $stagesSettings );
+
+	/**
+	 * Function responsible for actually performing the action of the import class.
+	 *
+	 * @param WebPage          $webPage
+	 * @param HTMLImportStages $stagesSettings
+	 * @param WPMetaConfigs    $meta
+	 * @param null             $other
+	 *
+	 * @return mixed
+	 */
+	abstract protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null );
 } 

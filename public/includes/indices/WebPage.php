@@ -58,7 +58,7 @@ class WebPage extends LinkedTree {
 	 *
 	 * @param integer $wp_id
 	 */
-	public function setWPID($wp_id) {
+	public function setWPID( $wp_id ) {
 		$this->wp_id = $wp_id;
 	}
 
@@ -112,6 +112,7 @@ class WebPage extends LinkedTree {
 	 * Builds up and returns the full path of the webpage, using the retriever as the foundation
 	 *
 	 * @param string $relativePath
+	 *
 	 * @return string
 	 */
 	public function getFullPath( $relativePath = null ) {
@@ -134,6 +135,7 @@ class WebPage extends LinkedTree {
 		if ( !is_string( $relativePath ) ) {
 			throw new \InvalidArgumentException( "Relative path of webpage must be a string (may be empty)" );
 		}
+
 		return $this->retriever->retrieveFileContents( $relativePath, dirname( $this->relativePath ) );
 	}
 
@@ -169,7 +171,7 @@ class WebPage extends LinkedTree {
 			$content = $this->retriever->retrieveFileContents( $this->getRelativePath() );
 		}
 
-		return is_null( $content ) || strlen($content) <= 0;
+		return is_null( $content ) || strlen( $content ) <= 0;
 	}
 
 	/**

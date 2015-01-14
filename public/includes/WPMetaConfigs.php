@@ -36,6 +36,13 @@ class WPMetaConfigs {
 	private $source_path = '';
 
 	/**
+	 * @return string
+	 */
+	public function getSourcePath() {
+		return $this->source_path;
+	}
+
+	/**
 	 * @param string $source_path
 	 */
 	public function setSourcePath( $source_path ) {
@@ -43,12 +50,11 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @return string
+	 * @return mixed
 	 */
-	public function getSourcePath() {
-		return $this->source_path;
+	public function getPageTemplate() {
+		return $this->page_template;
 	}
-
 
 	/**
 	 * @param mixed $page_template
@@ -60,8 +66,8 @@ class WPMetaConfigs {
 	/**
 	 * @return mixed
 	 */
-	public function getPageTemplate() {
-		return $this->page_template;
+	public function getPostContent() {
+		return $this->post_content;
 	}
 
 	/**
@@ -72,58 +78,18 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @return mixed
+	 * Inserts the post into Wordpress and returns the resulting post ID.
+	 * @return int|\WP_Error
 	 */
-	public function getPostContent() {
-		return $this->post_content;
-	}
-
-	/**
-	 * Loads all of the meta data for a post given the post's ID.  Returns false of there is no post with that ID.
-	 * @param $post_id
-	 *
-	 * @return bool
-	 */
-	public function loadFromPostID( $post_id ) {
-		$post_object = get_post( $post_id, 'OBJECT' );
-		if ( is_null( $post_object ) ) {
-			return false;
-		} else {
-			return $this->loadFromPostObject( $post_object );
-		}
-	}
-
-	/**
-	 * Loads all of the meta data give an WP_Post object.  If there is no object, returns null.
-	 * @param \WP_Post $post
-	 *
-	 * @return bool
-	 */
-	public function loadFromPostObject( \WP_Post $post ) {
-		if ( is_null( $post ) ) {
-			return false;
+	public function updateWPPost() {
+		// TODO: handle WP_Error object if set to true.
+		$postArray = $this->getPostArray();
+		$result    = wp_insert_post( $postArray, true );
+		if ( !is_wp_error( $result ) ) {
+			$this->setPostId( $result );
 		}
 
-		$this->post_id     = $post->ID;
-		$this->post_author = $post->post_author;
-		$this->post_name   = $post->post_name;
-		$this->post_type   = $post->post_type;
-		$this->post_title  = $post->post_title;
-		$this->post_date   = $post->post_date;
-		// $post->post_date_gmt
-		$this->post_content   = $post->content;
-		$this->post_excerpt   = $post->post_excerpt;
-		$this->comment_status = $post->comment_status;
-		$this->ping_status    = $post->ping_status;
-		$this->post_status    = $post->post_status;
-		// $post->post_password
-		$this->post_parent = $post->post_parent;
-		// $post->post_modified
-		// $post->post_modified_gmt
-		// $post->comment_count
-		$this->menu_order = $post->menu_order;
-
-		return true;
+		return $result;
 	}
 
 	/**
@@ -161,18 +127,10 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * Inserts the post into Wordpress and returns the resulting post ID.
-	 * @return int|\WP_Error
+	 * @return mixed
 	 */
-	public function updateWPPost() {
-		// TODO: handle WP_Error object if set to true.
-		$postArray = $this->getPostArray();
-		$result    = wp_insert_post( $postArray, true );
-		if ( !is_wp_error( $result ) ) {
-			$this->setPostId( $result );
-		}
-
-		return $result;
+	public function getCommentStatus() {
+		return $this->comment_status;
 	}
 
 	/**
@@ -185,8 +143,8 @@ class WPMetaConfigs {
 	/**
 	 * @return mixed
 	 */
-	public function getCommentStatus() {
-		return $this->comment_status;
+	public function getMenuOrder() {
+		return $this->menu_order;
 	}
 
 	/**
@@ -199,38 +157,21 @@ class WPMetaConfigs {
 	/**
 	 * @return mixed
 	 */
-	public function getMenuOrder() {
-		return $this->menu_order;
+	public function getPingStatus() {
+		return $this->ping_status;
 	}
 
 	/**
 	 * @param mixed $ping_status
 	 */
 	public function setPingStatus( $ping_status ) {
-		if (!is_string($ping_status)) {
-			throw new \InvalidArgumentException("Post status must be a string");
+		if ( !is_string( $ping_status ) ) {
+			throw new \InvalidArgumentException( "Post status must be a string" );
 		}
-		if (($ping_status != 'closed') &&($ping_status != 'open')) {
-			throw new \InvalidArgumentException("Post status must be one of: closed, open");
+		if ( ( $ping_status != 'closed' ) && ( $ping_status != 'open' ) ) {
+			throw new \InvalidArgumentException( "Post status must be one of: closed, open" );
 		}
 		$this->ping_status = $ping_status;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getPingStatus() {
-		return $this->ping_status;
-	}
-
-	/**
-	 * @param mixed $post_author
-	 */
-	public function setPostAuthor( $post_author ) {
-		if (!is_integer($post_author) && (!is_null($post_author))) {
-			throw new \InvalidArgumentException("Post author ID must be an integer or null.");
-		}
-		$this->post_author = $post_author;
 	}
 
 	/**
@@ -241,14 +182,13 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param Array $post_category
+	 * @param mixed $post_author
 	 */
-	public function setPostCategory( Array $post_category ) {
-		if (!is_array($post_category) && (!is_null($post_category))) {
-			throw new \InvalidArgumentException("Post category must be an array or null.");
+	public function setPostAuthor( $post_author ) {
+		if ( !is_integer( $post_author ) && ( !is_null( $post_author ) ) ) {
+			throw new \InvalidArgumentException( "Post author ID must be an integer or null." );
 		}
-
-		$this->post_category = $post_category;
+		$this->post_author = $post_author;
 	}
 
 	/**
@@ -259,14 +199,33 @@ class WPMetaConfigs {
 	}
 
 	/**
+	 * @param Array $post_category
+	 */
+	public function setPostCategory( Array $post_category ) {
+		if ( !is_array( $post_category ) && ( !is_null( $post_category ) ) ) {
+			throw new \InvalidArgumentException( "Post category must be an array or null." );
+		}
+
+		$this->post_category = $post_category;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getPostDate() {
+		return $this->post_date;
+	}
+
+	/**
 	 * Sets the date and time in the appropriate format for Wordpress.  If null is passed in, then the current datetime as calculated by time() will be used.
+	 *
 	 * @param integer $post_date
 	 */
 	public function setPostDate( $post_date ) {
-		if (!is_integer($post_date) && (!is_null($post_date))) {
-			throw new \InvalidArgumentException("Post date must be an integer or null.");
+		if ( !is_integer( $post_date ) && ( !is_null( $post_date ) ) ) {
+			throw new \InvalidArgumentException( "Post date must be an integer or null." );
 		}
-		if (is_null($post_date)) {
+		if ( is_null( $post_date ) ) {
 			$datetime = time();
 		} else {
 			$datetime = $post_date;
@@ -278,8 +237,8 @@ class WPMetaConfigs {
 	/**
 	 * @return mixed
 	 */
-	public function getPostDate() {
-		return $this->post_date;
+	public function getPostExcerpt() {
+		return $this->post_excerpt;
 	}
 
 	/**
@@ -292,33 +251,18 @@ class WPMetaConfigs {
 	/**
 	 * @return mixed
 	 */
-	public function getPostExcerpt() {
-		return $this->post_excerpt;
+	public function getPostId() {
+		return $this->post_id;
 	}
 
 	/**
 	 * @param mixed $post_id
 	 */
 	public function setPostId( $post_id ) {
-		if (!is_integer($post_id) && (!is_null($post_id))) {
-			throw new \InvalidArgumentException("Post ID must be an integer or null.");
+		if ( !is_integer( $post_id ) && ( !is_null( $post_id ) ) ) {
+			throw new \InvalidArgumentException( "Post ID must be an integer or null." );
 		}
 		$this->post_id = $post_id;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getPostId() {
-		return $this->post_id;
-	}
-
-	/**
-	 * Given a name for the post, sets it to the meta data but sanitized with dashes instead of spaces.
-	 * @param mixed $post_name
-	 */
-	public function setPostName( $post_name ) {
-		$this->post_name = sanitize_title_with_dashes( $post_name );
 	}
 
 	/**
@@ -329,13 +273,12 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param mixed $post_parent
+	 * Given a name for the post, sets it to the meta data but sanitized with dashes instead of spaces.
+	 *
+	 * @param mixed $post_name
 	 */
-	public function setPostParent( $post_parent ) {
-		if (!is_integer($post_parent) && (!is_null($post_parent))) {
-			throw new \InvalidArgumentException("Post parent ID must be an integer or null.");
-		}
-		$this->post_parent = $post_parent;
+	public function setPostName( $post_name ) {
+		$this->post_name = sanitize_title_with_dashes( $post_name );
 	}
 
 	/**
@@ -346,17 +289,13 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param mixed $post_status
+	 * @param mixed $post_parent
 	 */
-	public function setPostStatus( $post_status ) {
-		if (!is_string($post_status) && !is_null($post_status)) {
-			throw new \InvalidArgumentException("Post status must be a string or null.");
+	public function setPostParent( $post_parent ) {
+		if ( !is_integer( $post_parent ) && ( !is_null( $post_parent ) ) ) {
+			throw new \InvalidArgumentException( "Post parent ID must be an integer or null." );
 		}
-		if (($post_status != 'publish') &&($post_status != 'pending')&&($post_status != 'draft')&&($post_status != 'auto-draft')&&($post_status != 'future')&&($post_status != 'inherit')&&($post_status != 'trash')) {
-			throw new \InvalidArgumentException("Post status must be one of: publish, pending, draft, auto-draft, future, inherit, trash");
-		}
-
-		$this->post_status = $post_status;
+		$this->post_parent = $post_parent;
 	}
 
 	/**
@@ -367,31 +306,17 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * @param mixed $post_title
+	 * @param mixed $post_status
 	 */
-	public function setPostTitle( $post_title ) {
-		if (!is_string($post_title) && !is_null($post_title)) {
-			throw new \InvalidArgumentException("Post title must be a string or null.");
+	public function setPostStatus( $post_status ) {
+		if ( !is_string( $post_status ) && !is_null( $post_status ) ) {
+			throw new \InvalidArgumentException( "Post status must be a string or null." );
 		}
-		$this->post_title = htmlspecialchars( $post_title );
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getPostTitle() {
-		return $this->post_title;
-	}
-
-	/**
-	 * @param mixed $post_type
-	 */
-	public function setPostType( $post_type ) {
-		if (!is_string($post_type) && !is_null($post_type)) {
-			throw new \InvalidArgumentException("Post type must be a string or null.");
+		if ( ( $post_status != 'publish' ) && ( $post_status != 'pending' ) && ( $post_status != 'draft' ) && ( $post_status != 'auto-draft' ) && ( $post_status != 'future' ) && ( $post_status != 'inherit' ) && ( $post_status != 'trash' ) ) {
+			throw new \InvalidArgumentException( "Post status must be one of: publish, pending, draft, auto-draft, future, inherit, trash" );
 		}
-		// typical values 'post' | 'page' | 'link' | 'nav_menu_item' | custom post type
-		$this->post_type = $post_type;
+
+		$this->post_status = $post_status;
 	}
 
 	/**
@@ -402,22 +327,19 @@ class WPMetaConfigs {
 	}
 
 	/**
-	 * Given a SimpleXMLElement, extracts the <TITLE> element and sets the title from that.
-	 * @param \SimpleXMLElement $html_file
-	 *
-	 * @return string
+	 * @param mixed $post_type
 	 */
-	private function getTitleFromTag( \SimpleXMLElement $html_file ) {
-		$title = '';
-		foreach ( $html_file->head->title as $titleElement ) {
-			$title = '' . $titleElement;
+	public function setPostType( $post_type ) {
+		if ( !is_string( $post_type ) && !is_null( $post_type ) ) {
+			throw new \InvalidArgumentException( "Post type must be a string or null." );
 		}
-
-		return $title;
+		// typical values 'post' | 'page' | 'link' | 'nav_menu_item' | custom post type
+		$this->post_type = $post_type;
 	}
 
 	/**
 	 * Builds meta data based on a loaded WebPage, and HtmlImportSettings from the plugin.
+	 *
 	 * @param admin\HtmlImportSettings $globalSettings
 	 * @param WebPage                  $webPage
 	 * @param null                     $post_id
@@ -434,7 +356,7 @@ class WPMetaConfigs {
 			$file_as_xml_obj = null;
 		} else {
 			$file_as_xml_obj = XMLHelper::getXMLObjectFromString( $webPage->getContent() );
-			if (!is_null($file_as_xml_obj)) {
+			if ( !is_null( $file_as_xml_obj ) ) {
 				$this->setPostContent( $file_as_xml_obj->body->asXML() );
 				$this->setPostTitle( $this->getTitleFromTag( $file_as_xml_obj ) );
 			}
@@ -484,6 +406,89 @@ class WPMetaConfigs {
 		$this->setPageTemplate( $globalSettings->getTemplate()->getValue() );
 
 
+	}
+
+	/**
+	 * Loads all of the meta data for a post given the post's ID.  Returns false of there is no post with that ID.
+	 *
+	 * @param $post_id
+	 *
+	 * @return bool
+	 */
+	public function loadFromPostID( $post_id ) {
+		$post_object = get_post( $post_id, 'OBJECT' );
+		if ( is_null( $post_object ) ) {
+			return false;
+		} else {
+			return $this->loadFromPostObject( $post_object );
+		}
+	}
+
+	/**
+	 * Loads all of the meta data give an WP_Post object.  If there is no object, returns null.
+	 *
+	 * @param \WP_Post $post
+	 *
+	 * @return bool
+	 */
+	public function loadFromPostObject( \WP_Post $post ) {
+		if ( is_null( $post ) ) {
+			return false;
+		}
+
+		$this->post_id     = $post->ID;
+		$this->post_author = $post->post_author;
+		$this->post_name   = $post->post_name;
+		$this->post_type   = $post->post_type;
+		$this->post_title  = $post->post_title;
+		$this->post_date   = $post->post_date;
+		// $post->post_date_gmt
+		$this->post_content   = $post->content;
+		$this->post_excerpt   = $post->post_excerpt;
+		$this->comment_status = $post->comment_status;
+		$this->ping_status    = $post->ping_status;
+		$this->post_status    = $post->post_status;
+		// $post->post_password
+		$this->post_parent = $post->post_parent;
+		// $post->post_modified
+		// $post->post_modified_gmt
+		// $post->comment_count
+		$this->menu_order = $post->menu_order;
+
+		return true;
+	}
+
+	/**
+	 * Given a SimpleXMLElement, extracts the <TITLE> element and sets the title from that.
+	 *
+	 * @param \SimpleXMLElement $html_file
+	 *
+	 * @return string
+	 */
+	private function getTitleFromTag( \SimpleXMLElement $html_file ) {
+		$title = '';
+		foreach ( $html_file->head->title as $titleElement ) {
+			$title = '' . $titleElement;
+		}
+
+		return $title;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getPostTitle() {
+		return $this->post_title;
+	}
+
+	/**
+	 * @param mixed $post_title
+	 */
+	public function setPostTitle( $post_title ) {
+		if ( !is_string( $post_title ) && !is_null( $post_title ) ) {
+			throw new \InvalidArgumentException( "Post title must be a string or null." );
+		}
+		$this->post_title = htmlspecialchars( $post_title );
 	}
 
 } 

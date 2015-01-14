@@ -17,6 +17,7 @@ namespace html_import;
 class XMLHelper {
 	/**
 	 * Returns a SimpleXMLElement object given an XML contained in a string.
+	 *
 	 * @param $source_string
 	 *
 	 * @return \SimpleXMLElement
@@ -26,19 +27,21 @@ class XMLHelper {
 		$doc->strictErrorChecking = false;
 		libxml_use_internal_errors( true ); // some ok HTML will generate errors, this masks them, pt 1/2
 		$xmlValid = @$doc->loadHTML( $source_string/*, LIBXML_HTML_NOIMPLIED */ ); // server uses 5.3.28, this is added in 5.4
-		if ($xmlValid) {
+		if ( $xmlValid ) {
 			libxml_clear_errors(); // some ok HTML will generate errors, this masks them, pt 2/2
 			$file_as_xml_obj = simplexml_import_dom( $doc );
 
 			return $file_as_xml_obj;
 		} else {
 			echo 'Empty string used for XML source<br>';
+
 			return null;
 		}
 	}
 
 	/**
 	 * Returns a SimpleXMLElement object given a path to an XML file.
+	 *
 	 * @param $source_file
 	 *
 	 * @return \SimpleXMLElement
@@ -55,9 +58,32 @@ class XMLHelper {
 	}
 
 	// TODO: find an appropriate place for this
+
+	/**
+	 * Verifies that a file exists at the path provided, whether it's a URL or a local file.
+	 *
+	 * @param $xml_path
+	 *
+	 * @return bool|mixed
+	 */
+	public static function valid_xml_file( $xml_path ) {
+		if ( filter_var( $xml_path, FILTER_VALIDATE_URL ) ) { // if URL
+			return self::url_exists( $xml_path );
+		} else {
+			if ( file_exists( $xml_path ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	// TODO: this should be beefed up to actually validate that it's an XML
+
 	/**
 	 * Check to determine if the provided URL resolves to a real file.  Returns true if so, false otherwise.
 	 * source from: http://php.net/manual/en/function.file-exists.php
+	 *
 	 * @param $url
 	 *
 	 * @return mixed
@@ -79,27 +105,9 @@ class XMLHelper {
 		return $connectable;
 	}
 
-	// TODO: this should be beefed up to actually validate that it's an XML
-	/**
-	 * Verifies that a file exists at the path provided, whether it's a URL or a local file.
-	 * @param $xml_path
-	 *
-	 * @return bool|mixed
-	 */
-	public static function valid_xml_file( $xml_path ) {
-		if ( filter_var( $xml_path, FILTER_VALIDATE_URL ) ) { // if URL
-			return self::url_exists( $xml_path );
-		} else {
-			if ( file_exists( $xml_path ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	/**
 	 * Given an HTML file in a string, returns an array listing all of the URLs from the <a href>s.
+	 *
 	 * @param $contentAsXML
 	 *
 	 * @return array

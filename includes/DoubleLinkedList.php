@@ -128,20 +128,6 @@ class DoubleLinkedList {
 	}
 
 	/**
-	 * Returns a reference to the head node in the linked list to which this node belongs.
-	 * If this node is the head, it will return itself.
-	 * @return DoubleLinkedList
-	 */
-	public function head() {
-		$previous = $this;
-		while ( !is_null( $previous->previous ) ) {
-			$previous = $previous->previous;
-		}
-
-		return $previous;
-	}
-
-	/**
 	 * Returns a reference to the tail node in the linked list to which this node belongs.
 	 * If this node is the tail, it will return itself.
 	 * @return DoubleLinkedList
@@ -168,6 +154,20 @@ class DoubleLinkedList {
 		}
 
 		return $counter;
+	}
+
+	/**
+	 * Returns a reference to the head node in the linked list to which this node belongs.
+	 * If this node is the head, it will return itself.
+	 * @return DoubleLinkedList
+	 */
+	public function head() {
+		$previous = $this;
+		while ( !is_null( $previous->previous ) ) {
+			$previous = $previous->previous;
+		}
+
+		return $previous;
 	}
 
 	/**
