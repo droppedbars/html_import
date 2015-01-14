@@ -64,22 +64,6 @@ class ArraySetting implements PluginSettingInterface {
 	}
 
 	/**
-	 * Escapes the value of the setting before providing, makes it safe to display in webpages.
-	 * @return mixed
-	 */
-	public function getEscapedHTMLValue() {
-		return esc_html( $this->getValue( $this->index ) );
-	}
-
-	/**
-	 * Returns the name of the setting
-	 * @return mixed
-	 */
-	public function getName() {
-		return $this->name;
-	}
-
-	/**
 	 * Returns the value an in the array.  If $index is null then it will use the current element.  Otherwise it returns the element at the position defined by $index.  If $index is larger than the size of the array, or there is no value there, then it returns null.
 	 *
 	 * @param int|null $index
@@ -101,6 +85,22 @@ class ArraySetting implements PluginSettingInterface {
 		} else {
 			return $this->value[$i];
 		}
+	}
+
+	/**
+	 * Escapes the value of the setting before providing, makes it safe to display in webpages.
+	 * @return mixed
+	 */
+	public function getEscapedHTMLValue() {
+		return esc_html( $this->getValue( $this->index ) );
+	}
+
+	/**
+	 * Returns the name of the setting
+	 * @return mixed
+	 */
+	public function getName() {
+		return $this->name;
 	}
 
 	/**

@@ -28,6 +28,7 @@ class ImportHTMLStage extends ImportStage {
 
 	/**
 	 * Executes the actual stage of importing the HTML contents.  <BODY> tags are converted to <DIV> tags.
+	 *
 	 * @param WebPage          $webPage
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
@@ -41,6 +42,7 @@ class ImportHTMLStage extends ImportStage {
 
 	/**
 	 * Replaces all body tags with div dags.
+	 *
 	 * @param $body
 	 *
 	 * @return mixed

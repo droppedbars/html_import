@@ -27,10 +27,12 @@ class SetTemplateStage extends ImportStage {
 
 	/**
 	 * Performs the action of setting the appropriate template to the page.
+	 *
 	 * @param WebPage          $webPage
 	 * @param HTMLImportStages $stagesSettings
 	 * @param WPMetaConfigs    $meta
 	 * @param null             $other
+	 *
 	 * @return null
 	 */
 	protected function performStage( WebPage $webPage, HTMLImportStages $stagesSettings, WPMetaConfigs &$meta, &$other = null ) {

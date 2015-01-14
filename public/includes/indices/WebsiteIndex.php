@@ -22,9 +22,8 @@ require_once( dirname( __FILE__ ) . '/../../../includes/LinkedTree.php' );
  */
 abstract class WebsiteIndex {
 	protected $retriever = null;
-	private $nodeCounter = - 1;
-	protected $trees = null; // This is an Array to store trees
-
+protected $trees = null;
+		private $nodeCounter = - 1; // This is an Array to store trees
 
 	/**
 	 * @param \droppedbars\files\FileRetriever $fileRetriever describes the source location of the index file(s)
@@ -52,6 +51,16 @@ abstract class WebsiteIndex {
 	 */
 	public function setToFirstFile() {
 		$this->nodeCounter = - 1;
+	}
+
+	/**
+	 * Return a LinkedTree node that contains the reference to the next HTML file indicated by the source index. If there is no next HTML file, return null.
+	 * @return \html_import\indices\WebPage|null the next HTML file
+	 */
+	public function getNextHTMLFile() {
+		$this->nodeCounter ++;
+
+		return $this->recurseTreeNodeForNext( null );
 	}
 
 	/**
@@ -96,15 +105,5 @@ abstract class WebsiteIndex {
 
 			return null;
 		}
-	}
-
-	/**
-	 * Return a LinkedTree node that contains the reference to the next HTML file indicated by the source index. If there is no next HTML file, return null.
-	 * @return \html_import\indices\WebPage|null the next HTML file
-	 */
-	public function getNextHTMLFile() {
-		$this->nodeCounter ++;
-
-		return $this->recurseTreeNodeForNext( null );
 	}
 }

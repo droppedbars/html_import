@@ -3,7 +3,7 @@ Contributors: droppedbars
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=D7J2RY6828E7N
 Tags: import,HTML,website,webpage,flare,xml
 Requires at least: 3.8.1
-Tested up to: 4.0
+Tested up to: 4.1
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -83,5 +83,22 @@ When importing a local located website the index file can be referenced directly
 
 Settings defined in the XML file will override settings contained in the plugin settings page.
 
+== Roadmap ==
+The roadmap will be based on user demand and feedback.  Please provide feedback on what development would be important to you.  Some possibilities:
+* Option to import as a post
+* Overwriting of media files on subsequent imports or during filename conflicts.
+* Option to create new pages vs overwrite existing pages of the same name.
+* Option to set the category of the import based on the category the top level page has
+* Support for tags.
+* Support for categories and tags for media files.
+* Import from confluence index files.
+* Import from Subversion.
+* Ability to change content in HTML (eg, replacing tags, or sections of text).
+* Read in page information (such as tags or content) from custom-defined meta tags.
+If you find this plugin useful, or find that it could be useful with certain additions, please let me know.
+
 == Known Issues ==
-* Madcap Flare imports only support one chunk file, and the TOC must be named Toc.js and only the first chunk file will be loaded (using name [TOC_CHUNK_NAME]0.js.
+* Madcap Flare imports only support one chunk file, and the TOC must be named Toc.js and only the first chunk file will be loaded (using name [TOC_CHUNK_NAME]0.js).
+* During large Flare imports, the output text may stop printing even though the import completes.
+* Links that link to within the current page (thispage.html#section) are not relinked.
+* Relative links that do not specify http:// or https:// will not be relinked.

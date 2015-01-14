@@ -22,6 +22,7 @@ class HTMLStubImporter extends Importer {
 
 	/**
 	 * Executes the stub import by updating the Wordpress post and then adds its references to $html_post_lookup.
+	 *
 	 * @param WebPage       $webPage
 	 * @param WPMetaConfigs $meta
 	 * @param null          $html_post_lookup
@@ -36,7 +37,7 @@ class HTMLStubImporter extends Importer {
 		if ( is_wp_error( $updateResult ) ) {
 			echo '<li>***Unable to create content ' . $meta->getPostTitle() . ' from ' . $webPage->getFullPath() . '</li>';
 		} else {
-			$webPage->setWPID($updateResult);
+			$webPage->setWPID( $updateResult );
 			echo '<li>Stub post created from ' . $webPage->getFullPath() . ' into post #' . $updateResult . ' with title ' . $meta->getPostTitle() . '</li>';
 		}
 

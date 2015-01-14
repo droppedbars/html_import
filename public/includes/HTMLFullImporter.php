@@ -28,6 +28,7 @@ class HTMLFullImporter extends Importer {
 	/**
 	 * Initiates all of the import stages that can be executed.
 	 * $stages is responsible to define which stages actually will be actioned upon.
+	 *
 	 * @param admin\HtmlImportSettings $settings
 	 * @param HTMLImportStages         $stages
 	 */
@@ -42,6 +43,7 @@ class HTMLFullImporter extends Importer {
 
 	/**
 	 * Processes through each stage and if permitted, executes them.
+	 *
 	 * @param WebPage       $webPage
 	 * @param WPMetaConfigs $meta
 	 * @param null          $html_post_lookup

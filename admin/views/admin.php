@@ -69,9 +69,10 @@ $settings->loadFromDB();
 
 		<h3>Select the type of import index</h3>
 		<label for="index-type-xml"><input type="radio" name="index-type" id="index-type-xml" value="xml" <?php checked( strcmp( 'xml', $settings->getIndexType()->getValue() ), 0, true ); ?>/>Confluence XML</label><br>
-		<a href="#" target="_none" id="showXML" onclick="javascript: jQuery('#showXML').hide('fast');  jQuery('#hideXML').show('fast'); jQuery('#SampleXML').show('fast');">Show XML Example</a>
-		<a href="#" target="_none" id="hideXML" style="display:none;" onclick="javascript: jQuery('#showXML').show('fast');  jQuery('#hideXML').hide('fast'); jQuery('#SampleXML').hide('fast');">Hide XML Example</a>
-			<div id="SampleXML" style="display:none;">
+		<a href="#" target="_self" id="showXML" onclick="javascript: jQuery('#showXML').hide('fast');  jQuery('#hideXML').show('fast'); jQuery('#SampleXML').show('fast');">Show XML Example</a>
+		<a href="#" target="_self" id="hideXML" style="display:none;" onclick="javascript: jQuery('#showXML').show('fast');  jQuery('#hideXML').hide('fast'); jQuery('#SampleXML').hide('fast');">Hide XML Example</a>
+
+		<div id="SampleXML" style="display:none;">
 				<pre>&lt;knowledgebase version="1.0"&gt;
   &lt;document title="First File" src="first.html" category="category1" order="1"&gt;
   &lt;/document&gt;
@@ -80,7 +81,7 @@ $settings->loadFromDB();
     &lt;/document&gt;
   &lt;/document&gt;
 &lt;/knowledgebase&gt;</pre>
-			</div>
+		</div>
 		<br>
 		<label for="index-type-flare"><input type="radio" name="index-type" id="index-type-flare" value="flare" <?php checked( strcmp( 'flare', $settings->getIndexType()->getValue() ), 0, true ); ?> />MadCap Flare</label><br>
 		</p>
@@ -167,12 +168,13 @@ $settings->loadFromDB();
 
 		<h3>Select the Categories for the imported files</h3>
 		<?php
-			if (!class_exists("PTCFP")) { // check for the Post Tags and Categories for Pages plugin
-				?>
-				<h4>* <a href="https://wordpress.org/plugins/post-tags-and-categories-for-pages/">Post Tags and Categories for Pages</a> is a required plugin in order to use categories.
-				</h4>
-			<?php
-			}
+		if ( !class_exists( "PTCFP" ) ) { // check for the Post Tags and Categories for Pages plugin
+			?>
+			<h4>*
+				<a href="https://wordpress.org/plugins/post-tags-and-categories-for-pages/">Post Tags and Categories for Pages</a> is a required plugin in order to use categories.
+			</h4>
+		<?php
+		}
 		?>
 		<div id="settings-categories">
 			<select id="select-categories" multiple name="category[]" size="8">
@@ -180,6 +182,7 @@ $settings->loadFromDB();
 
 				/**
 				 * Given a category ID return all of the categories, by hierarchy with indenting as OPTIONS for a SELECT.
+				 *
 				 * @param $category_id
 				 * @param $settings
 				 */

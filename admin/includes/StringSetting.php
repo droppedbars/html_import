@@ -55,6 +55,14 @@ class StringSetting implements PluginSettingInterface {
 	}
 
 	/**
+	 * Returns the settings value.
+	 * @return mixed
+	 */
+	public function getValue() {
+		return $this->value;
+	}
+
+	/**
 	 * Escapes the value of the setting before providing, makes it safe to display in webpages.
 	 * @return mixed
 	 */
@@ -68,14 +76,6 @@ class StringSetting implements PluginSettingInterface {
 	 */
 	public function getName() {
 		return $this->name;
-	}
-
-	/**
-	 * Returns the settings value.
-	 * @return mixed
-	 */
-	public function getValue() {
-		return $this->value;
 	}
 
 	/**
