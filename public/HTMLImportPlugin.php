@@ -170,17 +170,22 @@ class HTMLImportPlugin {
 	}
 
 	/**
+	 * Populates the default values of the plugins settings to the database or the current site.
+	 */
+	private static function populate_default_settings() {
+		$settings = new \html_import\admin\HtmlImportSettings();
+		if ( !get_option( $settings::SETTINGS_NAME ) ) {
+			$settings->saveToDB();
+		}
+	}
+
+	/**
 	 * Fired for each blog when the plugin is activated.
 	 *
 	 * @since    1.0.0
 	 */
 	private static function single_activate() {
-
-		$settings = new \html_import\admin\HtmlImportSettings();
-		if ( !get_option( $settings::SETTINGS_NAME ) ) {
-			$settings->saveToDB();
-		}
-
+		self::populate_default_settings();
 	}
 
 	/**
@@ -251,6 +256,7 @@ class HTMLImportPlugin {
 	public function activate_new_site( $blog_id ) {
 
 		if ( 1 !== did_action( 'wpmu_new_blog' ) ) {
+			self::populate_default_settings();
 			return;
 		}
 

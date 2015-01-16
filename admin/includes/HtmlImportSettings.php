@@ -49,6 +49,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->template           = new StringSetting( 'template' );
 		$this->category           = new ArraySetting( 'category' );
 		$this->doesOverwriteFiles = new StringSetting( 'overwrite-files' ); // TODO: should make a BoolSetting
+		$this->loadDefaults();
 	}
 
 	/**
