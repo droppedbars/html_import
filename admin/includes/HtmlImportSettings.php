@@ -49,6 +49,7 @@ class HtmlImportSettings implements PluginSettingsInterface {
 		$this->template           = new StringSetting( 'template' );
 		$this->category           = new ArraySetting( 'category' );
 		$this->doesOverwriteFiles = new StringSetting( 'overwrite-files' ); // TODO: should make a BoolSetting
+		$this->loadDefaults();
 	}
 
 	/**
@@ -138,6 +139,64 @@ class HtmlImportSettings implements PluginSettingsInterface {
 
 		return update_site_option( self::SETTINGS_NAME, $settings );
 
+	}
+
+	/**
+	 * Validates that required settings are correctly set.
+	 * It does a simple true/false and does not identify the offending setting.
+	 */
+	public function validate() {
+		if ( isset( $_POST[$this->index_type->getName()] ) ) {
+			if ( ( strcmp( $_POST[$this->index_type->getName()], 'xml' ) != 0 ) && ( strcmp( $_POST[$this->index_type->getName()], 'flare' ) != 0 ) /*&& ( strcmp( $_POST[$this->index_type->getName()], 'crawl' ) != 0 )*/ ) {
+				echo 'Invalid index type.<br>';
+
+				return false;
+			}
+		} else {
+			echo 'Missing index type.<br>';
+
+			return false;
+		}
+
+		if ( isset( $_POST[$this->import_source->getName()] ) ) {
+			if ( strcmp( $_POST[$this->import_source->getName()], 'location' ) == 0 ) {
+				if ( ( !isset( $_POST[$this->file_location->getName()] ) ) || ( strlen( $_POST[$this->file_location->getName()] ) <= 0 ) ) {
+					echo 'Missing file location.<br>';
+
+					return false;
+				}
+			} else {
+				if ( strcmp( $_POST[$this->import_source->getName()], 'upload' ) == 0 ) {
+					if ( ( !isset( $_FILES['file-upload'] ) ) || ( $_FILES['file-upload']['error'] != 0 ) ) {
+						echo 'Error with file to upload.<br>';
+
+						return false;
+					}
+				} else {
+					echo 'Invalid import source.<br>';
+
+					return false;
+				}
+			}
+		} else {
+			echo 'Missing import source.<br>';
+
+			return false;
+		}
+
+		if ( isset( $_POST[$this->file_type->getName()] ) ) {
+			if ( ( strcmp( $_POST[$this->file_type->getName()], 'index' ) != 0 ) && ( strcmp( $_POST[$this->file_type->getName()], 'zip' ) ) ) {
+				echo 'Invalid file type.<br>';
+
+				return false;
+			}
+		} else {
+			echo 'Missing file type.<br>';
+
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

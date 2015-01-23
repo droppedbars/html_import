@@ -170,17 +170,22 @@ class HTMLImportPlugin {
 	}
 
 	/**
+	 * Populates the default values of the plugins settings to the database or the current site.
+	 */
+	private static function populate_default_settings() {
+		$settings = new \html_import\admin\HtmlImportSettings();
+		if ( !get_option( $settings::SETTINGS_NAME ) ) {
+			$settings->saveToDB();
+		}
+	}
+
+	/**
 	 * Fired for each blog when the plugin is activated.
 	 *
 	 * @since    1.0.0
 	 */
 	private static function single_activate() {
-
-		$settings = new \html_import\admin\HtmlImportSettings();
-		if ( !get_option( $settings::SETTINGS_NAME ) ) {
-			$settings->saveToDB();
-		}
-
+		self::populate_default_settings();
 	}
 
 	/**
@@ -251,6 +256,7 @@ class HTMLImportPlugin {
 	public function activate_new_site( $blog_id ) {
 
 		if ( 1 !== did_action( 'wpmu_new_blog' ) ) {
+			self::populate_default_settings();
 			return;
 		}
 
@@ -302,24 +308,28 @@ class HTMLImportPlugin {
 		echo '<h2>Output from Import</h2><br>Please be patient</br>';
 		echo '<ul>';
 
-		// TODO: prefer to pass this value in rather than use global
-		$zip_to_upload = $_FILES['file-upload'];
-		if ( strcmp( 'upload', $settings->getImportSource()->getValue() ) == 0 ) {
-			$mime_type = $zip_to_upload['type'];
-			echo 'uploading file of mime-type ' . $mime_type . ' <br>';
-			if ( $this->isFileMimeTypeCompressed( $mime_type ) ) {
-				// echo 'mime-type: '.$mime_type;
-				$filePath = $this->decompressAndUploadFiletoSite( $zip_to_upload );
-				if ( !is_null( $filePath ) ) {
-					$this->routeImportToCorrectImporter( $filePath, $settings );
-					// clean up the files that were unzipped
-					html_import\FileHelper::delTree( $filePath );
+		if ($settings->validate()) {
+
+			// TODO: prefer to pass this value in rather than use global
+			$zip_to_upload = $_FILES['file-upload'];
+			if ( strcmp( 'upload', $settings->getImportSource()->getValue() ) == 0 ) {
+				$mime_type = $zip_to_upload['type'];
+				echo 'uploading file of mime-type ' . $mime_type . ' <br>';
+				if ( $this->isFileMimeTypeCompressed( $mime_type ) ) {
+					// echo 'mime-type: '.$mime_type;
+					$filePath = $this->decompressAndUploadFiletoSite( $zip_to_upload );
+					if ( !is_null( $filePath ) ) {
+						$this->routeImportToCorrectImporter( $filePath, $settings );
+						// clean up the files that were unzipped
+						html_import\FileHelper::delTree( $filePath );
+					}
 				}
+			} else {
+				$this->routeImportToCorrectImporter( $settings->getFileLocation()->getValue(), $settings );
 			}
 		} else {
-			$this->routeImportToCorrectImporter( $settings->getFileLocation()->getValue(), $settings );
+			echo 'The required parameters were not set.<br>';
 		}
-
 		echo '</ul>';
 	}
 
