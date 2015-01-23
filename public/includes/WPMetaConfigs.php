@@ -379,7 +379,7 @@ class WPMetaConfigs {
 			$categoryIDs = null;
 			if ( !is_null( $category ) && is_array( $category ) ) {
 				foreach ( $category as $index => $cat ) {
-					$cat_id              = wp_create_category( trim( $cat ) );
+					$cat_id              = get_cat_ID( trim( $cat ) );
 					$categoryIDs[$index] = intval( $cat_id );
 				}
 			}
