@@ -104,3 +104,4 @@ If you find this plugin useful, or find that it could be useful with certain add
 * Relative links that do not specify http:// or https:// will not be relinked.
 * Pages with titles that look like tags (uses < and >) may not appear in the 2015 theme menu.  It works in the 2014 theme menu.
 * The incorrect category may get attached to the imported page if there are multiple categories with the same name.
+* index.xml must be at the root of the zip file, and not in a sub-directory for an uploaded XML zip import.
