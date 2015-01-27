@@ -54,7 +54,8 @@ In order to create and manage categories for pages, another plugin is required. 
 
 = Where does the index file have to be? =
 
-When importing a local located website the index file can be referenced directly.  If uploading a zip file containing the website, then for an XML import the index.xml file must be in the root of the zip file and named index.xml.  For an uploaded zip of a Flare website, the TOCs can be anywhere and will be found automatically.
+When importing a locally located website using an XML import, the index file must be referenced directly with all file locations relative to that index file.  For a locally located website using a Flare import, the root path of the Flare website can be referenced directly: if the Toc.js is referenced then all file links within Toc.js must be relative to the Toc.js location.
+If uploading a zip file containing the website, then for an XML import the index.xml file must be in the root of the zip file and named index.xml.  For an uploaded zip of a Flare website, the TOCs can be anywhere and will be found automatically.
 
 == Screenshots ==
 
@@ -105,3 +106,4 @@ If you find this plugin useful, or find that it could be useful with certain add
 * Pages with titles that look like tags (uses < and >) may not appear in the 2015 theme menu.  It works in the 2014 theme menu.
 * The incorrect category may get attached to the imported page if there are multiple categories with the same name.
 * index.xml must be at the root of the zip file, and not in a sub-directory for an uploaded XML zip import.
+* Uploading a Flare website that using a local path must reference the root directory of the Flare website, it cannot point to the Toc.js otherwise the webpage locations stored in Toc.js cannot be found by the importer.

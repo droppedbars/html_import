@@ -323,6 +323,8 @@ class HTMLImportPlugin {
 						// clean up the files that were unzipped
 						html_import\FileHelper::delTree( $filePath );
 					}
+				} else {
+					echo 'File is not a ZIP file.';
 				}
 			} else {
 				$this->routeImportToCorrectImporter( $settings->getFileLocation()->getValue(), $settings );
