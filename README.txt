@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: import,HTML,website,webpage,flare,xml
 Requires at least: 3.8.1
 Tested up to: 4.1
-Stable tag: 1.0.0
+Stable tag: 1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,8 +23,8 @@ Initial plugin development funded by Gliderline Solutions (http://www.gliderline
 * Minimum tested/supported WordPress version: 3.8.1
 * Minimum tested PHP version: 5.4.25
 * Other requirements:
-** Javascript required for Settings Page
-** PHP must not be running in safe mode
+* Javascript required for Settings Page
+* PHP must not be running in safe mode
 
 = Through your WordPress Installation =
 
@@ -63,7 +63,7 @@ If uploading a zip file containing the website, then for an XML import the index
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0 =
 * First release, supports a custom XML index and basic Flare imports.
 
 == XML Index Format ==
@@ -86,6 +86,7 @@ Settings defined in the XML file will override settings contained in the plugin 
 
 == Roadmap ==
 The roadmap will be based on user demand and feedback.  Please provide feedback on what development would be important to you.  Some possibilities:
+
 * Option to import as a post
 * Overwriting of media files on subsequent imports or during filename conflicts.
 * Option to create new pages vs overwrite existing pages of the same name.
